@@ -1,5 +1,10 @@
 # Readme: parse_ss_farmer_log.ps1
-subspace advance CLI farmer log monitoring powershell script for Windows
+Windows Powershell script that captures information from subspace advance CLI farmer logs:
+
+Key features:
+  - Local Time display
+  - Summary information by disk listing rewards, plot status and last reward received timeframe
+  - Warning/Error messages summarized to remove duplicates and show only unique warnings/errors
 
 pre-requisite:
 - farmer output is written to a file with extension .txt or .log
