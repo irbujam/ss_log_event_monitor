@@ -3,7 +3,8 @@ subspace advance CLI farmer log monitoring powershell script for Windows
 
 pre-requisite:
 - farmer output is written to a file with extension .txt or .log
-        Example Farmer file that writes to log:
+
+  Example Farmer file that writes to log:
   
             # Replace `PATH_TO_FARM` with location where you want you store plot files
             # Replace `WALLET_ADDRESS` below with your account address from Polkadot.js wallet
