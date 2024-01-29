@@ -1,4 +1,4 @@
-# Readme: ss_log_event_monitor
+# Readme: parse_ss_farmer_log.ps1
 subspace advance CLI farmer log monitoring powershell script for Windows
 
 pre-requisite:
