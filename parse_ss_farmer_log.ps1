@@ -66,7 +66,7 @@ function main {
 			}
 
 			#Build Summary
-			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting", "error"
+			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error"
 			$diskCount = 0
 			$rewardCount = 0
 			$diskSizeArr = [System.Collections.ArrayList]@()
@@ -115,7 +115,7 @@ function main {
 					$textPart = $allDetailsArrText.SubString(0,$i)
 					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
-				elseif ($allDetailsArrText.IndexOf("plotting") -ge 0) {
+				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0) {
 					$diskInfoLabel = "{disk_farm_index="
 					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
 					$diskInfoEndPos = $allDetailsArrText.IndexOf("}")
