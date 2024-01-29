@@ -21,6 +21,7 @@ function main {
 		if ($bRefreshPage -eq $true) {
 			$bRefreshPage = $false
 			#
+			$object = @()
 			Clear-Host
 			$uSuppressWarnings = $(Write-Host "Supress warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
 			if ($uSuppressWarnings.ToLower() -eq 'y') {
@@ -35,14 +36,65 @@ function main {
 			else {
 				$patternArr = $fullPatternArr
 			}
-			
+
+			$allDetailsTextArr = Select-String -Path $logFileName -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
+			$diskCount = 0
+			$rewardCount = 0
+			$rewardByDiskCountArr = [System.Collections.ArrayList]@()
+			$plotSizeByDiskCountArr = [System.Collections.ArrayList]@()
+			for ($arrPos = 0; $arrPos -lt $allDetailsTextArr.Count; $arrPos++)
+			{
+				$allDetailsArrText = $allDetailsTextArr[$arrPos].ToString()
+				if ($allDetailsArrText.IndexOf("Single disk farm") -ge 0) {
+					$tempArrId = $rewardByDiskCountArr.Add(0)
+					$tempArrId = $plotSizeByDiskCountArr.Add(0)
+					$diskCount = $diskCount + 1
+				}
+				elseif ($allDetailsArrText.IndexOf("Successfully signed reward hash") -ge 0) {
+					$rewardCount = $rewardCount + 1
+					$diskInfoLabel = "{disk_farm_index="
+					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
+					$diskInfoEndPos = $allDetailsArrText.IndexOf("}")
+					$diskNumInfo = $allDetailsArrText.SubString($diskInfoStartPos+$diskInfoLabel.Length,$diskInfoEndPos-$diskInfoLabel.Length-$diskInfoStartPos)
+					#Write-Host "diskNumInfo" $diskNumInfo
+					$rewardByDiskCountArr[$diskNumInfo] = $rewardByDiskCountArr[$diskNumInfo] + 1
+				}
+				elseif ($allDetailsArrText.IndexOf("plotting") -ge 0) {
+					$diskInfoLabel = "{disk_farm_index="
+					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
+					$diskInfoEndPos = $allDetailsArrText.IndexOf("}")
+					$diskNumInfo = $allDetailsArrText.SubString($diskInfoStartPos+$diskInfoLabel.Length,$diskInfoEndPos-$diskInfoLabel.Length-$diskInfoStartPos)
+					#Write-Host "diskNumInfo" $diskNumInfo
+					if ($allDetailsArrText.IndexOf("Replotting complete") -ge 0) {
+						$plotSizeByDiskCountArr[$diskNumInfo] = "100%"
+					}
+					else {
+						$plotSizeInfoLabel = "("
+						$plotSizeStartPos = $allDetailsArrText.IndexOf($plotSizeInfoLabel)
+						$plotSizeEndPos = $allDetailsArrText.IndexOf("%")
+						$plotSizeInfo = $allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos)
+						#Write-Host "diskNumInfo" $diskNumInfo
+						$plotSizeByDiskCountArr[$diskNumInfo] = $plotSizeInfo
+					}
+				}
+			}
+			Write-Host "------------------" -ForegroundColor yellow
+			Write-Host "Summary:" -ForegroundColor green
+			Write-Host "------------------" -ForegroundColor yellow
+			Write-Host "Total Rewards " $rewardCount
+			Write-Host "------------------" -ForegroundColor yellow
+			Write-Host "Disk#" "Rewards" "Plot Status" -ForegroundColor cyan
+			Write-Host "------------------" -ForegroundColor yellow
+			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
+				Write-Host $arrPos "   " $rewardByDiskCountArr[$arrPos] "     " $plotSizeByDiskCountArr[$arrPos]
+			}
+
 			foreach($pattern in $patternArr)
 			{
 				$subHeaderText = ""
 				$subHeaderColor = "green"
 				if ($pattern.IndexOf("farm") -ge 0) {
-					$subHeaderText = "Disk"					
-					#$subHeaderColor = "cyan"
+					continue
 				}
 				elseif ($pattern.IndexOf("reward") -ge 0) {
 					$subHeaderText = "Reward"					
@@ -57,7 +109,8 @@ function main {
 				Write-Host "------------------" -ForegroundColor yellow
 				Write-Host $subHeaderText " details:" -ForegroundColor $subHeaderColor
 				Write-Host "------------------" -ForegroundColor yellow
-				$meaningfulText = Select-String -Path $logFileName -Pattern $pattern
+				#$meaningfulText = Select-String -Path $logFileName -Pattern $pattern
+				$meaningfulText = $allDetailsTextArr | Select-String -Pattern $pattern
 				#Write-Host $meaningfulText
 				$meaningfulText = $meaningfulText -replace "\\", ".."
 				$seperator = ":"
