@@ -12,7 +12,7 @@ pre-requisite:
             # Add "| Tee-Object -file log.txt" at the end to write console oyutput to log file, as seen in example below
             .\subspace-farmer-windows-x86_64-skylake-gemini-3g-2024-jan-29.exe farm --reward-address WALLET_ADDRESS path=PATH_TO_FARM,size=PLOT_SIZE | Tee-Object -file log.txt
 
-- powershell version 5 is installed
+- powershell version 5.1 is installed
   
 This script will open a windows dialog box at start asking user to select the log file. Please select appropriate subspace farmer log file and follow the prompts.
 
