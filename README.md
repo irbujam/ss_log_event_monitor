@@ -6,8 +6,8 @@ Key features:
   - Summary information by disk listing rewards, plot status and last reward received timeframe
   - Warning/Error messages summarized to remove duplicates and show only unique warnings/errors
 
-pre-requisite:
-- farmer output is written to a file with extension .txt or .log
+Pre-requisites:
+- Ensure that advance CLI is used for the farmer and the farmer cosnole output is written to a file with extension .txt or .log
 
   Example Farmer file that writes to log:
   
