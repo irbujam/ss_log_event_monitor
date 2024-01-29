@@ -7,7 +7,7 @@ $host.UI.RawUI.WindowTitle = "Subspace Log Event Monitor"
 
 ##Definitions
 $bRefreshPage = $true
-$bSuppressWarnings = $false
+$bSuppressWarnings = $true
 $patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error")
 
 ##Prompt for advanced CLI farmer log filer
@@ -28,24 +28,27 @@ function main {
 			#
 			$object = @()
 			Clear-Host
-			$uSuppressWarnings = $(Write-Host "Supress warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-			if ($uSuppressWarnings.ToLower() -eq 'y') {
-				$bSuppressWarnings = $true
-			}
-			else {
-				$bSuppressWarnings = $false
-			}
-
-			$allDetailsTextArr = Select-String -Path $logFileName -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
+			#$uSuppressWarnings = $(Write-Host "Supress warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+			#if ($uSuppressWarnings.ToLower() -eq 'y') {
+			#	$bSuppressWarnings = $true
+			#}
+			#else {
+			#	$bSuppressWarnings = $false
+			#}
+			#$allDetailsTextArr = Get-Content -Path $logFileName
+			#$allDetailsTextArr = Select-String -Path $logFileName -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
+			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
 			$diskCount = 0
 			$rewardCount = 0
 			$rewardByDiskCountArr = [System.Collections.ArrayList]@()
+			$lastRewardTimestampArr = [System.Collections.ArrayList]@()
 			$plotSizeByDiskCountArr = [System.Collections.ArrayList]@()
 			for ($arrPos = 0; $arrPos -lt $allDetailsTextArr.Count; $arrPos++)
 			{
 				$allDetailsArrText = $allDetailsTextArr[$arrPos].ToString()
 				if ($allDetailsArrText.IndexOf("Single disk farm") -ge 0) {
 					$tempArrId = $rewardByDiskCountArr.Add(0)
+					$tempArrId = $lastRewardTimestampArr.Add(0)
 					$tempArrId = $plotSizeByDiskCountArr.Add(0)
 					$diskCount = $diskCount + 1
 				}
@@ -56,6 +59,11 @@ function main {
 					$diskInfoEndPos = $allDetailsArrText.IndexOf("}")
 					$diskNumInfo = $allDetailsArrText.SubString($diskInfoStartPos+$diskInfoLabel.Length,$diskInfoEndPos-$diskInfoLabel.Length-$diskInfoStartPos)
 					$rewardByDiskCountArr[$diskNumInfo] = $rewardByDiskCountArr[$diskNumInfo] + 1
+					#Write-Host $allDetailsArrText
+					$seperator = " "
+					$i = $allDetailsArrText.IndexOf($seperator)
+					$textPart = $allDetailsArrText.SubString(0,$i)
+					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
 				elseif ($allDetailsArrText.IndexOf("plotting") -ge 0) {
 					$diskInfoLabel = "{disk_farm_index="
@@ -74,15 +82,29 @@ function main {
 					}
 				}
 			}
-			Write-Host "------------------------" -ForegroundColor yellow
-			Write-Host "Summary:" -ForegroundColor green
-			Write-Host "------------------------" -ForegroundColor yellow
-			Write-Host "Total Rewards " $rewardCount
-			Write-Host "------------------------" -ForegroundColor yellow
-			Write-Host "Disk#" "Rewards" "Plot Status" -ForegroundColor cyan
-			Write-Host "------------------------" -ForegroundColor yellow
+			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "                         Summary:                        " -ForegroundColor green
+			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "Total Rewards: " $rewardCount
+			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			$diskLabel = "Disk#"
+			$rewardLabel = "Rewards"
+			$plotStatusLabel = "Plot Status"
+			$lastRewardLabel = "Last Reward On"
+			$spacerLabel = "  "
+			Write-Host $diskLabel $spacerLabel $rewardLabel $spacerLabel $plotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
+			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
-				Write-Host $arrPos "   " $rewardByDiskCountArr[$arrPos] "     " $plotSizeByDiskCountArr[$arrPos]
+				$diskText = $arrPos.ToString()
+				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
+				$diskRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$rewardByDiskText = $rewardByDiskCountArr[$arrPos].ToString()
+				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
+				$rewardPlotSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString()
+				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
+				$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				Write-Host $arrPos $diskRewardSpacerLabel $rewardByDiskCountArr[$arrPos] $rewardPlotSpacerLabel $plotSizeByDiskCountArr[$arrPos] $plotLastRewardSpacerLabel	$lastRewardTimestampArr[$arrPos]
 			}
 
 			foreach($pattern in $patternArr)
@@ -93,7 +115,8 @@ function main {
 					continue
 				}
 				elseif ($pattern.IndexOf("reward") -ge 0) {
-					$subHeaderText = "Reward"					
+					$subHeaderText = "Reward"
+					continue
 				}
 				elseif ($pattern.IndexOf("plotting") -ge 0) {
 					$subHeaderText = "Plotting"
@@ -107,22 +130,10 @@ function main {
 						$subHeaderColor = "red"
 					}
 				}
-				Write-Host "------------------------" -ForegroundColor yellow
-				Write-Host $subHeaderText " details:" -ForegroundColor $subHeaderColor
-				Write-Host "------------------------" -ForegroundColor yellow
-				$meaningfulText = $allDetailsTextArr | Select-String -Pattern $pattern
-				$meaningfulText = $meaningfulText -replace "\\", ".."
-				$seperator = ":"
-				$resultTextArr = parseInputStrToArr $meaningfulText $seperator
-
-				for ($arrIndex =0;$arrIndex -lt $resultTextArr.Count; $arrIndex++)
-				{
-					if ($resultTextArr[$arrIndex] -ne "") {
-						$partialText = $resultTextArr[2]
-						break
-					}
-				}
-				$meaningfulTextArr = $meaningfulText -split $partialText
+				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+				Write-Host "                   " $subHeaderText " details:           " -ForegroundColor $subHeaderColor
+				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+				$meaningfulTextArr = $allDetailsTextArr | Select-String -Pattern $pattern
 				$textArrSize =  $meaningfulTextArr.Length
 				
 				$bDiskInfoMatchFound = $false
@@ -130,7 +141,7 @@ function main {
 				for ($arrIndex =$textArrSize-1;$arrIndex -ge 0; $arrIndex--)
 				{
 					if ($meaningfulTextArr[$arrIndex] -ne "") {
-						$dispText = parseInputStr $meaningfulTextArr[$arrIndex] ":"
+						$dispText = $meaningfulTextArr[$arrIndex].ToString()
 						if ($subHeaderText -eq "Plotting") {
 							$diskInfoLabel = "{disk_farm_index="
 							$diskInfoStartPos = $dispText.IndexOf($diskInfoLabel)
@@ -158,7 +169,7 @@ function main {
 			$currentDate = Get-Date -Format u
 			# Refresh
 			Write-Host `n                
-			Write-Host "Last refresh: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
+			Write-Host "Last refresh On: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
 			#
 			$uRefreshRequest = Read-Host 'Type (R) to refresh, (X) to Exit and press Enter'
 			if ($uRefreshRequest.ToLower() -eq 'r') {
@@ -180,23 +191,30 @@ function main {
 	}
 }
 
+function fBuildDynamicSpacer ([int]$ioSpacerLength){
+				$dataSpacerLabel = ""
+				for ($k=0;$k -lt $ioSpacerLength;$k++) {
+					$dataSpacerLabel = $dataSpacerLabel + " "
+				}
+				return $dataSpacerLabel
+}
 function parseInputStr([string]$ioSourceText, [string]$delimiter){
 	$i = $ioSourceText.IndexOf($delimiter)
 	$textPart = $ioSourceText.SubString($i+1,$ioSourceText.Length-$i-1)
 	return $textPart
 }
-function parseInputStrToArr([string]$ioSourceText, [string]$delimiter){
-	$i = $ioSourceText.IndexOf($delimiter)             # get the last separator
-	$i = $ioSourceText.IndexOf($delimiter, $i + 1)     # get the second to last separator, also the end of the column we are interested in
-	$textPart1 = $ioSourceText.SubString(0,$i+1)
-	$textPart2 = $ioSourceText.SubString($i+1,$ioSourceText.Length-$i-1)
-	$ioReturnTextArr = [System.Collections.ArrayList]@()
-	$ioTempArr = ($textPart1, $textPart2)
-	foreach($item in $ioTempArr)
-	{
-		$ioReturnTextArr.Add($item)
-	}
-	return $ioReturnTextArr
-}
+#function parseInputStrToArr([string]$ioSourceText, [string]$delimiter){
+#	$i = $ioSourceText.IndexOf($delimiter)             # get the first separator position
+#	$i = $ioSourceText.IndexOf($delimiter, $i + 1)     # get the second from first separator position
+#	$textPart1 = $ioSourceText.SubString(0,$i+1)
+#	$textPart2 = $ioSourceText.SubString($i+1,$ioSourceText.Length-$i-1)
+#	$ioReturnTextArr = [System.Collections.ArrayList]@()
+#	$ioTempArr = ($textPart1, $textPart2)
+#	foreach($item in $ioTempArr)
+#	{
+#		$ioReturnTextArr.Add($item)
+#	}
+#	return $ioReturnTextArr
+#}
 
 main
