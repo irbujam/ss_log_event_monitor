@@ -7,7 +7,9 @@ $host.UI.RawUI.WindowTitle = "Subspace Log Event Monitor"
 
 ##Definitions
 $bRefreshPage = $true
-$bSuppressWarnings = $true
+$bShowWarnings = $false
+$bShowRewardDetails = $false
+$bShowPlottingDetails = $false
 $patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error")
 
 ##Prompt for advanced CLI farmer log filer
@@ -26,17 +28,29 @@ function main {
 		if ($bRefreshPage -eq $true) {
 			$bRefreshPage = $false
 			#
-			$object = @()
 			Clear-Host
-			#$uSuppressWarnings = $(Write-Host "Supress warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-			#if ($uSuppressWarnings.ToLower() -eq 'y') {
-			#	$bSuppressWarnings = $true
-			#}
-			#else {
-			#	$bSuppressWarnings = $false
-			#}
-			#$allDetailsTextArr = Get-Content -Path $logFileName
-			#$allDetailsTextArr = Select-String -Path $logFileName -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
+			$uShowWarnings = $(Write-Host "Show warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+			if ($uShowWarnings.ToLower() -eq 'y') {
+				$bShowWarnings = $true
+			}
+			else {
+				$bShowWarnings = $false
+			}
+			$uShowRewardDetails = $(Write-Host "Show reward details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+			if ($uShowRewardDetails.ToLower() -eq 'y') {
+				$bShowRewardDetails = $true
+			}
+			else {
+				$bShowRewardDetails = $false
+			}
+			$uShowPlottingDetails = $(Write-Host "Show plotting details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+			if ($uShowPlottingDetails.ToLower() -eq 'y') {
+				$bShowPlottingDetails = $true
+			}
+			else {
+				$bShowPlottingDetails = $false
+			}
+
 			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
 			$diskCount = 0
 			$rewardCount = 0
@@ -106,6 +120,7 @@ function main {
 				$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
 				Write-Host $arrPos $diskRewardSpacerLabel $rewardByDiskCountArr[$arrPos] $rewardPlotSpacerLabel $plotSizeByDiskCountArr[$arrPos] $plotLastRewardSpacerLabel	$lastRewardTimestampArr[$arrPos]
 			}
+			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
 
 			foreach($pattern in $patternArr)
 			{
@@ -116,13 +131,18 @@ function main {
 				}
 				elseif ($pattern.IndexOf("reward") -ge 0) {
 					$subHeaderText = "Reward"
-					continue
+					if ($bShowRewardDetails -eq $false) {
+						continue
+					}
 				}
 				elseif ($pattern.IndexOf("plotting") -ge 0) {
 					$subHeaderText = "Plotting"
+					if ($bShowPlottingDetails -eq $false) {
+						continue
+					}
 				}
 				elseif ($pattern.IndexOf("error") -ge 0) {
-					if ($bSuppressWarnings -eq $true) {
+					if ($bShowWarnings -eq $false) {
 						continue
 					}
 					else {
@@ -130,14 +150,16 @@ function main {
 						$subHeaderColor = "red"
 					}
 				}
-				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+				#Write-Host "---------------------------------------------------------" -ForegroundColor yellow
 				Write-Host "                   " $subHeaderText " details:           " -ForegroundColor $subHeaderColor
 				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
 				$meaningfulTextArr = $allDetailsTextArr | Select-String -Pattern $pattern
 				$textArrSize =  $meaningfulTextArr.Length
 				
 				$bDiskInfoMatchFound = $false
+				$bErrMsgInfoMatchFound = $false
 				$diskInfoHoldArr = [System.Collections.ArrayList]@()
+				$errMsgInfoHoldArr = [System.Collections.ArrayList]@()
 				for ($arrIndex =$textArrSize-1;$arrIndex -ge 0; $arrIndex--)
 				{
 					if ($meaningfulTextArr[$arrIndex] -ne "") {
@@ -158,13 +180,38 @@ function main {
 								$tempArrId = $diskInfoHoldArr.Add($diskInfoHold)
 							}
 						}
-						if ($bDiskInfoMatchFound -eq $false) {
-							Write-Host $dispText
+						elseif ($subHeaderText -eq "Error") {
+							$errMsgLable = "{"
+							$errMsgStartPos = $allDetailsArrText.IndexOf($errMsgLable)
+							$errMsgEndPos = $allDetailsArrText.IndexOf("}")
+							$errMsgInfoHold = $allDetailsArrText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
+							$bErrMsgInfoMatchFound = $false
+							foreach($errMsg in $errMsgInfoHoldArr)
+							{
+								if ($errMsgInfoHold -eq $errMsg) {
+									$bErrMsgInfoMatchFound = $true
+									break
+								}
+							}							
+							if ($bErrMsgInfoMatchFound -eq $false) {
+								$tempArrId = $errMsgInfoHoldArr.Add($errMsgInfoHold)
+							}
+						}
+						if ($bDiskInfoMatchFound -eq $false -and $bErrMsgInfoMatchFound -eq $false) {
+							$seperator = " "
+							$i = $dispText.IndexOf($seperator)
+							$textPart1 = $dispText.SubString(0,$i)
+							$textPart2 = $dispText.SubString($i+1,$dispText.Length-$i-1)
+							
+							#Write-Host $dispText
+							Write-Host (Get-Date $textPart1).ToLocalTime() $textPart2
 						}
 						#echo "`n"
 					}
 				}
+				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
 			}
+			
 			#$currentDate = Get-Date -Format HH:mm:ss
 			$currentDate = Get-Date -Format u
 			# Refresh
