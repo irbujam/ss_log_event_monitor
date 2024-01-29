@@ -7,7 +7,7 @@ Key features:
   - Warning/Error messages summarized to remove duplicates and show only unique warnings/errors
 
 Pre-requisites:
-- Ensure that advance CLI is used for the farmer and the farmer cosnole output is written to a file with extension .txt or .log
+- Ensure that advance CLI is used for the farmer and the farmer console output is written to a file with extension .txt or .log
 
   Example Farmer file that writes to log:
   
