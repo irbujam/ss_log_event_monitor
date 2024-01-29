@@ -1,5 +1,5 @@
-# ss_log_event_monitor
-subspace monitoring powershell script for Windows
+# Readme: ss_log_event_monitor
+subspace advance CLI farmer log monitoring powershell script for Windows
 
 pre-requisite:
 - farmer output is written to a file with extension .txt or .log
