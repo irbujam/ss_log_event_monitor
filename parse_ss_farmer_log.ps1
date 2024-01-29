@@ -4,8 +4,13 @@
 
 ##header
 $host.UI.RawUI.WindowTitle = "Subspace Log Event Monitor"
-
-##Definitions
+##-------------------------------------------------------------------------
+##				>>>>>>>>>>> DO NOT MAKE CHANGES below this line <<<<<<<<<<<
+##-------------------------------------------------------------------------
+##Console Input for User refresh definitions 
+$bAutoRefresh = $false
+$refreshTimeScaleInSeconds = 20			#Time in seconds (For example...set to 600 if refresh is desired every 10 minutes)
+##Other definitions
 $bRefreshPage = $true
 $bShowWarnings = $false
 $bShowRewardDetails = $false
@@ -24,8 +29,43 @@ $logFileName = $FileBrowser.filename
 ##functions
 #Main process
 function main {
+	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$gitVersion = Get-gitNewVersion
+	
+	Clear-Host
+	#Console input for User choices on auto-refresh
+	$uAutoRefresh = $(Write-Host "Auto Refresh (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+	if ($uAutoRefresh.ToLower() -eq "y") {$bAutoRefresh = $true}
+
+	if ($bAutoRefresh) {
+		$uTimeInputInSeconds = $(Write-Host "Enter time in seconds for auto-refresh (For example...set to 60 if refresh is desired every 1 minute): " -nonewline -ForegroundColor cyan; Read-Host)
+		$refreshTimeScaleInSeconds = [int]$uTimeInputInSeconds
+	}
+	#Console input for User choices on console for suppressions
+	$uShowWarnings = $(Write-Host "Show warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+	if ($uShowWarnings.ToLower() -eq 'y') {
+		$bShowWarnings = $true
+	}
+	else {
+		$bShowWarnings = $false
+	}
+	$uShowRewardDetails = $(Write-Host "Show reward details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+	if ($uShowRewardDetails.ToLower() -eq 'y') {
+		$bShowRewardDetails = $true
+	}
+	else {
+		$bShowRewardDetails = $false
+	}
+	$uShowPlottingDetails = $(Write-Host "Show plotting details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+	if ($uShowPlottingDetails.ToLower() -eq 'y') {
+		$bShowPlottingDetails = $true
+	}
+	else {
+		$bShowPlottingDetails = $false
+	}
+
 	while ($true) {
-		if ($bRefreshPage -eq $true) {
+		if ($bRefreshPage -or $bAutoRefresh) {
 			$bRefreshPage = $false
 			#
 			Clear-Host
@@ -42,27 +82,10 @@ function main {
 			}
 			Write-Host "----------------------" -ForegroundColor yellow
 
-			#User choices on console for suppressions
-			$uShowWarnings = $(Write-Host "Show warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-			if ($uShowWarnings.ToLower() -eq 'y') {
-				$bShowWarnings = $true
-			}
-			else {
-				$bShowWarnings = $false
-			}
-			$uShowRewardDetails = $(Write-Host "Show reward details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-			if ($uShowRewardDetails.ToLower() -eq 'y') {
-				$bShowRewardDetails = $true
-			}
-			else {
-				$bShowRewardDetails = $false
-			}
-			$uShowPlottingDetails = $(Write-Host "Show plotting details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-			if ($uShowPlottingDetails.ToLower() -eq 'y') {
-				$bShowPlottingDetails = $true
-			}
-			else {
-				$bShowPlottingDetails = $false
+			if ($null -ne $gitVersion) {
+				$currentVersion = $gitVersion -replace "[^.0-9]"
+				Write-Host "Latest subspace github advance CLI version: " -nonewline
+				Write-Host "$($gitVersion)" -ForegroundColor Green
 			}
 
 			#Build Summary
@@ -287,12 +310,33 @@ function main {
 			Write-Host `n                
 			Write-Host "Last refresh On: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
 			#
-			$uRefreshRequest = Read-Host 'Type (R) to refresh, (X) to Exit and press Enter'
-			if ($uRefreshRequest.ToLower() -eq 'r') {
-				$bRefreshPage = $true
+			####
+			## Auto refresh wait cycle
+			if ($bAutoRefresh) {
+				Write-Host "Auto-refresh scheduled for every " $refreshTimeScaleInSeconds " seconds"
+				[System.Console]::CursorVisible = $false
+				$iterations = [math]::Ceiling($refreshTimeScaleInSeconds / 5)       
+				for ($i = 0; $i -lt $iterations; $i++) {
+					Write-Host -NoNewline "." -ForegroundColor Cyan
+					Start-Sleep 5
+				}
+				###### Auto refresh
+				$gitNewVersion = Get-gitNewVersion
+				if ($gitNewVersion) {
+					$gitVersion = $gitNewVersion
+				}
+				$Stopwatch.Restart()
+				######
 			}
-			elseif ($uRefreshRequest.ToLower() -eq 'x') {
-				exit
+			else {
+				[System.Console]::CursorVisible = $true
+				$uRefreshRequest = Read-Host 'Type (R) to refresh, (X) to Exit and press Enter'
+				if ($uRefreshRequest.ToLower() -eq 'r') {
+					$bRefreshPage = $true
+				}
+				elseif ($uRefreshRequest.ToLower() -eq 'x') {
+					exit
+				}
 			}
 		}
 		else {
@@ -314,10 +358,19 @@ function fBuildDynamicSpacer ([int]$ioSpacerLength){
 				}
 				return $dataSpacerLabel
 }
-function parseInputStr([string]$ioSourceText, [string]$delimiter){
-	$i = $ioSourceText.IndexOf($delimiter)
-	$textPart = $ioSourceText.SubString($i+1,$ioSourceText.Length-$i-1)
-	return $textPart
+function Get-gitNewVersion {
+	.{
+		$gitNewVersion = Invoke-RestMethod -Method 'GET' -uri "https://api.github.com/repos/subspace/subspace/releases/latest" 2>$null
+		if ($gitNewVersion) {
+			$gitNewVersion = $gitNewVersion.tag_name
+		}
+	}|Out-Null
+	return $gitNewVersion
 }
+#function parseInputStr([string]$ioSourceText, [string]$delimiter){
+#	$i = $ioSourceText.IndexOf($delimiter)
+#	$textPart = $ioSourceText.SubString($i+1,$ioSourceText.Length-$i-1)
+#	return $textPart
+#}
 
 main
