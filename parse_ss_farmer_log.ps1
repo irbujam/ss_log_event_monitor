@@ -29,6 +29,20 @@ function main {
 			$bRefreshPage = $false
 			#
 			Clear-Host
+
+			# get Farmer process status
+			$bProcess = Get-Process "subspace-farmer" -ErrorAction SilentlyContinue
+			if ($bProcess) {
+				Write-Host "Farmer status: " -nonewline
+				Write-Host "Running" -ForegroundColor green
+			}
+			else {
+				Write-Host "Farmer status: " -nonewline
+				Write-Host "Stopped" -ForegroundColor red
+			}
+			Write-Host "----------------------" -ForegroundColor yellow
+
+			#User choices on console for suppressions
 			$uShowWarnings = $(Write-Host "Show warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
 			if ($uShowWarnings.ToLower() -eq 'y') {
 				$bShowWarnings = $true
@@ -51,12 +65,14 @@ function main {
 				$bShowPlottingDetails = $false
 			}
 
+			#Build Summary
 			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Single disk farm", "Successfully signed reward hash", "plotting", "error"
 			$diskCount = 0
 			$rewardCount = 0
 			$rewardByDiskCountArr = [System.Collections.ArrayList]@()
 			$lastRewardTimestampArr = [System.Collections.ArrayList]@()
 			$plotSizeByDiskCountArr = [System.Collections.ArrayList]@()
+			$replotSizeByDiskCountArr = [System.Collections.ArrayList]@()
 			for ($arrPos = 0; $arrPos -lt $allDetailsTextArr.Count; $arrPos++)
 			{
 				$allDetailsArrText = $allDetailsTextArr[$arrPos].ToString()
@@ -64,6 +80,7 @@ function main {
 					$tempArrId = $rewardByDiskCountArr.Add(0)
 					$tempArrId = $lastRewardTimestampArr.Add(0)
 					$tempArrId = $plotSizeByDiskCountArr.Add(0)
+					$tempArrId = $replotSizeByDiskCountArr.Add(0)
 					$diskCount = $diskCount + 1
 				}
 				elseif ($allDetailsArrText.IndexOf("Successfully signed reward hash") -ge 0) {
@@ -86,6 +103,16 @@ function main {
 					$diskNumInfo = $allDetailsArrText.SubString($diskInfoStartPos+$diskInfoLabel.Length,$diskInfoEndPos-$diskInfoLabel.Length-$diskInfoStartPos)
 					if ($allDetailsArrText.IndexOf("Replotting complete") -ge 0) {
 						$plotSizeByDiskCountArr[$diskNumInfo] = "100%"
+						$replotSizeByDiskCountArr[$diskNumInfo] = "100%"
+					}
+					elseif ($allDetailsArrText.IndexOf("Replotting sector") -ge 0) {
+						$plotSizeByDiskCountArr[$diskNumInfo] = "100%"
+						#
+						$plotSizeInfoLabel = "("
+						$plotSizeStartPos = $allDetailsArrText.IndexOf($plotSizeInfoLabel)
+						$plotSizeEndPos = $allDetailsArrText.IndexOf("%")
+						$plotSizeInfo = $allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos)
+						$replotSizeByDiskCountArr[$diskNumInfo] = $plotSizeInfo
 					}
 					else {
 						$plotSizeInfoLabel = "("
@@ -93,35 +120,45 @@ function main {
 						$plotSizeEndPos = $allDetailsArrText.IndexOf("%")
 						$plotSizeInfo = $allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos)
 						$plotSizeByDiskCountArr[$diskNumInfo] = $plotSizeInfo
+						$replotSizeByDiskCountArr[$diskNumInfo] = "N/A"
 					}
 				}
 			}
-			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
-			Write-Host "                         Summary:                        " -ForegroundColor green
-			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "                                 Summary:                                " -ForegroundColor green
+			Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
 			Write-Host "Total Rewards: " $rewardCount
-			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
 			$diskLabel = "Disk#"
 			$rewardLabel = "Rewards"
 			$plotStatusLabel = "Plot Status"
+			$replotStatusLabel = "Replot Status"
 			$lastRewardLabel = "Last Reward On"
 			$spacerLabel = "  "
-			Write-Host $diskLabel $spacerLabel $rewardLabel $spacerLabel $plotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
-			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			Write-Host $diskLabel $spacerLabel $rewardLabel $spacerLabel $plotStatusLabel $spacerLabel $replotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
+			Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
 				$diskRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				
 				$rewardByDiskText = $rewardByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
-				$rewardPlotSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength
+				
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
-				$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
-				Write-Host $arrPos $diskRewardSpacerLabel $rewardByDiskCountArr[$arrPos] $rewardPlotSpacerLabel $plotSizeByDiskCountArr[$arrPos] $plotLastRewardSpacerLabel	$lastRewardTimestampArr[$arrPos]
+				#$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength
+				
+				$replotSizeByDiskText = $replotSizeByDiskCountArr[$arrPos].ToString()
+				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
+				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				Write-Host $arrPos $diskRewardSpacerLabel $rewardByDiskCountArr[$arrPos] $plotSpacerLabel $plotSizeByDiskCountArr[$arrPos] $replotSpacerLabel $replotSizeByDiskCountArr[$arrPos] $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
 			}
-			Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
 
+			#Build Details
 			foreach($pattern in $patternArr)
 			{
 				$subHeaderText = ""
@@ -152,7 +189,7 @@ function main {
 				}
 				#Write-Host "---------------------------------------------------------" -ForegroundColor yellow
 				Write-Host "                   " $subHeaderText " details:           " -ForegroundColor $subHeaderColor
-				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+				Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
 				$meaningfulTextArr = $allDetailsTextArr | Select-String -Pattern $pattern
 				$textArrSize =  $meaningfulTextArr.Length
 				
@@ -209,9 +246,11 @@ function main {
 						#echo "`n"
 					}
 				}
-				Write-Host "---------------------------------------------------------" -ForegroundColor yellow
+				Write-Host "-------------------------------------------------------------------------" -ForegroundColor yellow
 			}
 			
+			#Finalize
+			#
 			#$currentDate = Get-Date -Format HH:mm:ss
 			$currentDate = Get-Date -Format u
 			# Refresh
