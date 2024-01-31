@@ -38,7 +38,23 @@ function main {
 	if ($uAutoRefresh.ToLower() -eq "y") {$bAutoRefresh = $true}
 
 	if ($bAutoRefresh) {
+		# Get original position of cursor
+		$originalPosition = $host.UI.RawUI.CursorPosition
+		
 		$uTimeInputInSeconds = $(Write-Host "Enter time in seconds for auto-refresh (For example...set to 60 if refresh is desired every 1 minute): " -nonewline -ForegroundColor cyan; Read-Host)
+		
+		$uInputTimeValue = 0
+		do {
+			$uInputTimeValueValid = [int]::TryParse($uTimeInputInSeconds, [ref]$uInputTimeValue)
+			if (-not $uInputTimeValueValid) {
+				$clearmsg = " " * ([System.Console]::WindowWidth - 1)  
+				[Console]::SetCursorPosition($originalPosition.X, $originalPosition.Y)
+				[System.Console]::Write($clearmsg) 
+				[Console]::SetCursorPosition($originalPosition.X, $originalPosition.Y)
+				Write-Host "Invalid value provided, please try again..." -ForegroundColor red -nonewline				
+				$uTimeInputInSeconds = $(Write-Host "Enter time in seconds for auto-refresh (For example...set to 60 if refresh is desired every 1 minute): " -nonewline -ForegroundColor cyan; Read-Host)
+			}
+		} while (-not $uInputTimeValueValid)
 		$refreshTimeScaleInSeconds = [int]$uTimeInputInSeconds
 	}
 	#Console input for User choices on console for suppressions
