@@ -125,6 +125,8 @@ function main {
 			echo "`n"
 
 			#Build Summary
+			$bPlottingStarted = $false
+			#
 			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting sector", "error"
 			$diskCount = 0
 			$rewardCount = 0
@@ -175,6 +177,7 @@ function main {
 					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
 				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0) {
+					$bPlottingStarted = $true
 					$diskInfoLabel = "{disk_farm_index="
 					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
 					$diskInfoEndPos = $allDetailsArrText.IndexOf("}")
@@ -237,10 +240,10 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
 				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
-				#if ($plotSizeByDiskCountArr[$arrPos] -eq "-") {
-				#	$plotSizeByDiskCountArr[$arrPos] = "100%"
+				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
+					$plotSizeByDiskCountArr[$arrPos] = "100%"
 				#	$replotSizeByDiskCountArr[$arrPos] = "-"
-				#}
+				}
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString() 
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
 				#$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
