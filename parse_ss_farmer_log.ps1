@@ -89,7 +89,7 @@ function main {
 			}
 
 			#Build Summary
-			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error"
+			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting sector", "error"
 			$diskCount = 0
 			$rewardCount = 0
 			$diskSizeArr = [System.Collections.ArrayList]@()
@@ -252,8 +252,8 @@ function main {
 				$errMsgInfoHoldArr = [System.Collections.ArrayList]@()
 				for ($arrIndex =$textArrSize-1;$arrIndex -ge 0; $arrIndex--)
 				{
-					if ($meaningfulTextArr[$arrIndex] -ne "") {
-						$dispText = $meaningfulTextArr[$arrIndex].ToString()
+					$dispText = $meaningfulTextArr[$arrIndex].ToString()
+					if ($dispText -ne "") {
 						if ($subHeaderText -eq "Plotting") {
 							$diskInfoLabel = "{disk_farm_index="
 							$diskInfoStartPos = $dispText.IndexOf($diskInfoLabel)
@@ -272,9 +272,9 @@ function main {
 						}
 						elseif ($subHeaderText -eq "Error") {
 							$errMsgLable = "{"
-							$errMsgStartPos = $allDetailsArrText.IndexOf($errMsgLable)
-							$errMsgEndPos = $allDetailsArrText.IndexOf("}")
-							$errMsgInfoHold = $allDetailsArrText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
+							$errMsgStartPos = $dispText.IndexOf($errMsgLable)
+							$errMsgEndPos = $dispText.IndexOf("}")
+							$errMsgInfoHold = $dispText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
 							$bErrMsgInfoMatchFound = $false
 							foreach($errMsg in $errMsgInfoHoldArr)
 							{
@@ -333,6 +333,10 @@ function main {
 				$uRefreshRequest = Read-Host 'Type (R) to refresh, (X) to Exit and press Enter'
 				if ($uRefreshRequest.ToLower() -eq 'r') {
 					$bRefreshPage = $true
+					$gitNewVersion = Get-gitNewVersion
+					if ($gitNewVersion) {
+						$gitVersion = $gitNewVersion
+					}
 				}
 				elseif ($uRefreshRequest.ToLower() -eq 'x') {
 					exit
