@@ -17,22 +17,27 @@ $bShowRewardDetails = $false
 $bShowPlottingDetails = $false
 $patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error")
 
-##Prompt for advanced CLI farmer log filer
-Add-Type -AssemblyName System.Windows.Forms
-$FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{ 
-    InitialDirectory = [Environment]::GetFolderPath('Desktop') 
-    Filter = 'Text (*.txt)|*.txt|Logs (*.log)|*.log'
-}
-$null = $FileBrowser.ShowDialog()
-$logFileName = $FileBrowser.filename
 
 ##functions
 #Main process
 function main {
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$gitVersion = Get-gitNewVersion
+
+	#Get current folder info
+	$seperator = "\"
+	$currFolderName = fParseStr $pwd.Path $seperator "LAST"
+	##Prompt for advanced CLI farmer log filer
+	Add-Type -AssemblyName System.Windows.Forms
+	$FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{ 
+		InitialDirectory = [Environment]::GetFolderPath('Desktop') 
+		Filter = 'Text (*.txt)|*.txt|Logs (*.log)|*.log'
+	}
+	$null = $FileBrowser.ShowDialog()
+	$logFileName = $FileBrowser.filename
 	
 	Clear-Host
+	#Write-Host $currFolderName
 	#Console input for User choices on auto-refresh
 	$uAutoRefresh = $(Write-Host "Auto Refresh (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
 	if ($uAutoRefresh.ToLower() -eq "y") {$bAutoRefresh = $true}
@@ -391,10 +396,19 @@ function Get-gitNewVersion {
 	}|Out-Null
 	return $gitNewVersion
 }
-#function parseInputStr([string]$ioSourceText, [string]$delimiter){
-#	$i = $ioSourceText.IndexOf($delimiter)
-#	$textPart = $ioSourceText.SubString($i+1,$ioSourceText.Length-$i-1)
-#	return $textPart
-#}
+function fParseStr([string]$ioSourceText, [string]$delimiter, [string]$ioSplitPosition){
+	$returnTextValue = $ioSourceText
+	$iPos = $ioSourceText.IndexOf($delimiter)
+	if ($ioSplitPosition.ToLower() -eq "last") {
+		do {
+			$returnTextValue = $returnTextValue.SubString($iPos+1,$returnTextValue.Length-$iPos-1)
+			$iPos = $returnTextValue.IndexOf($delimiter)
+		} while ($iPos -ge 0)
+	}
+	elseif ($ioSplitPosition.ToLower() -eq "first") {
+		$returnTextValue = $returnTextValue.SubString($iPos+1,$returnTextValue.Length-$iPos-1)
+	}
+	return $returnTextValue
+}
 
 main
