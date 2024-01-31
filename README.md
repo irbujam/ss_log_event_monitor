@@ -9,7 +9,7 @@ Key features:
 
 Pre-requisites:
 - Ensure that advance CLI is used for the farmer
-- Must write the farmer console output a file with extension .txt or .log
+- Must write the farmer console output to a file with extension .txt or .log
 
   Example Farmer file that writes to log:
   
