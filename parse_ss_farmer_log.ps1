@@ -91,23 +91,38 @@ function main {
 			#
 			Clear-Host
 
-			# get Farmer process status
-			$bProcess = Get-Process "subspace-farmer" -ErrorAction SilentlyContinue
-			if ($bProcess) {
+			# get Subspace node process state
+			$bNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
+			if ($bNodeProcess) {
+				Write-Host "Node status: " -nonewline
+				Write-Host "Running" -ForegroundColor green -NoNewline
+			}
+			else {
+				Write-Host "Node status: " -nonewline
+				Write-Host "Stopped" -ForegroundColor red -NoNewline
+			}
+
+			# get Subspace farmer process state
+			#$bFarmerProcess = Get-Process "subspace-farmer" -ErrorAction SilentlyContinue
+			$bFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
+			if ($bFarmerProcess) {
+				Write-Host "    |    " -nonewline -ForegroundColor yellow
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Running" -ForegroundColor green
 			}
 			else {
+				Write-Host "    |    " -nonewline
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Stopped" -ForegroundColor red
 			}
-			Write-Host "----------------------" -ForegroundColor gray
+			#Write-Host "---------------------------------------------------" -ForegroundColor gray
 
 			if ($null -ne $gitVersion) {
 				$currentVersion = $gitVersion -replace "[^.0-9]"
 				Write-Host "Latest subspace github advance CLI version: " -nonewline
 				Write-Host "$($gitVersion)" -ForegroundColor Green
 			}
+			echo "`n"
 
 			#Build Summary
 			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting sector", "error"
@@ -222,10 +237,10 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
 				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
-				if ($plotSizeByDiskCountArr[$arrPos] -eq "-") {
-					$plotSizeByDiskCountArr[$arrPos] = "100%"
-					$replotSizeByDiskCountArr[$arrPos] = "-"
-				}
+				#if ($plotSizeByDiskCountArr[$arrPos] -eq "-") {
+				#	$plotSizeByDiskCountArr[$arrPos] = "100%"
+				#	$replotSizeByDiskCountArr[$arrPos] = "-"
+				#}
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString() 
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
 				#$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
