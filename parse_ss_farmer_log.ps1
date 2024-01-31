@@ -101,7 +101,7 @@ function main {
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Stopped" -ForegroundColor red
 			}
-			Write-Host "----------------------" -ForegroundColor yellow
+			Write-Host "----------------------" -ForegroundColor gray
 
 			if ($null -ne $gitVersion) {
 				$currentVersion = $gitVersion -replace "[^.0-9]"
@@ -187,11 +187,12 @@ function main {
 					}
 				}
 			}
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                      Summary:                                                     " -ForegroundColor green
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
-			Write-Host "Total Rewards: " $rewardCount
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "Total Rewards: " -nonewline
+			Write-Host $rewardCount -ForegroundColor Yellow
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			$diskLabel = "Disk#"
 			$driveLabel = "Drive Label"
 			$diskSizeLabel = "Space Allocated       "
@@ -200,24 +201,26 @@ function main {
 			$replotStatusLabel = "Replot Status"
 			$lastRewardLabel = "Last Reward On"
 			$spacerLabel = "  "
+			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
 			Write-Host $diskLabel $spacerLabel $driveLabel $spacerLabel $diskSizeLabel $spacerLabel $rewardLabel $spacerLabel $plotStatusLabel $spacerLabel $replotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
-				$driveSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$driveSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$driveText = $driveArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$driveLabel.Length-$driveText.Length)
-				$diskSizeSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$diskSizeSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$diskSizeText = $diskSizeArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskSizeLabel.Length-$diskSizeText.Length)
-				$diskRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$diskRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				$rewardByDiskText = $rewardByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
-				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				if ($plotSizeByDiskCountArr[$arrPos] -eq "-") {
 					$plotSizeByDiskCountArr[$arrPos] = "100%"
@@ -226,15 +229,15 @@ function main {
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString() 
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
 				#$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
-				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				$replotSizeByDiskText = $replotSizeByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
-				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
+				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
 			}
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 
 			#Build Details
 			foreach($pattern in $patternArr)
@@ -265,9 +268,9 @@ function main {
 						$subHeaderColor = "red"
 					}
 				}
-				#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+				#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 				Write-Host "                                            " $subHeaderText " details:                                     " -ForegroundColor $subHeaderColor
-				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 				$meaningfulTextArr = $allDetailsTextArr | Select-String -Pattern $pattern
 				$textArrSize =  $meaningfulTextArr.Length
 				
@@ -324,7 +327,7 @@ function main {
 						#echo "`n"
 					}
 				}
-				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
+				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			}
 			
 			#Finalize
@@ -380,10 +383,10 @@ function main {
 	}
 }
 
-function fBuildDynamicSpacer ([int]$ioSpacerLength){
+function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
 				$dataSpacerLabel = ""
 				for ($k=0;$k -lt $ioSpacerLength;$k++) {
-					$dataSpacerLabel = $dataSpacerLabel + " "
+					$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
 				}
 				return $dataSpacerLabel
 }
