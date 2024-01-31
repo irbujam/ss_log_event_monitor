@@ -103,11 +103,11 @@ function main {
 				$allDetailsArrText = $allDetailsTextArr[$arrPos].ToString()
 				if ($allDetailsArrText.IndexOf("Single disk farm") -ge 0) {
 					$tempArrId = $diskSizeArr.Add(0)
-					$tempArrId = $driveArr.Add("")
+					$tempArrId = $driveArr.Add("-")
 					$tempArrId = $rewardByDiskCountArr.Add(0)
-					$tempArrId = $lastRewardTimestampArr.Add("")
-					$tempArrId = $plotSizeByDiskCountArr.Add("")
-					$tempArrId = $replotSizeByDiskCountArr.Add("")
+					$tempArrId = $lastRewardTimestampArr.Add("-")
+					$tempArrId = $plotSizeByDiskCountArr.Add("-")
+					$tempArrId = $replotSizeByDiskCountArr.Add("-")
 					$diskCount = $diskCount + 1
 				}
 				elseif ($allDetailsArrText.IndexOf("Allocated space: ") -ge 0) {
@@ -162,7 +162,7 @@ function main {
 						$plotSizeEndPos = $allDetailsArrText.IndexOf("%")
 						$plotSizeInfo = $allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos)
 						$plotSizeByDiskCountArr[$diskNumInfo] = $plotSizeInfo
-						$replotSizeByDiskCountArr[$diskNumInfo] = "N/A"
+						$replotSizeByDiskCountArr[$diskNumInfo] = "-"
 					}
 				}
 			}
@@ -198,8 +198,11 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
 				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength
 				
+				if ($plotSizeByDiskCountArr[$arrPos] -eq "-") {
+					$plotSizeByDiskCountArr[$arrPos] = "100%"
+					$replotSizeByDiskCountArr[$arrPos] = "-"
+				}
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString() 
-				if ($plotSizeByDiskText -eq "") {$plotSizeByDiskText = "100%"}
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
 				#$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
 				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength
@@ -208,10 +211,6 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
 				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
 
-				if ($plotSizeByDiskText -eq "" -and $replotSizeByDiskText -eq "") {
-					$plotSizeByDiskText = "100%"
-					$replotSizeByDiskText = "N/A"
-				}
 				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
 			}
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor yellow
