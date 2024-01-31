@@ -38,6 +38,10 @@ function main {
 	
 	Clear-Host
 	#Write-Host $currFolderName
+	#
+	#Console input for dicord notifications
+	$discord_webhook_url = $(Write-Host "Discord server notification url: " -nonewline -ForegroundColor cyan; Read-Host)
+	#
 	#Console input for User choices on auto-refresh
 	$uAutoRefresh = $(Write-Host "Auto Refresh (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
 	if ($uAutoRefresh.ToLower() -eq "y") {$bAutoRefresh = $true}
@@ -89,10 +93,18 @@ function main {
 		if ($bRefreshPage -or $bAutoRefresh) {
 			$bRefreshPage = $false
 			#
+			# get Subspace node and farmer process state
+			$bNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
+			if (!($bNodeProcess)) {
+				fSendDiscordNotification $discord_webhook_url "Subspace Node status: Stopped"
+			}
+			$bFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
+			if (!($bFarmerProcess)) {
+				fSendDiscordNotification $discord_webhook_url "Subspace Farmer status: Stopped"
+			}
 			Clear-Host
 
-			# get Subspace node process state
-			$bNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
+			# check  Subspace node process state
 			if ($bNodeProcess) {
 				Write-Host "Node status: " -nonewline
 				Write-Host "Running" -ForegroundColor green -NoNewline
@@ -103,8 +115,6 @@ function main {
 			}
 
 			# get Subspace farmer process state
-			#$bFarmerProcess = Get-Process "subspace-farmer" -ErrorAction SilentlyContinue
-			$bFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
 			if ($bFarmerProcess) {
 				Write-Host "    |    " -nonewline -ForegroundColor yellow
 				Write-Host "Farmer status: " -nonewline
@@ -401,12 +411,9 @@ function main {
 	}
 }
 
-function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
-				$dataSpacerLabel = ""
-				for ($k=0;$k -lt $ioSpacerLength;$k++) {
-					$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
-				}
-				return $dataSpacerLabel
+function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg){
+	$JSON = @{ "content" = $ioMsg; } | convertto-json
+	Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 }
 function Get-gitNewVersion {
 	.{
@@ -416,6 +423,13 @@ function Get-gitNewVersion {
 		}
 	}|Out-Null
 	return $gitNewVersion
+}
+function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
+				$dataSpacerLabel = ""
+				for ($k=0;$k -lt $ioSpacerLength;$k++) {
+					$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
+				}
+				return $dataSpacerLabel
 }
 function fParseStr([string]$ioSourceText, [string]$delimiter, [string]$ioSplitPosition){
 	$returnTextValue = $ioSourceText
