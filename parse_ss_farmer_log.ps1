@@ -3,7 +3,7 @@
 	--------------------------------------------------------------------------------------------- #>
 
 ##header
-$host.UI.RawUI.WindowTitle = "Subspace Log Event Monitor"
+$host.UI.RawUI.WindowTitle = "Subspace Farmer Log Monitor"
 ##-------------------------------------------------------------------------
 ##				>>>>>>>>>>> DO NOT MAKE CHANGES below this line <<<<<<<<<<<
 ##-------------------------------------------------------------------------
@@ -96,20 +96,32 @@ function main {
 			$bRefreshPage = $false
 			#
 			# get Subspace node and farmer process state
-			$bNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
-			if (!($bNodeProcess)) {
+			$oNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
+			if (!($oNodeProcess)) {
 				$alterText = "Subspace Node status: Stopped, Hostname:" + $hostName
 				fSendDiscordNotification $discord_webhook_url $alterText
 			}
-			$bFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
-			if (!($bFarmerProcess)) {
+			else {
+				$processPath = $oNodeProcess.path 
+				$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
+				$gitCurrVersionReleaseDate = $gitVersion[1]
+				$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
+			}
+			$oFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
+			if (!($oFarmerProcess)) {
 				$alterText = "Subspace Farmer status: Stopped, Hostname:" + $hostName
 				fSendDiscordNotification $discord_webhook_url $alterText
+			}
+			else {
+				$processPath = $oFarmerProcess.path 
+				$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
+				$gitCurrVersionReleaseDate = $gitVersion[1]
+				$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
 			}
 			Clear-Host
 
 			# check  Subspace node process state
-			if ($bNodeProcess) {
+			if ($oNodeProcess) {
 				Write-Host "Node status: " -nonewline
 				Write-Host "Running" -ForegroundColor green -NoNewline
 			}
@@ -119,7 +131,7 @@ function main {
 			}
 
 			# get Subspace farmer process state
-			if ($bFarmerProcess) {
+			if ($oFarmerProcess) {
 				Write-Host "    |    " -nonewline -ForegroundColor gray
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Running" -ForegroundColor green
@@ -132,9 +144,25 @@ function main {
 			#Write-Host "---------------------------------------------------" -ForegroundColor gray
 
 			if ($null -ne $gitVersion) {
-				$currentVersion = $gitVersion -replace "[^.0-9]"
-				Write-Host "Latest subspace github advance CLI version: " -nonewline
-				Write-Host "$($gitVersion)" -ForegroundColor Green
+				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
+				Write-Host "Latest github advanced CLI version: " -nonewline
+				Write-Host "$($gitVersion[0])" -ForegroundColor Green
+				#
+				Write-Host "Node running on latest version? " -nonewline
+				if ($gitNodeReleasesVerDateDiff.days -ne 0) {
+					Write-Host "No" -NoNewline -ForegroundColor red
+				}
+				else {
+					Write-Host "Yes" -NoNewline -ForegroundColor green
+				}
+				Write-Host " | " -nonewline -ForegroundColor gray
+				Write-Host "Farmer running on latest version? " -nonewline
+				if ($gitFarmerReleasesVerDateDiff.days -ne 0) {
+					Write-Host "No" -ForegroundColor red
+				}
+				else {
+					Write-Host "Yes" -ForegroundColor green
+				}
 			}
 			echo "`n"
 
@@ -160,7 +188,6 @@ function main {
 					$startTimePos = $allDetailsArrText.IndexOf($seperator)
 					$startTimeUTC = $allDetailsArrText.SubString(0,$startTimePos-1)
 					$currDateTime=(GET-DATE)
-					#$beginDateTime=[datetime]$startTimeUTC
 					$beginDateTime=(Get-Date $startTimeUTC).ToLocalTime()
 					$oTS_totalUpTime = New-TimeSpan -start $beginDateTime -end $currDateTime 
 					$upTimeDisp = $oTS_totalUpTime.days.ToString()+"d "+$oTS_totalUpTime.hours.ToString()+"h "+$oTS_totalUpTime.minutes.ToString()+"m "+$oTS_totalUpTime.seconds.ToString()+"s"
@@ -278,11 +305,9 @@ function main {
 				
 				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
 					$plotSizeByDiskCountArr[$arrPos] = "100%"
-				#	$replotSizeByDiskCountArr[$arrPos] = "-"
 				}
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString() 
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
-				#$plotLastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength
 				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				$replotSizeByDiskText = $replotSizeByDiskCountArr[$arrPos].ToString()
@@ -382,7 +407,6 @@ function main {
 							#Write-Host $dispText
 							Write-Host (Get-Date $textPart1).ToLocalTime() $textPart2
 						}
-						#echo "`n"
 					}
 				}
 				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
@@ -447,12 +471,15 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg){
 }
 function Get-gitNewVersion {
 	.{
-		$gitNewVersion = Invoke-RestMethod -Method 'GET' -uri "https://api.github.com/repos/subspace/subspace/releases/latest" 2>$null
-		if ($gitNewVersion) {
-			$gitNewVersion = $gitNewVersion.tag_name
+		$gitVersionArr = [System.Collections.ArrayList]@()
+		$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri "https://api.github.com/repos/subspace/subspace/releases/latest" 2>$null
+		if ($gitVersionCurrObj) {
+			$tempArr_1 = $gitVersionArr.add($gitVersionCurrObj.tag_name)
+			$gitNewVersionReleaseDate = (Get-Date $gitVersionCurrObj.published_at).ToLocalTime() 
+			$tempArr_1 = $gitVersionArr.add($gitNewVersionReleaseDate)
 		}
 	}|Out-Null
-	return $gitNewVersion
+	return $gitVersionArr
 }
 function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
 				$dataSpacerLabel = ""
