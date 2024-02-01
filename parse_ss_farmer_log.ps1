@@ -15,7 +15,7 @@ $bRefreshPage = $true
 $bShowWarnings = $false
 $bShowRewardDetails = $false
 $bShowPlottingDetails = $false
-$patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error")		#reserved for details section
+$patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error" ," WARN ")		#reserved for details section
 
 
 ##functions
@@ -169,7 +169,7 @@ function main {
 			#Build Summary
 			$bPlottingStarted = $false
 			#
-			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Finished collecting", "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error"
+			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Finished collecting", "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error", " WARN "
 			$isNodeSynced = "-"
 			$upTimeDisp = "-"
 			$diskCount = 0
@@ -316,11 +316,13 @@ function main {
 
 				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
 			}
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 
 			#Build Details
+			$bWarnAndErrHeaderPrinted = $false
 			foreach($pattern in $patternArr)
 			{
+				$bHeaderOther = $false
+				$bWarnAndErrHeader = $false
 				$subHeaderText = ""
 				$subHeaderColor = "green"
 				if ($pattern.IndexOf("farm") -ge 0) {
@@ -331,25 +333,34 @@ function main {
 					if ($bShowRewardDetails -eq $false) {
 						continue
 					}
+					$bHeaderOther = $true
 				}
 				elseif ($pattern.IndexOf("plotting") -ge 0) {
 					$subHeaderText = "Plotting"
 					if ($bShowPlottingDetails -eq $false) {
 						continue
 					}
+					$bHeaderOther = $true
 				}
-				elseif ($pattern.IndexOf("error") -ge 0) {
+				elseif ($pattern.IndexOf("error") -ge 0 -or $pattern.IndexOf(" WARN ") -ge 0) {
+					$bWarnAndErrHeader = $true
 					if ($bShowWarnings -eq $false) {
 						continue
 					}
 					else {
-						$subHeaderText = "Error"
+						$subHeaderText = "Warning and Error"
 						$subHeaderColor = "red"
 					}
 				}
-				#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-				Write-Host "                                            " $subHeaderText " details:                                     " -ForegroundColor $subHeaderColor
-				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+				#
+				if ($bHeaderOther -or $bWarnAndErrHeaderPrinted -eq $false) {
+					Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+					Write-Host "                                            " $subHeaderText " details:                                     " -ForegroundColor $subHeaderColor
+					Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+				}
+				if ($bWarnAndErrHeader -and $bWarnAndErrHeaderPrinted -eq $false) {
+						$bWarnAndErrHeaderPrinted = $true
+				}
 				$meaningfulTextArr = $allDetailsTextArr | Select-String -Pattern $pattern
 				$textArrSize =  $meaningfulTextArr.Length
 				
@@ -381,11 +392,18 @@ function main {
 								$tempArrId = $diskInfoHoldArr.Add($diskInfoHold)
 							}
 						}
-						elseif ($subHeaderText -eq "Error") {
-							$errMsgLable = "{"
-							$errMsgStartPos = $dispText.IndexOf($errMsgLable)
-							$errMsgEndPos = $dispText.IndexOf("}")
-							$errMsgInfoHold = $dispText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
+						elseif ($subHeaderText -eq "Warning and Error") {
+							if ($dispText.IndexOf("error") -ge 0) {
+								$errMsgLable = "{"
+								$errMsgStartPos = $dispText.IndexOf($errMsgLable)
+								$errMsgEndPos = $dispText.IndexOf("}")
+								$errMsgInfoHold = $dispText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
+							}
+							else {
+								$errMsgLable = " WARN "
+								$errMsgStartPos = $dispText.IndexOf($errMsgLable)
+								$errMsgInfoHold = $dispText.SubString($errMsgStartPos+$errMsgLable.Length,$dispText.Length-$errMsgStartPos-+$errMsgLable.Length)
+							}
 							$bErrMsgInfoMatchFound = $false
 							foreach($errMsg in $errMsgInfoHoldArr)
 							{
@@ -398,6 +416,7 @@ function main {
 								$tempArrId = $errMsgInfoHoldArr.Add($errMsgInfoHold)
 							}
 						}
+						#
 						if ($bSkipDisplay -eq $false -and $bDiskInfoMatchFound -eq $false -and $bErrMsgInfoMatchFound -eq $false) {
 							$seperator = " "
 							$i = $dispText.IndexOf($seperator)
@@ -409,10 +428,10 @@ function main {
 						}
 					}
 				}
-				Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			}
 			
 			#Finalize
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			#$currentDate = Get-Date -Format HH:mm:ss
 			$currentDate = Get-Date -Format u
