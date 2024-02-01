@@ -15,7 +15,7 @@ $bRefreshPage = $true
 $bShowWarnings = $false
 $bShowRewardDetails = $false
 $bShowPlottingDetails = $false
-$patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error")
+$patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error")		#reserved for details section
 
 
 ##functions
@@ -38,6 +38,8 @@ function main {
 	
 	Clear-Host
 	#Write-Host $currFolderName
+	#
+	$hostName = [System.Net.Dns]::GetHostName()
 	#
 	#Console input for dicord notifications
 	$discord_webhook_url = $(Write-Host "Discord server notification url: " -nonewline -ForegroundColor cyan; Read-Host)
@@ -67,7 +69,7 @@ function main {
 		$refreshTimeScaleInSeconds = [int]$uTimeInputInSeconds
 	}
 	#Console input for User choices on console for suppressions
-	$uShowWarnings = $(Write-Host "Show warnings (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
+	$uShowWarnings = $(Write-Host "Show warnings/errors (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
 	if ($uShowWarnings.ToLower() -eq 'y') {
 		$bShowWarnings = $true
 	}
@@ -96,11 +98,13 @@ function main {
 			# get Subspace node and farmer process state
 			$bNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
 			if (!($bNodeProcess)) {
-				fSendDiscordNotification $discord_webhook_url "Subspace Node status: Stopped"
+				$alterText = "Subspace Node status: Stopped, Hostname:" + $hostName
+				fSendDiscordNotification $discord_webhook_url $alterText
 			}
 			$bFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
 			if (!($bFarmerProcess)) {
-				fSendDiscordNotification $discord_webhook_url "Subspace Farmer status: Stopped"
+				$alterText = "Subspace Farmer status: Stopped, Hostname:" + $hostName
+				fSendDiscordNotification $discord_webhook_url $alterText
 			}
 			Clear-Host
 
@@ -116,12 +120,12 @@ function main {
 
 			# get Subspace farmer process state
 			if ($bFarmerProcess) {
-				Write-Host "    |    " -nonewline -ForegroundColor yellow
+				Write-Host "    |    " -nonewline -ForegroundColor gray
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Running" -ForegroundColor green
 			}
 			else {
-				Write-Host "    |    " -nonewline
+				Write-Host "    |    " -nonewline -ForegroundColor gray
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Stopped" -ForegroundColor red
 			}
@@ -137,7 +141,8 @@ function main {
 			#Build Summary
 			$bPlottingStarted = $false
 			#
-			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting sector", "error"
+			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Finished collecting", "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error"
+			$upTimeDisp = "-"
 			$diskCount = 0
 			$rewardCount = 0
 			$diskSizeArr = [System.Collections.ArrayList]@()
@@ -149,7 +154,16 @@ function main {
 			for ($arrPos = 0; $arrPos -lt $allDetailsTextArr.Count; $arrPos++)
 			{
 				$allDetailsArrText = $allDetailsTextArr[$arrPos].ToString()
-				if ($allDetailsArrText.IndexOf("Single disk farm") -ge 0) {
+				if ($allDetailsArrText.IndexOf("Finished collecting") -ge 0) {
+					$seperator = " "
+					$startTimePos = $allDetailsArrText.IndexOf($seperator)
+					$startTimeUTC = $allDetailsArrText.SubString(0,$startTimePos-1)
+					$currDateTime=(GET-DATE)
+					$beginDateTime=[datetime]$startTimeUTC
+					$oTS_totalUpTime = New-TimeSpan -start $beginDateTime -end $currDateTime 
+					$upTimeDisp = $oTS_totalUpTime.days.ToString()+"d "+$oTS_totalUpTime.hours.ToString()+"h "+$oTS_totalUpTime.minutes.ToString()+"m "+$oTS_totalUpTime.seconds.ToString()+"s"
+				}
+				elseif ($allDetailsArrText.IndexOf("Single disk farm") -ge 0) {
 					$tempArrId = $diskSizeArr.Add(0)
 					$tempArrId = $driveArr.Add("-")
 					$tempArrId = $rewardByDiskCountArr.Add(0)
@@ -186,7 +200,7 @@ function main {
 					$textPart = $allDetailsArrText.SubString(0,$i)
 					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
-				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0) {
+				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0) {
 					$bPlottingStarted = $true
 					$diskInfoLabel = "{disk_farm_index="
 					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
@@ -218,18 +232,21 @@ function main {
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                      Summary:                                                     " -ForegroundColor green
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-host "Uptime: " -NoNewline
+			Write-host $upTimeDisp -NoNewline -ForegroundColor yellow
+			Write-Host "   |   " -nonewline -ForegroundColor gray
 			Write-Host "Total Rewards: " -nonewline
 			Write-Host $rewardCount -ForegroundColor Yellow
-			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			$diskLabel = "Disk#"
-			$driveLabel = "Drive Label"
-			$diskSizeLabel = "Space Allocated       "
+			$driveLabel = "Drive label"
+			$diskSizeLabel = "Space allocated       "
 			$rewardLabel = "Rewards"
-			$plotStatusLabel = "Plot Status"
-			$replotStatusLabel = "Replot Status"
-			$lastRewardLabel = "Last Reward On"
-			$spacerLabel = "  "
-			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
+			$plotStatusLabel = "Plot status"
+			$replotStatusLabel = "Replot status"
+			$lastRewardLabel = "Last reward on"
+			$spacerLabel = " "
+			#Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
 			Write-Host $diskLabel $spacerLabel $driveLabel $spacerLabel $diskSizeLabel $spacerLabel $rewardLabel $spacerLabel $plotStatusLabel $spacerLabel $replotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
 			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
@@ -302,6 +319,7 @@ function main {
 				$meaningfulTextArr = $allDetailsTextArr | Select-String -Pattern $pattern
 				$textArrSize =  $meaningfulTextArr.Length
 				
+				$bSkipDisplay = $false
 				$bDiskInfoMatchFound = $false
 				$bErrMsgInfoMatchFound = $false
 				$diskInfoHoldArr = [System.Collections.ArrayList]@()
@@ -310,7 +328,10 @@ function main {
 				{
 					$dispText = $meaningfulTextArr[$arrIndex].ToString()
 					if ($dispText -ne "") {
-						if ($subHeaderText -eq "Plotting") {
+						if ($dispText.IndexOf("Subscribing") -ge 0) {
+							$bSkipDisplay = $true
+						}
+						elseif ($subHeaderText -eq "Plotting") {
 							$diskInfoLabel = "{disk_farm_index="
 							$diskInfoStartPos = $dispText.IndexOf($diskInfoLabel)
 							$diskInfoHold = $dispText.SubString($diskInfoStartPos,$diskInfoLabel.Length+2)
@@ -343,7 +364,7 @@ function main {
 								$tempArrId = $errMsgInfoHoldArr.Add($errMsgInfoHold)
 							}
 						}
-						if ($bDiskInfoMatchFound -eq $false -and $bErrMsgInfoMatchFound -eq $false) {
+						if ($bSkipDisplay -eq $false -and $bDiskInfoMatchFound -eq $false -and $bErrMsgInfoMatchFound -eq $false) {
 							$seperator = " "
 							$i = $dispText.IndexOf($seperator)
 							$textPart1 = $dispText.SubString(0,$i)
@@ -364,7 +385,7 @@ function main {
 			$currentDate = Get-Date -Format u
 			# Refresh
 			Write-Host `n                
-			Write-Host "Last refresh On: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
+			Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
 			#
 			####
 			## Auto refresh wait cycle
