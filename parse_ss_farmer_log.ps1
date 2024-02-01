@@ -142,6 +142,7 @@ function main {
 			$bPlottingStarted = $false
 			#
 			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Finished collecting", "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error"
+			$isNodeSynced = "-"
 			$upTimeDisp = "-"
 			$diskCount = 0
 			$rewardCount = 0
@@ -159,7 +160,8 @@ function main {
 					$startTimePos = $allDetailsArrText.IndexOf($seperator)
 					$startTimeUTC = $allDetailsArrText.SubString(0,$startTimePos-1)
 					$currDateTime=(GET-DATE)
-					$beginDateTime=[datetime]$startTimeUTC
+					#$beginDateTime=[datetime]$startTimeUTC
+					$beginDateTime=(Get-Date $startTimeUTC).ToLocalTime()
 					$oTS_totalUpTime = New-TimeSpan -start $beginDateTime -end $currDateTime 
 					$upTimeDisp = $oTS_totalUpTime.days.ToString()+"d "+$oTS_totalUpTime.hours.ToString()+"h "+$oTS_totalUpTime.minutes.ToString()+"m "+$oTS_totalUpTime.seconds.ToString()+"s"
 				}
@@ -200,7 +202,8 @@ function main {
 					$textPart = $allDetailsArrText.SubString(0,$i)
 					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
-				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0) {
+				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("sync") -lt 0 ) {
+					$isNodeSynced = "Y"
 					$bPlottingStarted = $true
 					$diskInfoLabel = "{disk_farm_index="
 					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
@@ -228,11 +231,17 @@ function main {
 						$replotSizeByDiskCountArr[$diskNumInfo] = "-"
 					}
 				}
+				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("not synced") -ge 0 ) {
+					$isNodeSynced = "N"
+				}
 			}
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                      Summary:                                                     " -ForegroundColor green
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-host "Uptime: " -NoNewline
+			Write-host "Node Synced: " -NoNewline
+			Write-host $isNodeSynced -NoNewline -ForegroundColor yellow
+			Write-Host "   |   " -nonewline -ForegroundColor gray
+			Write-host "Farmer uptime: " -NoNewline
 			Write-host $upTimeDisp -NoNewline -ForegroundColor yellow
 			Write-Host "   |   " -nonewline -ForegroundColor gray
 			Write-Host "Total Rewards: " -nonewline
