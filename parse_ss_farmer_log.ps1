@@ -40,13 +40,41 @@ function main {
 	#Write-Host $currFolderName
 	#
 	$hostName = [System.Net.Dns]::GetHostName()
-	#
-	#Console input for dicord notifications
+	
+	##
+	#Prompt user for console input and test initial ping for dicord notification set-up
+	$bAlertSkipped = $false
+	$alertSetStatusColor = "white"
+	$testAlertText = " "
 	$discord_webhook_url = $(Write-Host "Discord server notification url: " -nonewline -ForegroundColor cyan; Read-Host)
-	#
-	#Console input for User choices on auto-refresh
+	##
+	#Console choice for user to set and test discord alerts
+	if ($discord_webhook_url -eq "" -or $discord_webhook_url -eq $null) {
+		$alertSetStatusColor = "yellow"
+		$testAlertText = "Info: Discord alert were not set...notifications will be skipped" 
+	}
+	else {
+		#Write-Host "Test discord subscription? [Y/N]: " -NoNewline -ForegroundColor cyan
+		#$uTestAlertKey = $Host.UI.RawUI.ReadKey()
+		#Write-Host ""
+		$uTestAlertKey = $(Write-Host "Test discord subscription? (Y/N): " -nonewline -ForegroundColor cyan; Read-Host)
+		if ($uTestAlertKey.ToLower().IndexOf("y") -eq 0) {
+				$alertStatusArr = fTestDiscordPing $hostName $discord_webhook_url
+				$bAlertSkipped = $alertStatusArr[1]
+				$alertSetStatusColor = $alertStatusArr[2]
+				$testAlertText = $alertStatusArr[3]
+		}
+		else {
+				$alertSetStatusColor = "yellow"
+				$testAlertText = "Warn: Discord connectivity test skipped, notifications may be missed." 
+		}
+	}
+	Write-Host $testAlertText -ForegroundColor $alertSetStatusColor
+	
+	##
+	#Console choice for User to set auto-refresh
 	$uAutoRefresh = $(Write-Host "Auto Refresh (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-	if ($uAutoRefresh.ToLower() -eq "y") {$bAutoRefresh = $true}
+	if ($uAutoRefresh.ToLower().IndexOf("y") -eq 0) {$bAutoRefresh = $true}
 
 	if ($bAutoRefresh) {
 		# Get original position of cursor
@@ -68,29 +96,31 @@ function main {
 		} while (-not $uInputTimeValueValid)
 		$refreshTimeScaleInSeconds = [int]$uTimeInputInSeconds
 	}
-	#Console input for User choices on console for suppressions
+	#Console choice for User to set detailed data suppression 
 	$uShowWarnings = $(Write-Host "Show warnings/errors (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-	if ($uShowWarnings.ToLower() -eq 'y') {
+	if ($uShowWarnings.ToLower().IndexOf("y") -eq 0) {
 		$bShowWarnings = $true
 	}
 	else {
 		$bShowWarnings = $false
 	}
 	$uShowRewardDetails = $(Write-Host "Show reward details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-	if ($uShowRewardDetails.ToLower() -eq 'y') {
+	if ($uShowRewardDetails.ToLower().IndexOf("y") -eq 0) {
 		$bShowRewardDetails = $true
 	}
 	else {
 		$bShowRewardDetails = $false
 	}
 	$uShowPlottingDetails = $(Write-Host "Show plotting details (Y/N)? " -nonewline -ForegroundColor cyan; Read-Host)
-	if ($uShowPlottingDetails.ToLower() -eq 'y') {
+	if ($uShowPlottingDetails.ToLower().IndexOf("y") -eq 0) {
 		$bShowPlottingDetails = $true
 	}
 	else {
 		$bShowPlottingDetails = $false
 	}
 
+	##
+	#process begins here
 	while ($true) {
 		if ($bRefreshPage -or $bAutoRefresh) {
 			$bRefreshPage = $false
@@ -98,8 +128,8 @@ function main {
 			# get Subspace node and farmer process state
 			$oNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
 			if (!($oNodeProcess)) {
-				$alterText = "Subspace Node status: Stopped, Hostname:" + $hostName
-				fSendDiscordNotification $discord_webhook_url $alterText
+				$alertText = "Subspace Node status: Stopped, Hostname:" + $hostName
+				fSendDiscordNotification $discord_webhook_url $alertText
 			}
 			else {
 				$processPath = $oNodeProcess.path 
@@ -109,8 +139,8 @@ function main {
 			}
 			$oFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
 			if (!($oFarmerProcess)) {
-				$alterText = "Subspace Farmer status: Stopped, Hostname:" + $hostName
-				fSendDiscordNotification $discord_webhook_url $alterText
+				$alertText = "Subspace Farmer status: Stopped, Hostname:" + $hostName
+				fSendDiscordNotification $discord_webhook_url $alertText
 			}
 			else {
 				$processPath = $oFarmerProcess.path 
@@ -386,13 +416,14 @@ function main {
 			$replotStatusLabel2 	= "status "
 			$lastRewardLabel2 		= "             "
 			
+			##
 			#Write sub-headers
-			#
-			#Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
-			Write-Host $diskLabel $spacerLabel $driveLabel $spacerLabel $diskSizeLabel $spacerLabel $rewardLabel $spacerLabel $missesLabel $spacerLabel $plottingSpeedLabel $spacerLabel $plotStatusLabel $spacerLabel $replotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
-			Write-Host $diskLabel2 $spacerLabel $driveLabel2 $spacerLabel $diskSizeLabel2 $spacerLabel $rewardLabel2 $spacerLabel $missesLabel2 $spacerLabel $plottingSpeedLabel2 $spacerLabel $plotStatusLabel2 $spacerLabel $replotStatusLabel2 $spacerLabel $lastRewardLabel2 -ForegroundColor cyan
-			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $missesLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
+			$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $plottingSpeedLabel + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel
+			Write-Host $header -ForegroundColor cyan
+			$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $plottingSpeedLabel2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2
+			Write-Host $header -ForegroundColor cyan
+			$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-")
+			Write-Host $header -ForegroundColor gray
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
@@ -434,14 +465,16 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
 				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $missesSpacerLabel -NoNewline
+				$summaryData =  $diskText + $driveSpacerLabel + $driveText + $diskSizeSpacerLabel + $diskSizeText + $diskRewardSpacerLabel + $rewardByDiskText + $missesSpacerLabel
+				Write-Host $summaryData -NoNewline
 				if ([int]$missesByDiskText -eq 0) {
-					Write-Host "" $missesByDiskText -NoNewline
+					Write-Host $missesByDiskText -NoNewline
 				}
 				else {
-					Write-Host "" $missesByDiskText -NoNewline -ForegroundColor red
+					Write-Host $missesByDiskText -NoNewline -ForegroundColor red
 				}
-				Write-Host "" $plottingSpeedByDiskSpacerLabel $plottingSpeedByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
+				$summaryData = $plottingSpeedByDiskSpacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $lastRewardTimestampArr[$arrPos]
+				Write-Host $summaryData
 			}
 
 			#Build Details
@@ -627,12 +660,60 @@ function Get-gitNewVersion {
 	}|Out-Null
 	return $gitVersionArr
 }
-function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
-				$dataSpacerLabel = ""
-				for ($k=0;$k -lt $ioSpacerLength;$k++) {
-					$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
+function fTestDiscordPing ([string]$ioHostName, [string]$ioUrl) {
+	#$alertArr = [System.Collections.ArrayList]@()
+	$alertSkipped = $false
+	$pingOk = $false
+	$alertColor = "white"
+	$alertStatusMsg = ""
+	do {
+		if ($ioUrl -eq "" -or $ioUrl -eq $null) {
+			$alertColor = "yellow"
+			$alertStatusMsg = "Info: Discord alert were not set...notifications will be skipped" 
+			$alertSkipped = $true
+		}
+		else {
+			[System.Console]::CursorVisible = $false
+			try {
+				$alertColor = "green"
+				$alertStatusMsg = "Successfully subscribed to receiving alerts from Hostname: " + $ioHostName
+				fSendDiscordNotification $ioUrl $alertStatusMsg
+				$pingOk = $true
+			}
+			catch {
+				$alertColor = "red"
+				$alertStatusMsg = "Can not reach url provided, please check and provide corrected url. Press [R] to retry Or any other key to skip:"
+				Write-Host $alertStatusMsg -nonewline -ForegroundColor $alertColor
+				$uRetryAlertKey = $Host.UI.RawUI.ReadKey()
+				Switch ($uRetryAlertKey.Character.ToString().ToLower()) {
+					r {
+						[System.Console]::CursorVisible = $true
+						write-host ""
+						$ioUrl = $(Write-Host "Discord server notification url: " -nonewline -ForegroundColor cyan; Read-Host)
+					}
+					default {
+						$alertColor = "yellow"
+						$alertStatusMsg = "Info: Discord alert were not set...notifications will be skipped" 
+						$alertSkipped = $true
+						write-host ""
+					}
 				}
-				return $dataSpacerLabel
+			}
+			finally {
+				[System.Console]::CursorVisible = $true
+			}
+		}
+	} until ($alertSkipped -or $pingOk)
+	#
+	$alertArr = @($alertSkipped, $alertColor, $alertStatusMsg)
+	return $alertArr
+}
+function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
+	$dataSpacerLabel = ""
+	for ($k=1;$k -le $ioSpacerLength;$k++) {
+		$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
+	}
+	return $dataSpacerLabel
 }
 function fParseStr([string]$ioSourceText, [string]$delimiter, [string]$ioSplitPosition){
 	$returnTextValue = $ioSourceText
@@ -650,3 +731,4 @@ function fParseStr([string]$ioSourceText, [string]$delimiter, [string]$ioSplitPo
 }
 
 main
+
