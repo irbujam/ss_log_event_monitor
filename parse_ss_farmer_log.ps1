@@ -175,6 +175,7 @@ function main {
 			$upTimeDisp = "-"
 			$diskCount = 0
 			$rewardCount = 0
+			$totalSizeAllocated = 0
 			$diskSizeArr = [System.Collections.ArrayList]@()
 			$driveArr = [System.Collections.ArrayList]@()
 			$rewardByDiskCountArr = [System.Collections.ArrayList]@()
@@ -217,6 +218,21 @@ function main {
 					$sizeInfoStartPos = $allDetailsArrText.IndexOf($sizeInfoLabel)
 					$sizeInfo = $allDetailsArrText.SubString($sizeInfoStartPos+$sizeInfoLabel.Length,$allDetailsArrText.Length-$sizeInfoLabel.Length-$sizeInfoStartPos)
 					$diskSizeArr[$diskCount-1] = $sizeInfo
+					#
+					$seperator = " ("
+					$sizeTextPos = $sizeInfo.IndexOf($seperator)
+					$sizeText = $sizeInfo.SubString(0,$sizeTextPos)
+					$seperator = " "
+					$sizeNumPos = $sizeText.IndexOf($seperator)
+					$sizeType = $sizeText.SubString($sizeNumPos+1,$sizeText.Length-$sizeNumPos-1)
+					$sizeNum = 0
+					if ($sizeType.ToLower() -eq "tib") {
+						$sizeNum = [decimal]($sizeText.SubString(0,$sizeNumPos)) * 1024					#convert to GiB
+					}
+					else {
+						$sizeNum = [decimal]($sizeText.SubString(0,$sizeNumPos))
+					}
+					$totalSizeAllocated = $totalSizeAllocated + $sizeNum
 				}
 				elseif ($allDetailsArrText.IndexOf("Directory: ") -ge 0) {
 					$driveInfoLabel = "Directory: "
@@ -324,16 +340,28 @@ function main {
 			}
 			#
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host "                                                      Summary:                                                     " -ForegroundColor green
+			Write-Host "                                                      Summary:                                                     " -ForegroundColor cyan
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-host "Node Synced: " -NoNewline
-			Write-host $isNodeSynced -NoNewline -ForegroundColor yellow
-			Write-Host "   |   " -nonewline -ForegroundColor gray
+			if ($isNodeSynced = "Y") {
+				Write-host $isNodeSynced -NoNewline -ForegroundColor green
+			}
+			else {
+				Write-host $isNodeSynced -NoNewline -ForegroundColor red
+			}
+			Write-Host "  |  " -nonewline -ForegroundColor gray
 			Write-host "Farmer uptime: " -NoNewline
 			Write-host $upTimeDisp -NoNewline -ForegroundColor yellow
-			Write-Host "   |   " -nonewline -ForegroundColor gray
+			Write-Host "  |  " -nonewline -ForegroundColor gray
 			Write-Host "Total Rewards: " -nonewline
-			Write-Host $rewardCount -ForegroundColor Yellow
+			Write-Host $rewardCount -NoNewline -ForegroundColor Yellow
+			Write-Host "  |  " -nonewline -ForegroundColor gray
+			#
+			$totalSizeAllocatedTiB = [math]::Round([Math]::Ceiling($totalSizeAllocated*10/1024)/10,1)
+			$totalSizeAllocatedTB = [math]::Round([Math]::Ceiling($totalSizeAllocatedTiB*1.1*10)/10,1)
+			Write-Host "Total Space Allocated: " -nonewline
+			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor yellow
+			#
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#Sub-header label definition
 			$diskLabel 				= "Disk#"
@@ -406,7 +434,14 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
 				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $missesSpacerLabel $missesByDiskText $plottingSpeedByDiskSpacerLabel $plottingSpeedByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
+				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $missesSpacerLabel -NoNewline
+				if ([int]$missesByDiskText -eq 0) {
+					Write-Host "" $missesByDiskText -NoNewline
+				}
+				else {
+					Write-Host "" $missesByDiskText -NoNewline -ForegroundColor red
+				}
+				Write-Host "" $plottingSpeedByDiskSpacerLabel $plottingSpeedByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
 			}
 
 			#Build Details
@@ -417,19 +452,19 @@ function main {
 				$bHeaderOther = $false
 				$bWarnAndErrHeader = $false
 				$subHeaderText = ""
-				$subHeaderColor = "green"
+				$subHeaderColor = "cyan"
 				if ($pattern.IndexOf("farm") -ge 0) {
 					continue
 				}
 				elseif ($pattern.IndexOf("reward") -ge 0) {
-					$subHeaderText = "Reward"
+					$subHeaderText = "Reward details:"
 					if ($bShowRewardDetails -eq $false) {
 						continue
 					}
 					$bHeaderOther = $true
 				}
 				elseif ($pattern.IndexOf("plotting") -ge 0) {
-					$subHeaderText = "Plotting"
+					$subHeaderText = "Plotting details:"
 					if ($bShowPlottingDetails -eq $false) {
 						continue
 					}
@@ -441,14 +476,14 @@ function main {
 						continue
 					}
 					else {
-						$subHeaderText = "Warning and Error"
+						$subHeaderText = "Warnings and Errors:"
 						$subHeaderColor = "red"
 					}
 				}
 				#
 				if ($bHeaderOther -or $bWarnAndErrHeaderPrinted -eq $false) {
 					Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-					Write-Host "                                            " $subHeaderText " details:                                     " -ForegroundColor $subHeaderColor
+					Write-Host "                                            " $subHeaderText -ForegroundColor $subHeaderColor
 					Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 				}
 				if ($bWarnAndErrHeader -and $bWarnAndErrHeaderPrinted -eq $false) {
@@ -468,7 +503,7 @@ function main {
 						if ($dispText.IndexOf("Subscribing") -ge 0) {
 							$bSkipDisplay = $true
 						}
-						elseif ($subHeaderText -eq "Plotting") {
+						elseif ($subHeaderText -eq "Plotting details:") {
 							$diskInfoLabel = "{disk_farm_index="
 							$diskInfoStartPos = $dispText.IndexOf($diskInfoLabel)
 							$diskInfoHold = $dispText.SubString($diskInfoStartPos,$diskInfoLabel.Length+2)
@@ -484,7 +519,7 @@ function main {
 								$tempArrId = $diskInfoHoldArr.Add($diskInfoHold)
 							}
 						}
-						elseif ($subHeaderText -eq "Warning and Error") {
+						elseif ($subHeaderText -eq "Warnings and Errors:") {
 							if ($dispText.IndexOf("error") -ge 0) {
 								$errMsgLable = "{"
 								$errMsgStartPos = $dispText.IndexOf($errMsgLable)
