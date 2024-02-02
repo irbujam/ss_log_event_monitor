@@ -342,7 +342,7 @@ function main {
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                      Summary:                                                     " -ForegroundColor cyan
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-host "Node Synced: " -NoNewline
+			Write-host "Node synced: " -NoNewline
 			if ($isNodeSynced = "Y") {
 				Write-host $isNodeSynced -NoNewline -ForegroundColor green
 			}
@@ -353,13 +353,13 @@ function main {
 			Write-host "Farmer uptime: " -NoNewline
 			Write-host $upTimeDisp -NoNewline -ForegroundColor yellow
 			Write-Host "  |  " -nonewline -ForegroundColor gray
-			Write-Host "Total Rewards: " -nonewline
+			Write-Host "Total rewards: " -nonewline
 			Write-Host $rewardCount -NoNewline -ForegroundColor Yellow
 			Write-Host "  |  " -nonewline -ForegroundColor gray
 			#
 			$totalSizeAllocatedTiB = [math]::Round([Math]::Ceiling($totalSizeAllocated*10/1024)/10,1)
 			$totalSizeAllocatedTB = [math]::Round([Math]::Ceiling($totalSizeAllocatedTiB*1.1*10)/10,1)
-			Write-Host "Total Space Allocated: " -nonewline
+			Write-Host "Total space allocated: " -nonewline
 			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor yellow
 			#
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
@@ -381,7 +381,7 @@ function main {
 			$diskSizeLabel2 		= "                      "
 			$rewardLabel2 			= "       "
 			$missesLabel2			= "      "
-			$plottingSpeedLabel2	= "Speed (MiB/s)"
+			$plottingSpeedLabel2	= "speed (MiB/s)"
 			$plotStatusLabel2 		= "status "
 			$replotStatusLabel2 	= "status "
 			$lastRewardLabel2 		= "             "
