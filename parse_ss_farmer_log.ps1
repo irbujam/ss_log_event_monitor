@@ -16,7 +16,7 @@ $bShowWarnings = $false
 $bShowRewardDetails = $false
 $bShowPlottingDetails = $false
 $patternArr = @("Single disk farm","Successfully signed reward hash","plotting", "error" ," WARN ")		#reserved for details section
-
+$singleSectorSize = 1024				#(1024Mib=1GiB)
 
 ##functions
 #Main process
@@ -132,22 +132,17 @@ function main {
 
 			# get Subspace farmer process state
 			if ($oFarmerProcess) {
-				Write-Host "    |    " -nonewline -ForegroundColor gray
+				Write-Host "                | " -nonewline -ForegroundColor gray
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Running" -ForegroundColor green
 			}
 			else {
-				Write-Host "    |    " -nonewline -ForegroundColor gray
+				Write-Host "                | " -nonewline -ForegroundColor gray
 				Write-Host "Farmer status: " -nonewline
 				Write-Host "Stopped" -ForegroundColor red
 			}
-			#Write-Host "---------------------------------------------------" -ForegroundColor gray
 
 			if ($null -ne $gitVersion) {
-				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
-				Write-Host "Latest github advanced CLI version: " -nonewline
-				Write-Host "$($gitVersion[0])" -ForegroundColor Green
-				#
 				Write-Host "Node running on latest version? " -nonewline
 				if ($gitNodeReleasesVerDateDiff.days -ne 0) {
 					Write-Host "No" -NoNewline -ForegroundColor red
@@ -163,6 +158,12 @@ function main {
 				else {
 					Write-Host "Yes" -ForegroundColor green
 				}
+				#
+				Write-Host "---------------------------------------------------------------------------" -ForegroundColor gray
+				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
+				Write-Host "Latest github advanced CLI version: " -nonewline
+				Write-Host "$($gitVersion[0])" -ForegroundColor Green
+				Write-Host "---------------------------------------------------------------------------" -ForegroundColor gray
 			}
 			echo "`n"
 
@@ -180,6 +181,11 @@ function main {
 			$lastRewardTimestampArr = [System.Collections.ArrayList]@()
 			$plotSizeByDiskCountArr = [System.Collections.ArrayList]@()
 			$replotSizeByDiskCountArr = [System.Collections.ArrayList]@()
+			$missesByDiskCountArr = [System.Collections.ArrayList]@()
+			#
+			$sectorCountByDiskArr = [System.Collections.ArrayList]@()
+			$plotSpeedByDiskArr = [System.Collections.ArrayList]@()
+			#
 			for ($arrPos = 0; $arrPos -lt $allDetailsTextArr.Count; $arrPos++)
 			{
 				$allDetailsArrText = $allDetailsTextArr[$arrPos].ToString()
@@ -199,17 +205,20 @@ function main {
 					$tempArrId = $lastRewardTimestampArr.Add("-")
 					$tempArrId = $plotSizeByDiskCountArr.Add("-")
 					$tempArrId = $replotSizeByDiskCountArr.Add("-")
+					$tempArrId = $missesByDiskCountArr.Add(0)
+					#
+					$tempArrId = $sectorCountByDiskArr.Add(0)
+					$tempArrId = $plotSpeedByDiskArr.Add(0)
+					#
 					$diskCount = $diskCount + 1
 				}
 				elseif ($allDetailsArrText.IndexOf("Allocated space: ") -ge 0) {
-					
 					$sizeInfoLabel = "Allocated space: "
 					$sizeInfoStartPos = $allDetailsArrText.IndexOf($sizeInfoLabel)
 					$sizeInfo = $allDetailsArrText.SubString($sizeInfoStartPos+$sizeInfoLabel.Length,$allDetailsArrText.Length-$sizeInfoLabel.Length-$sizeInfoStartPos)
 					$diskSizeArr[$diskCount-1] = $sizeInfo
 				}
 				elseif ($allDetailsArrText.IndexOf("Directory: ") -ge 0) {
-					
 					$driveInfoLabel = "Directory: "
 					$driveInfoStartPos = $allDetailsArrText.IndexOf($driveInfoLabel)
 					$driveInfoEndPos = $allDetailsArrText.IndexOf("\")
@@ -261,7 +270,59 @@ function main {
 				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("not synced") -ge 0 ) {
 					$isNodeSynced = "N"
 				}
+				elseif ($allDetailsArrText.IndexOf(" WARN ") -ge 0 -and $allDetailsArrText.IndexOf("disk_farm_index") -ge 0) {
+					$diskInfoLabel = "{disk_farm_index="
+					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
+					$diskInfoEndPos = $allDetailsArrText.IndexOf("}")
+					$diskNumInfo = $allDetailsArrText.SubString($diskInfoStartPos+$diskInfoLabel.Length,$diskInfoEndPos-$diskInfoLabel.Length-$diskInfoStartPos)
+					$missesByDiskCountArr[$diskNumInfo] = $missesByDiskCountArr[$diskNumInfo] + 1
+				}
 			}
+			#
+			#Get sector and time info for plotting speed calculation
+			for ($diskNum = 0; $diskNum -lt $driveArr.Count; $diskNum++) 
+			{
+				$diskFarmIndexPattern = "{disk_farm_index=" + $diskNum.ToString()
+				$allDiskFarmIndexArr = $allDetailsTextArr | Select-String -Pattern $diskFarmIndexPattern
+				$allDiskFarmIndexArrSize =  $allDiskFarmIndexArr.Count
+				#
+				$timeOfLastSector = $null
+				$initialSectorNum = 0
+				$totalSectorsPlotted = 0
+				for ($diskFarmIndexArrPos = 0; $diskFarmIndexArrPos -lt $allDiskFarmIndexArrSize; $diskFarmIndexArrPos++) 
+				{
+					$diskFarmIndexRow = $allDiskFarmIndexArr[$diskFarmIndexArrPos].ToString()
+					if ($diskFarmIndexRow.ToLower().IndexOf("sector_index=") -ge 0 -and $diskFarmIndexRow.ToLower().IndexOf("replotting") -lt 0) {
+						$timeElapsedBetweenSectors = 0
+						$seperator = " "
+						$i = $diskFarmIndexRow.IndexOf($seperator)
+						$textPart = $diskFarmIndexRow.SubString(0,$i)
+						$timeOfCurrSector = (Get-Date $textPart).ToLocalTime()
+						if ($timeOfLastSector -eq $null) { 
+							$timeOfLastSector = $timeOfCurrSector
+						}
+						elseif ($timeOfCurrSector -ne $timeOfLastSector) {
+							$timeElapsedBetweenSectors = New-TimeSpan -start $timeOfLastSector -end $timeOfCurrSector
+							$timeOfLastSector = $timeOfCurrSector
+						}
+						$plotSpeedByDiskArr[$diskNum] = $plotSpeedByDiskArr[$diskNum] + $timeElapsedBetweenSectors.TotalSeconds
+						#
+						$seperator = "sector_index="
+						$i = $diskFarmIndexRow.IndexOf($seperator)
+						$currSectorNumText = $diskFarmIndexRow.SubString($i+$seperator.Length,$diskFarmIndexRow.Length-$i-$seperator.Length)
+						$currSectorNum = [int]$currSectorNumText
+						if ($initialSectorNum -eq 0) { 
+							$initialSectorNum = $currSectorNum
+							$totalSectorsPlotted = $currSectorNum - $initialSectorNum
+						}
+						elseif ($currSectorNum -ne $initialSectorNum) {
+							$totalSectorsPlotted = $currSectorNum - $initialSectorNum
+						}
+						$sectorCountByDiskArr[$diskNum] = $totalSectorsPlotted
+					}
+				}
+			}
+			#
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                      Summary:                                                     " -ForegroundColor green
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
@@ -274,18 +335,36 @@ function main {
 			Write-Host "Total Rewards: " -nonewline
 			Write-Host $rewardCount -ForegroundColor Yellow
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			$diskLabel = "Disk#"
-			$driveLabel = "Drive label"
-			$diskSizeLabel = "Space allocated       "
-			$rewardLabel = "Rewards"
-			$plotStatusLabel = "Plot status"
-			$replotStatusLabel = "Replot status"
-			$lastRewardLabel = "Last reward on"
+			#Sub-header label definition
+			$diskLabel 				= "Disk#"
+			$driveLabel 			= "Disk "
+			$diskSizeLabel 			= "Space allocated       "
+			$rewardLabel 			= "Rewards"
+			$missesLabel 			= "Misses"
+			$plottingSpeedLabel 	= "Plotting     "
+			$plotStatusLabel 		= "Plot   "
+			$replotStatusLabel 		= "Replot "
+			$lastRewardLabel 		= "Last reward on"
+			
 			$spacerLabel = " "
+
+			$diskLabel2 			= "     "
+			$driveLabel2 			= "label"
+			$diskSizeLabel2 		= "                      "
+			$rewardLabel2 			= "       "
+			$missesLabel2			= "      "
+			$plottingSpeedLabel2	= "Speed (MiB/s)"
+			$plotStatusLabel2 		= "status "
+			$replotStatusLabel2 	= "status "
+			$lastRewardLabel2 		= "             "
+			
+			#Write sub-headers
+			#
 			#Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
-			Write-Host $diskLabel $spacerLabel $driveLabel $spacerLabel $diskSizeLabel $spacerLabel $rewardLabel $spacerLabel $plotStatusLabel $spacerLabel $replotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
+			Write-Host $diskLabel $spacerLabel $driveLabel $spacerLabel $diskSizeLabel $spacerLabel $rewardLabel $spacerLabel $missesLabel $spacerLabel $plottingSpeedLabel $spacerLabel $plotStatusLabel $spacerLabel $replotStatusLabel $spacerLabel $lastRewardLabel -ForegroundColor cyan
+			Write-Host $diskLabel2 $spacerLabel $driveLabel2 $spacerLabel $diskSizeLabel2 $spacerLabel $rewardLabel2 $spacerLabel $missesLabel2 $spacerLabel $plottingSpeedLabel2 $spacerLabel $plotStatusLabel2 $spacerLabel $replotStatusLabel2 $spacerLabel $lastRewardLabel2 -ForegroundColor cyan
 			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
+			Write-Host (fBuildDynamicSpacer $diskLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $driveLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $diskSizeLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $rewardLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $missesLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $plotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $replotStatusLabel.Length "-") $spacerLabel (fBuildDynamicSpacer $lastRewardLabel.Length "-") -ForegroundColor gray
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
@@ -301,12 +380,25 @@ function main {
 				
 				$rewardByDiskText = $rewardByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
+				$missesSpacerLabel = fBuildDynamicSpacer $spacerLength " "
+
+				$missesByDiskText = $missesByDiskCountArr[$arrPos].ToString()
+				$spacerLength = [int]($spacerLabel.Length+$missesLabel.Length-$missesByDiskText.Length)
+				$plottingSpeedByDiskSpacerLabel = fBuildDynamicSpacer $spacerLength " "
+
+				#$plotSpeedByDiskArr[0]*$singleSectorSize
+				$plottingRate = "-"
+				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
+					$plottingRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * $singleSectorSize) / $plotSpeedByDiskArr[$arrPos], 2)
+				}
+				$plottingSpeedByDiskText = $plottingRate.ToString()
+				$spacerLength = [int]($spacerLabel.Length+$plottingSpeedLabel.Length-$plottingSpeedByDiskText.Length)
 				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
-				
+
 				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
 					$plotSizeByDiskCountArr[$arrPos] = "100%"
 				}
-				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString() 
+				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
 				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
@@ -314,7 +406,7 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
 				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
+				Write-Host $diskText $driveSpacerLabel $driveText $diskSizeSpacerLabel $diskSizeText $diskRewardSpacerLabel $rewardByDiskText $missesSpacerLabel $missesByDiskText $plottingSpeedByDiskSpacerLabel $plottingSpeedByDiskText $plotSpacerLabel $plotSizeByDiskText $replotSpacerLabel $replotSizeByDiskText $lastRewardSpacerLabel $lastRewardTimestampArr[$arrPos]
 			}
 
 			#Build Details
