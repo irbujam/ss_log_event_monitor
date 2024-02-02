@@ -392,38 +392,69 @@ function main {
 			Write-Host "Total space allocated: " -nonewline
 			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor yellow
 			#
+			Write-Host "Sectors/minute (avg): " -nonewline
+			$avgSectorsPerMinuteCursorPosition = $host.UI.RawUI.CursorPosition
+			Write-Host "        |    " -nonewline -ForegroundColor gray
+			Write-Host "Minutes/sector (avg): " -nonewline
+			$avgMinutesPerSectorCursorPosition = $host.UI.RawUI.CursorPosition
+			#
+			Write-Host ""
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#Sub-header label definition
-			$diskLabel 				= "Disk#"
+			$diskLabel 				= "Disk"
 			$driveLabel 			= "Disk "
-			$diskSizeLabel 			= "Space allocated       "
+			$diskSizeLabel 			= "Space allocated      "
 			$rewardLabel 			= "Rewards"
 			$missesLabel 			= "Misses"
-			$plottingSpeedLabel 	= "Plotting     "
+			$sectorPlotSpeedLabel 	= "Sectors"
+			$minutesPerSectorLabel 	= "Minutes"
+			$plottingSpeedLabel 	= "Plotting "
 			$plotStatusLabel 		= "Plot   "
-			$replotStatusLabel 		= "Replot "
+			$replotStatusLabel 		= "Replot"
 			$lastRewardLabel 		= "Last reward on"
 			
 			$spacerLabel = " "
 
-			$diskLabel2 			= "     "
+			$diskLabel2 			= "#   "
 			$driveLabel2 			= "label"
-			$diskSizeLabel2 		= "                      "
+			$diskSizeLabel2 		= "                     "
 			$rewardLabel2 			= "       "
 			$missesLabel2			= "      "
-			$plottingSpeedLabel2	= "speed (MiB/s)"
+			$sectorPlotSpeedLabel2 	= "per    "
+			$minutesPerSectorLabel2	= "per    "
+			$plottingSpeedLabel2	= "speed    "
 			$plotStatusLabel2 		= "status "
-			$replotStatusLabel2 	= "status "
+			$replotStatusLabel2 	= "status"
 			$lastRewardLabel2 		= "             "
 			
+			$diskLabel3 			= "    "
+			$driveLabel3 			= "     "
+			$diskSizeLabel3 		= "                     "
+			$rewardLabel3 			= "       "
+			$missesLabel3			= "      "
+			$sectorPlotSpeedLabel3 	= "minute "
+			$minutesPerSectorLabel3	= "sector "
+			$plottingSpeedLabel3	= "(MiB/min)  "
+			$plotStatusLabel3 		= "       "
+			$replotStatusLabel3 	= "      "
+			$lastRewardLabel3 		= "             "
+
 			##
 			#Write sub-headers
-			$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $plottingSpeedLabel + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel
+			$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $sectorPlotSpeedLabel + $spacerLabel + $minutesPerSectorLabel + $spacerLabel + $plottingSpeedLabel + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel
 			Write-Host $header -ForegroundColor cyan
-			$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $plottingSpeedLabel2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2
+			$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $sectorPlotSpeedLabel2 + $spacerLabel + $minutesPerSectorLabel2 + $spacerLabel + $plottingSpeedLabel2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2
 			Write-Host $header -ForegroundColor cyan
-			$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-")
+			$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $plottingSpeedLabel3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3
+			Write-Host $header -ForegroundColor cyan
+			$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-")
 			Write-Host $header -ForegroundColor gray
+			#
+			#write summary data
+			$avgSectorPerMinute = 0.0
+			$avgSectorPerMinuteDiskCount = 0
+			$avgMinutesPerSector = 0.0
+			$avgMinutesPerSectorDiskCount = 0
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
@@ -446,14 +477,35 @@ function main {
 				$plottingSpeedByDiskSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				#$plotSpeedByDiskArr[0]*$singleSectorSize
+				$sectorPlotRate = "-"
+				$minutesPerSector = "-"
 				$plottingRate = "-"
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
-					$plottingRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * $singleSectorSize) / $plotSpeedByDiskArr[$arrPos], 2)
+					#Write-Host "--" -NoNewline
+					#Write-Host $sectorCountByDiskArr[$arrPos] -NoNewline
+					#Write-Host " | " $plotSpeedByDiskArr[$arrPos] - NoNewline
+					#Write-Host "--" 
+					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 60) / $plotSpeedByDiskArr[$arrPos], 2)
+					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
+					$plottingRate = [math]::Round($sectorPlotRate * $singleSectorSize , 1)
+					#
+					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
+					$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
+					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
+					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
 				}
+				$sectorPlotSpeedByDiskText = $sectorPlotRate.ToString()
+				$spacerLength = [int]($spacerLabel.Length+$sectorPlotSpeedLabel.Length-$sectorPlotSpeedByDiskText.Length)
+				$sectorPlotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
+
+				$minutesPerSectorText = $minutesPerSector.ToString()
+				$spacerLength = [int]($spacerLabel.Length+$minutesPerSectorLabel.Length-$minutesPerSectorText.Length)
+				$minutesPerSectorSpacerLabel = fBuildDynamicSpacer $spacerLength " "
+
 				$plottingSpeedByDiskText = $plottingRate.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$plottingSpeedLabel.Length-$plottingSpeedByDiskText.Length)
 				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
-
+				
 				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
 					$plotSizeByDiskCountArr[$arrPos] = "100%"
 				}
@@ -473,11 +525,33 @@ function main {
 				else {
 					Write-Host $missesByDiskText -NoNewline -ForegroundColor red
 				}
-				$summaryData = $plottingSpeedByDiskSpacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $lastRewardTimestampArr[$arrPos]
+				$summaryData = $plottingSpeedByDiskSpacerLabel + $sectorPlotSpeedByDiskText + $sectorPlotSpacerLabel + $minutesPerSectorText + $minutesPerSectorSpacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $lastRewardTimestampArr[$arrPos]
 				Write-Host $summaryData
+				#
 			}
+			#remember the last written summary data for later repositioning after writing averages in sub-header at a high-level
+			$mostRecentSummaryDataCursorPosition = $host.UI.RawUI.CursorPosition
+			#
+			#reposition cursor for writing averages for sectors/min & min/sector information
+			[Console]::SetCursorPosition($avgSectorsPerMinuteCursorPosition.X, $avgSectorsPerMinuteCursorPosition.Y)
+			$_avgSectorPerMinuteDisp = "-"
+			if ($avgSectorPerMinuteDiskCount -gt 0) {
+				$_avgSectorPerMinuteDisp = ($avgSectorPerMinute / $avgSectorPerMinuteDiskCount).ToString()
+			}
+			[System.Console]::Write($_avgSectorPerMinuteDisp) 
+			#
+			[Console]::SetCursorPosition($avgMinutesPerSectorCursorPosition.X, $avgMinutesPerSectorCursorPosition.Y)
+			$_avgMinutesPerSectorDisp = "-"
+			if ($avgMinutesPerSectorDiskCount -gt 0) {
+				$_avgMinutesPerSectorDisp = ($avgMinutesPerSector / $avgMinutesPerSectorDiskCount).ToString()
+			}
+			[System.Console]::Write($_avgMinutesPerSectorDisp) 
+			#
+			#revert back cursor position to last written summary data
+			[Console]::SetCursorPosition($mostRecentSummaryDataCursorPosition.X, $mostRecentSummaryDataCursorPosition.Y)
 
-			#Build Details
+			##
+			#Build Details Header and Data
 			$bWarnAndErrHeaderPrinted = $false
 			$errMsgInfoHoldArr = [System.Collections.ArrayList]@()
 			foreach($pattern in $patternArr)
