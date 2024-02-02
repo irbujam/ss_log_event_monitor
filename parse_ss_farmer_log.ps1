@@ -292,7 +292,7 @@ function main {
 				for ($diskFarmIndexArrPos = 0; $diskFarmIndexArrPos -lt $allDiskFarmIndexArrSize; $diskFarmIndexArrPos++) 
 				{
 					$diskFarmIndexRow = $allDiskFarmIndexArr[$diskFarmIndexArrPos].ToString()
-					if ($diskFarmIndexRow.ToLower().IndexOf("sector_index=") -ge 0 -and $diskFarmIndexRow.ToLower().IndexOf("replotting") -lt 0) {
+					if ($diskFarmIndexRow.ToLower().IndexOf("sector_index=") -ge 0 -and $diskFarmIndexRow.ToLower().IndexOf("plotting:") -ge 0 -and $diskFarmIndexRow.ToLower().IndexOf("replotting") -lt 0) {
 						$timeElapsedBetweenSectors = 0
 						$seperator = " "
 						$i = $diskFarmIndexRow.IndexOf($seperator)
@@ -411,6 +411,7 @@ function main {
 
 			#Build Details
 			$bWarnAndErrHeaderPrinted = $false
+			$errMsgInfoHoldArr = [System.Collections.ArrayList]@()
 			foreach($pattern in $patternArr)
 			{
 				$bHeaderOther = $false
@@ -460,7 +461,6 @@ function main {
 				$bDiskInfoMatchFound = $false
 				$bErrMsgInfoMatchFound = $false
 				$diskInfoHoldArr = [System.Collections.ArrayList]@()
-				$errMsgInfoHoldArr = [System.Collections.ArrayList]@()
 				for ($arrIndex =$textArrSize-1;$arrIndex -ge 0; $arrIndex--)
 				{
 					$dispText = $meaningfulTextArr[$arrIndex].ToString()
