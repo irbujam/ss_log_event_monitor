@@ -7,6 +7,7 @@ $host.UI.RawUI.WindowTitle = "Subspace Farmer Log Monitor"
 ##-------------------------------------------------------------------------
 ##				>>>>>>>>>>> DO NOT MAKE CHANGES below this line <<<<<<<<<<<
 ##-------------------------------------------------------------------------
+##
 ##Console Input for User refresh definitions 
 $bAutoRefresh = $false
 $refreshTimeScaleInSeconds = 20			#Time in seconds (For example...set to 600 if refresh is desired every 10 minutes)
@@ -372,16 +373,56 @@ function main {
 					}
 				}
 			}
+			##
+			#Build overall progress and average sectors processed data 
+			$overallProgress = 0
+			$avgSectorPerMinute = 0.0
+			$avgSectorPerMinuteDiskCount = 0
+			$avgMinutesPerSector = 0.0
+			$avgMinutesPerSectorDiskCount = 0
+			$plotRateForProgressBar = 0
+			for ($arrPos = 0; $arrPos -lt $plotSpeedByDiskArr.Count; $arrPos++) {
+				$sectorPlotRate = "-"
+				$minutesPerSector = "-"
+				$plottingRate = "-"
+				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
+					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 60) / $plotSpeedByDiskArr[$arrPos], 1)
+					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
+					$plottingRate = [math]::Round($sectorPlotRate * $singleSectorSize , 1)
+					#
+					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
+					$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
+					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
+					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
+				}
+				$plotRateForProgressBar = $plotRateForProgressBar + [int]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
+			}
 			#
+			#Build overall progress
+			$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 1)
+			#
+			#Build averages for sector processed
+			$_avgSectorPerMinuteDisp = "-"
+			if ($avgSectorPerMinuteDiskCount -gt 0) {
+				$_avgSectorPerMinuteDisp = ([math]::Round($avgSectorPerMinute / $avgSectorPerMinuteDiskCount, 1)).ToString()
+			}
+			#
+			$_avgMinutesPerSectorDisp = "-"
+			if ($avgMinutesPerSectorDiskCount -gt 0) {
+				$_avgMinutesPerSectorDisp = ([math]::Round($avgMinutesPerSector / $avgMinutesPerSectorDiskCount, 1)).ToString()
+			}
+			#
+			##
+			#Write summary header and data table
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                      Summary:                                                     " -ForegroundColor cyan
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-host "Node synced: " -NoNewline
 			if ($isNodeSynced = "Y") {
-				Write-host $isNodeSynced -NoNewline -ForegroundColor green
+				Write-Host $isNodeSynced -NoNewline -ForegroundColor green
 			}
 			else {
-				Write-host $isNodeSynced -NoNewline -ForegroundColor red
+				Write-Host $isNodeSynced -NoNewline -ForegroundColor red
 			}
 			Write-Host "  |  " -nonewline -ForegroundColor gray
 			Write-host "Farmer uptime: " -NoNewline
@@ -398,9 +439,13 @@ function main {
 			#
 			Write-Host "Sectors/minute (avg): " -nonewline
 			$avgSectorsPerMinuteCursorPosition = $host.UI.RawUI.CursorPosition
+			Write-Host $_avgSectorPerMinuteDisp -nonewline -ForegroundColor yellow
 			Write-Host "        |    " -nonewline -ForegroundColor gray
 			Write-Host "Minutes/sector (avg): " -nonewline
 			$avgMinutesPerSectorCursorPosition = $host.UI.RawUI.CursorPosition
+			Write-Host $_avgMinutesPerSectorDisp -ForegroundColor yellow
+			#
+			Write-Host "Overall plotting progress: $overallProgress% complete"  -BackgroundColor black -ForegroundColor yellow
 			#
 			Write-Host ""
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
@@ -455,10 +500,10 @@ function main {
 			Write-Host $header -ForegroundColor gray
 			#
 			#write summary data
-			$avgSectorPerMinute = 0.0
-			$avgSectorPerMinuteDiskCount = 0
-			$avgMinutesPerSector = 0.0
-			$avgMinutesPerSectorDiskCount = 0
+			#$avgSectorPerMinute = 0.0
+			#$avgSectorPerMinuteDiskCount = 0
+			#$avgMinutesPerSector = 0.0
+			#$avgMinutesPerSectorDiskCount = 0
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
@@ -493,10 +538,10 @@ function main {
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
 					$plottingRate = [math]::Round($sectorPlotRate * $singleSectorSize , 1)
 					#
-					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
-					$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
-					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
-					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
+					#$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
+					#$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
+					#$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
+					#$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
 				}
 				$sectorPlotSpeedByDiskText = $sectorPlotRate.ToString()
 				$spacerLength = [int]($spacerLabel.Length+$sectorPlotSpeedLabel.Length-$sectorPlotSpeedByDiskText.Length)
@@ -537,22 +582,22 @@ function main {
 			$mostRecentSummaryDataCursorPosition = $host.UI.RawUI.CursorPosition
 			#
 			#reposition cursor for writing averages for sectors/min & min/sector information
-			[Console]::SetCursorPosition($avgSectorsPerMinuteCursorPosition.X, $avgSectorsPerMinuteCursorPosition.Y)
-			$_avgSectorPerMinuteDisp = "-"
-			if ($avgSectorPerMinuteDiskCount -gt 0) {
-				$_avgSectorPerMinuteDisp = ([math]::Round($avgSectorPerMinute / $avgSectorPerMinuteDiskCount, 1)).ToString()
-			}
-			[System.Console]::Write($_avgSectorPerMinuteDisp) 
+			#[Console]::SetCursorPosition($avgSectorsPerMinuteCursorPosition.X, $avgSectorsPerMinuteCursorPosition.Y)
+			#$_avgSectorPerMinuteDisp = "-"
+			#if ($avgSectorPerMinuteDiskCount -gt 0) {
+			#	$_avgSectorPerMinuteDisp = ([math]::Round($avgSectorPerMinute / $avgSectorPerMinuteDiskCount, 1)).ToString()
+			#}
+			#[System.Console]::Write($_avgSectorPerMinuteDisp) 
 			#
-			[Console]::SetCursorPosition($avgMinutesPerSectorCursorPosition.X, $avgMinutesPerSectorCursorPosition.Y)
-			$_avgMinutesPerSectorDisp = "-"
-			if ($avgMinutesPerSectorDiskCount -gt 0) {
-				$_avgMinutesPerSectorDisp = ([math]::Round($avgMinutesPerSector / $avgMinutesPerSectorDiskCount, 1)).ToString()
-			}
-			[System.Console]::Write($_avgMinutesPerSectorDisp) 
+			#[Console]::SetCursorPosition($avgMinutesPerSectorCursorPosition.X, $avgMinutesPerSectorCursorPosition.Y)
+			#$_avgMinutesPerSectorDisp = "-"
+			#if ($avgMinutesPerSectorDiskCount -gt 0) {
+			#	$_avgMinutesPerSectorDisp = ([math]::Round($avgMinutesPerSector / $avgMinutesPerSectorDiskCount, 1)).ToString()
+			#}
+			#[System.Console]::Write($_avgMinutesPerSectorDisp) 
 			#
 			#revert back cursor position to last written summary data
-			[Console]::SetCursorPosition($mostRecentSummaryDataCursorPosition.X, $mostRecentSummaryDataCursorPosition.Y)
+			#[Console]::SetCursorPosition($mostRecentSummaryDataCursorPosition.X, $mostRecentSummaryDataCursorPosition.Y)
 
 			##
 			#Build Details Header and Data
