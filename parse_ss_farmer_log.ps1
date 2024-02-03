@@ -485,7 +485,7 @@ function main {
 					#Write-Host $sectorCountByDiskArr[$arrPos] -NoNewline
 					#Write-Host " | " $plotSpeedByDiskArr[$arrPos] - NoNewline
 					#Write-Host "--" 
-					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 60) / $plotSpeedByDiskArr[$arrPos], 2)
+					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 60) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
 					$plottingRate = [math]::Round($sectorPlotRate * $singleSectorSize , 1)
 					#
@@ -536,14 +536,14 @@ function main {
 			[Console]::SetCursorPosition($avgSectorsPerMinuteCursorPosition.X, $avgSectorsPerMinuteCursorPosition.Y)
 			$_avgSectorPerMinuteDisp = "-"
 			if ($avgSectorPerMinuteDiskCount -gt 0) {
-				$_avgSectorPerMinuteDisp = ($avgSectorPerMinute / $avgSectorPerMinuteDiskCount).ToString()
+				$_avgSectorPerMinuteDisp = ([math]::Round($avgSectorPerMinute / $avgSectorPerMinuteDiskCount, 1)).ToString()
 			}
 			[System.Console]::Write($_avgSectorPerMinuteDisp) 
 			#
 			[Console]::SetCursorPosition($avgMinutesPerSectorCursorPosition.X, $avgMinutesPerSectorCursorPosition.Y)
 			$_avgMinutesPerSectorDisp = "-"
 			if ($avgMinutesPerSectorDiskCount -gt 0) {
-				$_avgMinutesPerSectorDisp = ($avgMinutesPerSector / $avgMinutesPerSectorDiskCount).ToString()
+				$_avgMinutesPerSectorDisp = ([math]::Round($avgMinutesPerSector / $avgMinutesPerSectorDiskCount, 1)).ToString()
 			}
 			[System.Console]::Write($_avgMinutesPerSectorDisp) 
 			#
