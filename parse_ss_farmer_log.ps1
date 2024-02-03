@@ -445,7 +445,7 @@ function main {
 			$avgMinutesPerSectorCursorPosition = $host.UI.RawUI.CursorPosition
 			Write-Host $_avgMinutesPerSectorDisp -ForegroundColor yellow
 			#
-			Write-Host "Overall plotting progress: $overallProgress% complete"  -BackgroundColor black -ForegroundColor yellow
+			Write-Host "Overall plotting progress: $overallProgress% complete"  -BackgroundColor white -ForegroundColor black
 			#
 			Write-Host ""
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
