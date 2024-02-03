@@ -676,7 +676,9 @@ function main {
 			####
 			## Auto refresh wait cycle
 			if ($bAutoRefresh) {
-				Write-Host "Auto-refresh scheduled for every " $refreshTimeScaleInSeconds " seconds"
+				Write-Host "Auto-refresh scheduled for every " -nonewline 
+				Write-Host $refreshTimeScaleInSeconds -nonewline -ForegroundColor yellow
+				Write-Host " seconds"
 				[System.Console]::CursorVisible = $false
 				$iterations = [math]::Ceiling($refreshTimeScaleInSeconds / 5)       
 				for ($i = 0; $i -lt $iterations; $i++) {
