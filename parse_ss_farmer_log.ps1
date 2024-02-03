@@ -133,9 +133,11 @@ function main {
 			}
 			else {
 				$processPath = $oNodeProcess.path 
-				$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
+				#$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
+				$processFileCreationDate = Get-ChildItem -Path  $processPath | select LastWriteTime  
 				$gitCurrVersionReleaseDate = $gitVersion[1]
-				$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
+				#$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
+				$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $gitCurrVersionReleaseDate
 			}
 			$oFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
 			if (!($oFarmerProcess)) {
@@ -144,9 +146,11 @@ function main {
 			}
 			else {
 				$processPath = $oFarmerProcess.path 
-				$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
+				#$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
+				$processFileCreationDate = Get-ChildItem -Path  $processPath | select LastWriteTime 
 				$gitCurrVersionReleaseDate = $gitVersion[1]
-				$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
+				#$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
+				$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $gitCurrVersionReleaseDate
 			}
 			Clear-Host
 
