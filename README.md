@@ -30,7 +30,7 @@ Pre-requisites:
             # Replace `PATH_TO_FARM` with location where you want you store plot files
             # Replace `WALLET_ADDRESS` below with your account address from Polkadot.js wallet
             # Replace `PLOT_SIZE` with plot size in gigabytes or terabytes, for example 100G or 2T (but leave at least 60G of disk space for node and some for OS)
-            # **Add "| Tee-Object -file <log file name>** at the end to write console oyutput to log file, as seen in example below
+            # Add "| Tee-Object -file <log file name>" at the end to write console oyutput to log file, as seen in example below
             #
             $host.UI.RawUI.WindowTitle = "Subspace Farmer - Gemini 3g"
             $currentDate = Get-Date -Format "yyyy-MM-dd"
