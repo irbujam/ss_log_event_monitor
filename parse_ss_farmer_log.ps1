@@ -272,7 +272,7 @@ function main {
 					}
 					$gibSizeByDiskArrPos = $gibSizeByDiskArr.Count - 1
 					$gibSizeByDiskArr[$gibSizeByDiskArrPos] = $_SizeInGib
-					$totalSizeAllocated = $totalSizeAllocated + $sizeNum
+					$totalSizeAllocated = $totalSizeAllocated + $_SizeInGib
 				}
 				elseif ($allDetailsArrText.IndexOf("Directory: ") -ge 0) {
 					$driveInfoLabel = "Directory: "
@@ -415,7 +415,7 @@ function main {
 			}
 			#
 			#Build overall progress
-			$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 1)
+			$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 2)
 			#
 			#Build averages for sector processed
 			$_avgSectorPerMinuteDisp = "-"
