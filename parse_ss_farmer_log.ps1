@@ -180,7 +180,7 @@ function main {
 			if ($null -ne $gitVersion) {
 				Write-Host "Node running on latest version? " -nonewline
 				if ($gitNodeReleasesVerDateDiff.days -ne 0) {
-					Write-Host "No" -NoNewline -ForegroundColor red
+					Write-Host "No " -NoNewline -ForegroundColor red
 				}
 				else {
 					Write-Host "Yes" -NoNewline -ForegroundColor green
@@ -188,7 +188,7 @@ function main {
 				Write-Host " | " -nonewline -ForegroundColor gray
 				Write-Host "Farmer running on latest version? " -nonewline
 				if ($gitFarmerReleasesVerDateDiff.days -ne 0) {
-					Write-Host "No" -ForegroundColor red
+					Write-Host "No " -ForegroundColor red
 				}
 				else {
 					Write-Host "Yes" -ForegroundColor green
@@ -294,7 +294,7 @@ function main {
 					$textPart = $allDetailsArrText.SubString(0,$i)
 					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
-				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("sync") -lt 0 ) {
+				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("sync") -lt 0 -and $allDetailsArrText.IndexOf("Initial plotting complete") -lt 0) {
 					$isNodeSynced = "Y"
 					$bPlottingStarted = $true
 					$diskInfoLabel = "{disk_farm_index="
@@ -311,15 +311,15 @@ function main {
 						$plotSizeInfoLabel = "("
 						$plotSizeStartPos = $allDetailsArrText.IndexOf($plotSizeInfoLabel)
 						$plotSizeEndPos = $allDetailsArrText.IndexOf("%")
-						$plotSizeInfo = $allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos)
-						$replotSizeByDiskCountArr[$diskNumInfo] = $plotSizeInfo
+						$plotSizeInfo = [decimal]($allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos-1))
+						$replotSizeByDiskCountArr[$diskNumInfo] = ([math]::Round($plotSizeInfo, 1)).ToString() + "%"
 					}
 					else {
 						$plotSizeInfoLabel = "("
 						$plotSizeStartPos = $allDetailsArrText.IndexOf($plotSizeInfoLabel)
 						$plotSizeEndPos = $allDetailsArrText.IndexOf("%")
-						$plotSizeInfo = $allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos)
-						$plotSizeByDiskCountArr[$diskNumInfo] = $plotSizeInfo
+						$plotSizeInfo = [decimal]($allDetailsArrText.SubString($plotSizeStartPos+$plotSizeInfoLabel.Length,$plotSizeEndPos-$plotSizeStartPos-1))
+						$plotSizeByDiskCountArr[$diskNumInfo] = ([math]::Round($plotSizeInfo, 1)).ToString() + "%"
 						$replotSizeByDiskCountArr[$diskNumInfo] = "-"
 					}
 				}
