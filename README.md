@@ -31,7 +31,11 @@ Pre-requisites:
             # Replace `WALLET_ADDRESS` below with your account address from Polkadot.js wallet
             # Replace `PLOT_SIZE` with plot size in gigabytes or terabytes, for example 100G or 2T (but leave at least 60G of disk space for node and some for OS)
             # Add "| Tee-Object -file log.txt" at the end to write console oyutput to log file, as seen in example below
-            .\subspace-farmer-windows-x86_64-skylake-gemini-3g-2024-jan-29.exe farm --reward-address WALLET_ADDRESS path=PATH_TO_FARM,size=PLOT_SIZE | Tee-Object -file log.txt
+            #
+            $host.UI.RawUI.WindowTitle = "Subspace Farmer - Gemini 3g"
+            $currentDate = Get-Date -Format "yyyy-MM-dd"
+            $logFile = "ss_log_" + $currentDate + ".txt"
+            .\subspace-farmer-windows-x86_64-skylake-gemini-3g-2024-jan-29.exe farm --reward-address WALLET_ADDRESS path=PATH_TO_FARM,size=PLOT_SIZE | Tee-Object -file $logFile
 
 - powershell version 5.1 is installed
   
