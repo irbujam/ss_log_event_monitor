@@ -6,20 +6,20 @@ Key features:
       > Node and Farmer process state is determined and notification is sent to discord if either is offline (assuming node and farmer is running on single pc)  
   - Latest github version check and display if running version of node or farmer is outdated
   - Statistics information by disk including:
-      > Node sync status
-      > Farmer uptime
-      > Overall plotting progress % completion
-      > Total rewards and space allocated
-      > Average overall progress rate by sector
-      > Per disk metrics:
-          > disk info and space allocated
-          > rewards and misses  
-          > plotting speeds and Time to completion
-          > plotting and replotting progress % completion 
-          > time of last reward received  
-  > Warning/Error messages summary with duplicates removed to show only unique entries
-  > Option for customizable auto-refresh time set-up or choice for manual refresh
-  > Local Time Zone display
+      - Node sync status
+      - Farmer uptime
+      - Overall plotting progress % completion
+      - Total rewards and space allocated
+      - Average overall progress rate by sector
+      - Per disk metrics:
+          - disk info and space allocated
+          - rewards and misses  
+          - plotting speeds and Time to completion
+          - plotting and replotting progress % completion 
+          - time of last reward received  
+  - Warning/Error messages summary with duplicates removed to show only unique entries
+  - Option for customizable auto-refresh time set-up or choice for manual refresh
+  - Local Time Zone display
 
 Pre-requisites:
 - Ensure that advance CLI is used for the farmer
