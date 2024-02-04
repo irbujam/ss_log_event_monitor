@@ -3,7 +3,7 @@ Windows Powershell script that captures information from subspace advance CLI fa
 
 Key features:
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
-      > Node and Farmer process state is determined and notification is sent to discord if either is offline (assuming node and farmer is running on single pc)  
+      - Node and Farmer process state is determined and notification is sent to discord if either is offline (assuming node and farmer is running on single pc)  
   - Latest github version check and display if running version of node or farmer is outdated
   - Statistics information by disk including:
       - Node sync status
