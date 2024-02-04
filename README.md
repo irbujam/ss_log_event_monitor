@@ -12,14 +12,14 @@ Key features:
       > Total rewards and space allocated
       > Average overall progress rate by sector
       > Per disk metrics:
-          - disk info and space allocated
-          - rewards and misses  
-          - plotting speeds and Time to completion
-          - plotting and replotting progress % completion 
-          - time of last reward received  
-  - Warning/Error messages summary with duplicates removed to show only unique entries
-  - Option for customizable auto-refresh time set-up or choice for manual refresh
-  - Local Time Zone display
+          > disk info and space allocated
+          > rewards and misses  
+          > plotting speeds and Time to completion
+          > plotting and replotting progress % completion 
+          > time of last reward received  
+  > Warning/Error messages summary with duplicates removed to show only unique entries
+  > Option for customizable auto-refresh time set-up or choice for manual refresh
+  > Local Time Zone display
 
 Pre-requisites:
 - Ensure that advance CLI is used for the farmer
