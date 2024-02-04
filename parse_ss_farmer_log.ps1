@@ -410,6 +410,10 @@ function main {
 					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
 					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
 				}
+				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
+					$plotSizeByDiskCountArr[$arrPos] = "100%"
+				}
+				#Write-Host "plotSizeByDiskCountArr[$arrPos]: " $plotSizeByDiskCountArr[$arrPos]
 				$plotRateForProgressBar = $plotRateForProgressBar + [int]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
 				#
 			}
@@ -577,9 +581,9 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$_eta_Label.Length-$_eta_Text.Length)
 				$_eta_SpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
-				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
-					$plotSizeByDiskCountArr[$arrPos] = "100%"
-				}
+				#if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
+				#	$plotSizeByDiskCountArr[$arrPos] = "100%"
+				#}
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString()
 				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
 				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
