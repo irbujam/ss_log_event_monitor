@@ -739,7 +739,7 @@ function main {
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			#$currentDate = Get-Date -Format HH:mm:ss
-			$currentDate = Get-Date -Format u
+			$currentDate = (Get-Date).ToLocalTime()
 			# Refresh
 			Write-Host `n                
 			Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
