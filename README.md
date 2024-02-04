@@ -2,12 +2,13 @@
 Windows Powershell script that captures information from subspace advance CLI farmer logs:
 
 Key features:
-  - Discord notifications on farmer going offline to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
-  - github version check on farmer
-  - node sync status
+  - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
+      - Node and Farmer process state is determined and notification is sent to discord if either is offline (assuming node and farmer is running on single pc)  
+  - Latest github version check and display if running version of node or farmer is outdated
+  - Node sync status
   - Farmer status and uptime
-  - Summary information by disk including: rewards, plotting speed & plotting/replotting progress and time of last reward received
-  - Warning/Error messages summarized to remove duplicates and show only unique warnings/errors
+  - Summary information by disk including: plotting speed & plotting/replotting progress and ETA, number of rewards, time of last reward received and missed rewards  
+  - Warning/Error messages summarized with duplicates removed to show only unique entries
   - User choice based option for Auto-refresh or manual refresh
   - Local Time display
 
