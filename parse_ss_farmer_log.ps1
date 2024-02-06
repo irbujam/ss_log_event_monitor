@@ -402,7 +402,7 @@ function main {
 					#calculation for ETA
 					$_sectorsInDisk = $gibSizeByDiskArr[$arrPos] 																							# 1 sector = 1024 GiB and disk size is in GiB
 					if ($LastSectorPlottedByDiskArr[$arrPos] -lt $_sectorsInDisk) {
-						$_eta_ByDisk[$arrPos] = [math]::Ceiling(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 60 * 24),2)		# convert ETA to days
+						$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 60 * 24),2)		# convert ETA to days
 					}
 					#calculation for average progression
 					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
