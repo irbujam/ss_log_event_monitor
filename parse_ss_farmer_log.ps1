@@ -402,7 +402,7 @@ function main {
 					#calculation for ETA
 					$_sectorsInDisk = $gibSizeByDiskArr[$arrPos] 																							# 1 sector = 1024 GiB and disk size is in GiB
 					if ($LastSectorPlottedByDiskArr[$arrPos] -lt $_sectorsInDisk) {
-						$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 60 * 24),1)		# convert ETA to days
+						$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 60 * 24),2)		# convert ETA to days
 					}
 					#calculation for average progression
 					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
@@ -478,8 +478,8 @@ function main {
 			$sectorPlotSpeedLabel 	= "Sectors"
 			$minutesPerSectorLabel 	= "Minutes"
 			$plottingSpeedLabel 	= "Plotting "
-			$_eta_Label 			= "ETA  "
-			$plotStatusLabel 		= "Plot   "
+			$_eta_Label 			= "ETA   "
+			$plotStatusLabel 		= "Plot  "
 			$replotStatusLabel 		= "Replot"
 			$lastRewardLabel 		= "Last reward on     "
 			
@@ -493,8 +493,8 @@ function main {
 			$sectorPlotSpeedLabel2 	= "per    "
 			$minutesPerSectorLabel2	= "per    "
 			$plottingSpeedLabel2	= "speed    "
-			$_eta_Label2 			= "(d)  "
-			$plotStatusLabel2 		= "status "
+			$_eta_Label2 			= "(d)   "
+			$plotStatusLabel2 		= "status"
 			$replotStatusLabel2 	= "status"
 			$lastRewardLabel2 		= "             "
 			
@@ -506,8 +506,8 @@ function main {
 			$sectorPlotSpeedLabel3 	= "minute "
 			$minutesPerSectorLabel3	= "sector "
 			$plottingSpeedLabel3	= "(MiB/min)  "
-			$_eta_Label3 			= "     "
-			$plotStatusLabel3 		= "       "
+			$_eta_Label3 			= "      "
+			$plotStatusLabel3 		= "      "
 			$replotStatusLabel3 	= "      "
 			$lastRewardLabel3 		= "             "
 			##
