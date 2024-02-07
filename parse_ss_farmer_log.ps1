@@ -278,6 +278,7 @@ function main {
 					$driveInfoLabel = "Directory: "
 					$driveInfoStartPos = $allDetailsArrText.IndexOf($driveInfoLabel)
 					$driveInfoEndPos = $allDetailsArrText.IndexOf("\")
+					if ($driveInfoEndPos -lt 0) {$driveInfoEndPos = $allDetailsArrText.Length}
 					$driveInfo = $allDetailsArrText.SubString($driveInfoStartPos+$driveInfoLabel.Length,$driveInfoEndPos-$driveInfoLabel.Length-$driveInfoStartPos)
 					$driveArr[$diskCount-1] = $driveInfo
 				}
@@ -409,13 +410,13 @@ function main {
 					$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
 					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
 					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
+					#
+					if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
+						$plotSizeByDiskCountArr[$arrPos] = "100%"
+					}
+					#Write-Host "plotSizeByDiskCountArr[$arrPos]: " $plotSizeByDiskCountArr[$arrPos]
+					$plotRateForProgressBar = $plotRateForProgressBar + [int]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
 				}
-				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
-					$plotSizeByDiskCountArr[$arrPos] = "100%"
-				}
-				#Write-Host "plotSizeByDiskCountArr[$arrPos]: " $plotSizeByDiskCountArr[$arrPos]
-				$plotRateForProgressBar = $plotRateForProgressBar + [int]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
-				#
 			}
 			#
 			#Build overall progress
