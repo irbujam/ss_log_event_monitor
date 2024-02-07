@@ -434,14 +434,14 @@ function main {
 				$plottingRate = "-"
 				$_eta_ByDisk[$arrPos] = "-"
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
-					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 60) / $plotSpeedByDiskArr[$arrPos], 2)
+					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 3600) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
-					$plottingRate = [math]::Round($sectorPlotRate * $singleSectorSize , 1)
+					$plottingRate = [math]::Round(($sectorPlotRate * $singleSectorSize) / 60, 1)
 					#
 					#calculation for ETA
 					$_sectorsInDisk = $gibSizeByDiskArr[$arrPos] 																							# 1 sector = 1024 GiB and disk size is in GiB
 					if ($LastSectorPlottedByDiskArr[$arrPos] -lt $_sectorsInDisk) {
-						$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 60 * 24),2)		# convert ETA to days
+						$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 24),2)		# convert ETA to days
 					}
 					#calculation for average progression
 					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
@@ -541,7 +541,7 @@ function main {
 			$diskSizeLabel3 		= "                     "
 			$rewardLabel3 			= "       "
 			$missesLabel3			= "      "
-			$sectorPlotSpeedLabel3 	= "minute "
+			$sectorPlotSpeedLabel3 	= "hour   "
 			$minutesPerSectorLabel3	= "sector "
 			$plottingSpeedLabel3	= "(MiB/min)  "
 			$_eta_Label3 			= "      "
@@ -589,14 +589,15 @@ function main {
 				$sectorPlotRate = "-"
 				$minutesPerSector = "-"
 				$plottingRate = "-"
+				#Write-Host "plotSpeedByDiskArr[$arrPos]: " $plotSpeedByDiskArr[$arrPos]
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
 					#Write-Host "--" -NoNewline
 					#Write-Host $sectorCountByDiskArr[$arrPos] -NoNewline
 					#Write-Host " | " $plotSpeedByDiskArr[$arrPos] - NoNewline
 					#Write-Host "--" 
-					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 60) / $plotSpeedByDiskArr[$arrPos], 1)
+					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 3600) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
-					$plottingRate = [math]::Round($sectorPlotRate * $singleSectorSize , 1)
+					$plottingRate = [math]::Round(($sectorPlotRate * $singleSectorSize) / 60 , 1)
 					#
 					#$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
 					#$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
