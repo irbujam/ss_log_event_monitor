@@ -55,9 +55,6 @@ function main {
 		$testAlertText = "Info: Discord alert were not set...notifications will be skipped" 
 	}
 	else {
-		#Write-Host "Test discord subscription? [Y/N]: " -NoNewline -ForegroundColor cyan
-		#$uTestAlertKey = $Host.UI.RawUI.ReadKey()
-		#Write-Host ""
 		$uTestAlertKey = $(Write-Host "Test discord subscription? (Y/N): " -nonewline -ForegroundColor cyan; Read-Host)
 		if ($uTestAlertKey.ToLower().IndexOf("y") -eq 0) {
 				$alertStatusArr = fTestDiscordPing $hostName $discord_webhook_url
@@ -121,16 +118,40 @@ function main {
 	}
 
 	##
+	$bNodeAlertSet = $false
+	$bFarmerAlertSet = $false
+	$nodeAlertStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$farmerAlertStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	#
 	#process begins here
 	while ($true) {
 		if ($bRefreshPage -or $bAutoRefresh) {
 			$bRefreshPage = $false
 			#
-			# get Subspace node and farmer process state
+			#check if last discord alert sent was within an hour of start, exception is for first notification that can be sent within this window
+			$nodeAlertHoursElapsed = $nodeAlertStopwatch.Elapsed.TotalHours
+			if ($nodeAlertHoursElapsed -ge 1) {
+				$nodeAlertStopwatch.Restart()
+				$bNodeAlertSet = $false
+			}
+			$farmerAlertHoursElapsed = $farmerAlertStopwatch.Elapsed.TotalHours
+			if ($farmerAlertHoursElapsed -ge 1) {
+				$farmerAlertStopwatch.Restart()
+				$bFarmerAlertSet = $false
+			}
+			#
+			# get Subspace node and farmer process state, send notification if process is stopped/not running
 			$oNodeProcess = Get-Process | where {$_.ProcessName -like '*subspace-node*'} -ErrorAction SilentlyContinue
 			if (!($oNodeProcess)) {
 				$alertText = "Subspace Node status: Stopped, Hostname:" + $hostName
-				fSendDiscordNotification $discord_webhook_url $alertText
+				if ($bNodeAlertSet -eq $false) {
+					try {
+						fSendDiscordNotification $discord_webhook_url $alertText
+					}
+					catch {}
+					#
+					$bNodeAlertSet = $true
+				}
 			}
 			else {
 				$processPath = $oNodeProcess.path 
@@ -143,7 +164,14 @@ function main {
 			$oFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
 			if (!($oFarmerProcess)) {
 				$alertText = "Subspace Farmer status: Stopped, Hostname:" + $hostName
-				fSendDiscordNotification $discord_webhook_url $alertText
+				if ($bFarmerAlertSet -eq $false) {
+					try {
+						fSendDiscordNotification $discord_webhook_url $alertText
+					}
+					catch {}
+					#
+					$bFarmerAlertSet = $true
+				}
 			}
 			else {
 				$processPath = $oFarmerProcess.path 
@@ -155,7 +183,7 @@ function main {
 			}
 			Clear-Host
 
-			# check  Subspace node process state
+			# write subspace node process state to console
 			if ($oNodeProcess) {
 				Write-Host "Node status: " -nonewline
 				Write-Host "Running" -ForegroundColor green -NoNewline
@@ -165,7 +193,7 @@ function main {
 				Write-Host "Stopped" -ForegroundColor red -NoNewline
 			}
 
-			# get Subspace farmer process state
+			# write subspace farmer process state to console
 			if ($oFarmerProcess) {
 				Write-Host "                | " -nonewline -ForegroundColor gray
 				Write-Host "Farmer status: " -nonewline
