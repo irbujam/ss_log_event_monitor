@@ -419,6 +419,8 @@ function main {
 			$plotRateForProgressBar = 0
 			$_eta_ByDisk = @(0) * $plotSpeedByDiskArr.Count
 			for ($arrPos = 0; $arrPos -lt $plotSpeedByDiskArr.Count; $arrPos++) {
+					Write-Host "plotSizeByDiskCountArr[$arrPos]: " $plotSizeByDiskCountArr[$arrPos]
+					Write-Host "plotSpeedByDiskArr[$arrPos]:" $plotSpeedByDiskArr[$arrPos]
 				$sectorPlotRate = "-"
 				$minutesPerSector = "-"
 				$plottingRate = "-"
@@ -442,13 +444,13 @@ function main {
 					if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
 						$plotSizeByDiskCountArr[$arrPos] = "100%"
 					}
-					#Write-Host "plotSizeByDiskCountArr[$arrPos]: " $plotSizeByDiskCountArr[$arrPos]
-					$plotRateForProgressBar = $plotRateForProgressBar + [int]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
+					$plotRateForProgressBar = $plotRateForProgressBar + [double]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
 				}
 			}
 			#
 			#Build overall progress
-			$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 2)
+			Write-Host "plotRateForProgressBar: $plotRateForProgressBar | plotSpeedByDiskArr.Count: " $plotSpeedByDiskArr.Count
+			$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 1)
 			#
 			#Build averages for sector processed
 			$_avgSectorPerMinuteDisp = "-"
