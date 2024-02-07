@@ -208,7 +208,12 @@ function main {
 			if ($null -ne $gitVersion) {
 				Write-Host "Node running on latest version? " -nonewline
 				if ($gitNodeReleasesVerDateDiff.days -ne 0) {
-					Write-Host "No " -NoNewline -ForegroundColor red
+					if ($oNodeProcess) {
+						Write-Host "No " -NoNewline -ForegroundColor red
+					}
+					else {
+						Write-Host " - " -NoNewline -ForegroundColor red
+					}
 				}
 				else {
 					Write-Host "Yes" -NoNewline -ForegroundColor green
@@ -216,7 +221,12 @@ function main {
 				Write-Host " | " -nonewline -ForegroundColor gray
 				Write-Host "Farmer running on latest version? " -nonewline
 				if ($gitFarmerReleasesVerDateDiff.days -ne 0) {
-					Write-Host "No " -ForegroundColor red
+					if ($oFarmerProcess) {
+						Write-Host "No " -ForegroundColor red
+					}
+					else {
+						Write-Host " - " -ForegroundColor red
+					}
 				}
 				else {
 					Write-Host "Yes" -ForegroundColor green
