@@ -411,7 +411,9 @@ function main {
 			}
 			#
 			#Build overall progress
-			$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 1)
+			if ($plotSpeedByDiskArr.Count -gt 0) {
+				$overallProgress = [math]::Round($plotRateForProgressBar / $plotSpeedByDiskArr.Count, 1)
+			}
 			#
 			#Build averages for sector processed
 			$_avgSectorPerMinuteDisp = "-"
