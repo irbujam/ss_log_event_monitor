@@ -1,5 +1,5 @@
 # Readme: parse_ss_farmer_log.ps1
-Windows Powershell script that captures information from subspace advance CLI farmer logs:
+Windows Powershell script that captures information from subspace advance CLI farmer logs. simple to run just save the ps1 file to your pc and double click to launch and follow prompts.
 
 Key features:
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
