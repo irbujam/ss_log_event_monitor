@@ -497,7 +497,7 @@ function main {
 			Write-Host "Total space allocated: " -nonewline
 			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor yellow
 			#
-			Write-Host "Sectors/minute (avg): " -nonewline
+			Write-Host "Sectors/hour (avg): " -nonewline
 			$avgSectorsPerMinuteCursorPosition = $host.UI.RawUI.CursorPosition
 			Write-Host $_avgSectorPerMinuteDisp -nonewline -ForegroundColor yellow
 			Write-Host "        |    " -nonewline -ForegroundColor gray
