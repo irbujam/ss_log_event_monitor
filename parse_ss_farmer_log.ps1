@@ -157,9 +157,13 @@ function main {
 				$processPath = $oNodeProcess.path 
 				#$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
 				$processFileCreationDate = Get-ChildItem -Path  $processPath | select LastWriteTime  
-				$gitCurrVersionReleaseDate = $gitVersion[1]
-				#$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
-				$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $gitCurrVersionReleaseDate
+				if ($null -ne $gitVersion) {
+					$gitCurrVersionReleaseDate = $gitVersion[1]
+					$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $gitCurrVersionReleaseDate
+				}
+				else {
+					$gitNodeReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $processFileCreationDate.LastWriteTime
+				}
 			}
 			$oFarmerProcess = Get-Process | where {$_.ProcessName -like '*subspace-farmer*'} -ErrorAction SilentlyContinue
 			if (!($oFarmerProcess)) {
@@ -177,74 +181,22 @@ function main {
 				$processPath = $oFarmerProcess.path 
 				#$processFileCreationDate = Get-ChildItem -Path  $processPath | select CreationTime 
 				$processFileCreationDate = Get-ChildItem -Path  $processPath | select LastWriteTime 
-				$gitCurrVersionReleaseDate = $gitVersion[1]
-				#$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.CreationTime -end $gitCurrVersionReleaseDate
-				$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $gitCurrVersionReleaseDate
+				if ($null -ne $gitVersion) {
+					$gitCurrVersionReleaseDate = $gitVersion[1]
+					$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $gitCurrVersionReleaseDate
+				}
+				else {
+					$gitFarmerReleasesVerDateDiff = New-TimeSpan -start $processFileCreationDate.LastWriteTime -end $processFileCreationDate.LastWriteTime
+				}
 			}
 			Clear-Host
 
-			# write subspace node process state to console
-			if ($oNodeProcess) {
-				Write-Host "Node status: " -nonewline
-				Write-Host "Running" -ForegroundColor green -NoNewline
-			}
-			else {
-				Write-Host "Node status: " -nonewline
-				Write-Host "Stopped" -ForegroundColor red -NoNewline
-			}
-
-			# write subspace farmer process state to console
-			if ($oFarmerProcess) {
-				Write-Host "                | " -nonewline -ForegroundColor gray
-				Write-Host "Farmer status: " -nonewline
-				Write-Host "Running" -ForegroundColor green
-			}
-			else {
-				Write-Host "                | " -nonewline -ForegroundColor gray
-				Write-Host "Farmer status: " -nonewline
-				Write-Host "Stopped" -ForegroundColor red
-			}
-
-			if ($null -ne $gitVersion) {
-				Write-Host "Node running on latest version? " -nonewline
-				if ($gitNodeReleasesVerDateDiff.days -ne 0) {
-					if ($oNodeProcess) {
-						Write-Host "No " -NoNewline -ForegroundColor red
-					}
-					else {
-						Write-Host " - " -NoNewline -ForegroundColor red
-					}
-				}
-				else {
-					Write-Host "Yes" -NoNewline -ForegroundColor green
-				}
-				Write-Host " | " -nonewline -ForegroundColor gray
-				Write-Host "Farmer running on latest version? " -nonewline
-				if ($gitFarmerReleasesVerDateDiff.days -ne 0) {
-					if ($oFarmerProcess) {
-						Write-Host "No " -ForegroundColor red
-					}
-					else {
-						Write-Host " - " -ForegroundColor red
-					}
-				}
-				else {
-					Write-Host "Yes" -ForegroundColor green
-				}
-				#
-				Write-Host "---------------------------------------------------------------------------" -ForegroundColor gray
-				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
-				Write-Host "Latest github advanced CLI version: " -nonewline
-				Write-Host "$($gitVersion[0])" -ForegroundColor Green
-				Write-Host "---------------------------------------------------------------------------" -ForegroundColor gray
-			}
-			echo "`n"
-
+			##
 			#Build Summary
 			$bPlottingStarted = $false
 			#
 			$allDetailsTextArr = Get-Content -Path $logFileName | Select-String -Pattern "Finished collecting", "Allocated space:", "Directory:", "Single disk farm", "Successfully signed reward hash", "plotting:", "error", " WARN "
-			$isNodeSynced = "-"
+			$isNodeSynced = " - "
 			$upTimeDisp = "-"
 			$diskCount = 0
 			$rewardCount = 0
@@ -334,7 +286,7 @@ function main {
 					$lastRewardTimestampArr[$diskNumInfo] = (Get-Date $textPart).ToLocalTime()
 				}
 				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("sync") -lt 0 -and $allDetailsArrText.IndexOf("Initial plotting complete") -lt 0) {
-					$isNodeSynced = "Y"
+					$isNodeSynced = "Yes"
 					$bPlottingStarted = $true
 					$diskInfoLabel = "{disk_farm_index="
 					$diskInfoStartPos = $allDetailsArrText.IndexOf($diskInfoLabel)
@@ -363,7 +315,7 @@ function main {
 					}
 				}
 				elseif ($allDetailsArrText.IndexOf("plotting:") -ge 0 -and $allDetailsArrText.IndexOf("Subscribing") -lt 0 -and $allDetailsArrText.IndexOf("not synced") -ge 0 ) {
-					$isNodeSynced = "N"
+					$isNodeSynced = "No "
 				}
 				elseif ($allDetailsArrText.IndexOf(" WARN ") -ge 0 -and $allDetailsArrText.IndexOf("disk_farm_index") -ge 0) {
 					$diskInfoLabel = "{disk_farm_index="
@@ -473,51 +425,171 @@ function main {
 			}
 			#
 			##
-			#Write summary header and data table
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host "                                                      Summary:                                                     " -ForegroundColor cyan
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			# display subspace node process state to console
+			if ($oNodeProcess) {
+				Write-Host "Node status: " -nonewline
+				Write-Host "Running" -ForegroundColor green -NoNewline
+			}
+			else {
+				Write-Host "Node status: " -nonewline
+				Write-Host "Stopped" -ForegroundColor red -NoNewline
+			}
+			# display subspace farmer process state to console
+			$_second_block_top_data_spacer = "------------------------------------"
+			$_second_block_top_data_spacer_gap =  $_second_block_top_data_spacer.Length - ("Node status: ").Length - ("Running").Length
+			$_second_block_top_data_spacer_label = fBuildDynamicSpacer $_second_block_top_data_spacer_gap " "
+			$_second_block_top_data_spacer_label = $_second_block_top_data_spacer_label + "| "
+			#Write-Host "                | " -nonewline -ForegroundColor gray
+			Write-Host $_second_block_top_data_spacer_label -nonewline -ForegroundColor gray
+			Write-Host "Farmer status: " -nonewline
+			if ($oFarmerProcess) {
+				Write-Host "Running" -nonewline -ForegroundColor green
+			}
+			else {
+				Write-Host "Stopped" -nonewline -ForegroundColor red
+			}
+			# display overall metrics
+			$_third_block_top_data_spacer = "--------------------------------------"
+			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Farmer status: ").Length - ("Running").Length
+			$_third_block_top_data_spacer_label = fBuildDynamicSpacer $_third_block_top_data_spacer_gap " "
+			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
+			#Write-Host "                | " -nonewline -ForegroundColor gray
+			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
+			Write-Host "Total rewards: " -nonewline
+			Write-Host $rewardCount -ForegroundColor Yellow
+			#
+			# Sync and uptime header info
 			Write-host "Node synced: " -NoNewline
-			if ($isNodeSynced = "Y") {
+			if ($isNodeSynced = "Yes") {
 				Write-Host $isNodeSynced -NoNewline -ForegroundColor green
 			}
 			else {
 				Write-Host $isNodeSynced -NoNewline -ForegroundColor red
 			}
-			Write-Host "  |  " -nonewline -ForegroundColor gray
+			$_second_block_top_data_spacer = "------------------------------------"
+			$_second_block_top_data_spacer_gap =  $_second_block_top_data_spacer.Length - ("Node synced: ").Length - $isNodeSynced.Length
+			$_second_block_top_data_spacer_label = fBuildDynamicSpacer $_second_block_top_data_spacer_gap " "
+			$_second_block_top_data_spacer_label = $_second_block_top_data_spacer_label + "| "
+			#Write-Host "                    | " -nonewline -ForegroundColor gray
+			Write-Host $_second_block_top_data_spacer_label -nonewline -ForegroundColor gray
 			Write-host "Farmer uptime: " -NoNewline
-			Write-host $upTimeDisp -NoNewline -ForegroundColor yellow
-			Write-Host "  |  " -nonewline -ForegroundColor gray
-			Write-Host "Total rewards: " -nonewline
-			Write-Host $rewardCount -NoNewline -ForegroundColor Yellow
-			Write-Host "  |  " -nonewline -ForegroundColor gray
+			Write-host $upTimeDisp -nonewline -ForegroundColor yellow
 			#
 			$totalSizeAllocatedTiB = [math]::Round([Math]::Ceiling($totalSizeAllocated*10/1024)/10,1)
 			$totalSizeAllocatedTB = [math]::Round([Math]::Ceiling($totalSizeAllocatedTiB*1.1*10)/10,1)
+			$_third_block_top_data_spacer = "--------------------------------------"
+			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Farmer uptime: ").Length - $upTimeDisp.Length
+			$_third_block_top_data_spacer_label = fBuildDynamicSpacer $_third_block_top_data_spacer_gap " "
+			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
+			#Write-Host "          | " -nonewline -ForegroundColor gray
+			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
 			Write-Host "Total space allocated: " -nonewline
 			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor yellow
 			#
-			Write-Host "Sectors/hour (avg): " -nonewline
+			# display running version info
+			Write-Host "----------------------------------------------------------------------------" -nonewline -ForegroundColor gray
+			Write-Host "| " -nonewline -ForegroundColor gray
+			Write-Host "Overall plotting progress: $overallProgress% complete" -nonewline -BackgroundColor yellow -ForegroundColor black
+			Write-Host " "  -ForegroundColor white
+			if ($null -ne $gitVersion) {
+				Write-Host "Node running on latest version? " -nonewline
+				if ($gitNodeReleasesVerDateDiff.days -ne 0) {
+					if ($oNodeProcess) {
+						Write-Host "No " -NoNewline -ForegroundColor red
+					}
+					else {
+						Write-Host " - " -NoNewline -ForegroundColor red
+					}
+				}
+				else {
+					Write-Host "Yes" -NoNewline -ForegroundColor green
+				}
+				$_second_block_top_data_spacer = "------------------------------------"
+				$_second_block_top_data_spacer_gap =  $_second_block_top_data_spacer.Length - ("Node running on latest version? ").Length - ("Yes").Length
+				$_second_block_top_data_spacer_label = fBuildDynamicSpacer $_second_block_top_data_spacer_gap " "
+				$_second_block_top_data_spacer_label = $_second_block_top_data_spacer_label + "| "
+				#Write-Host " | " -nonewline -ForegroundColor gray
+				Write-Host $_second_block_top_data_spacer_label -nonewline -ForegroundColor gray
+				Write-Host "Farmer running on latest version? " -nonewline
+				if ($gitFarmerReleasesVerDateDiff.days -ne 0) {
+					if ($oFarmerProcess) {
+						Write-Host "No " -nonewline -ForegroundColor red
+					}
+					else {
+						Write-Host " - " -nonewline  -ForegroundColor red
+					}
+				}
+				else {
+					Write-Host "Yes" -nonewline -ForegroundColor green
+				}
+				#
+			}
+			else {
+				Write-Host "Node running on latest version? " -nonewline
+				Write-Host " - " -NoNewline -ForegroundColor red
+				$_second_block_top_data_spacer = "--------------------------------------"
+				$_second_block_top_data_spacer_gap =  $_second_block_top_data_spacer.Length - ("Node running on latest version? ").Length - ("Yes").Length
+				$_second_block_top_data_spacer_label = fBuildDynamicSpacer $_second_block_top_data_spacer_gap " "
+				$_second_block_top_data_spacer_label = $_second_block_top_data_spacer_label + "| "
+				#Write-Host " | " -nonewline -ForegroundColor gray
+				Write-Host $_second_block_top_data_spacer_label -nonewline -ForegroundColor gray
+				Write-Host "Farmer running on latest version? " -nonewline
+				Write-Host " - " -nonewline  -ForegroundColor red
+			}
+			#
+			$_third_block_top_data_spacer = "--------------------------------------"
+			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Farmer running on latest version? ").Length - ("Yes").Length
+			$_third_block_top_data_spacer_label = fBuildDynamicSpacer $_third_block_top_data_spacer_gap " "
+			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
+			#Write-Host " | " -nonewline -ForegroundColor gray
+			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
+			Write-Host "Sectors/h (avg): " -nonewline
 			$avgSectorsPerMinuteCursorPosition = $host.UI.RawUI.CursorPosition
-			Write-Host $_avgSectorPerMinuteDisp -nonewline -ForegroundColor yellow
-			Write-Host "        |    " -nonewline -ForegroundColor gray
-			Write-Host "Minutes/sector (avg): " -nonewline
+			Write-Host $_avgSectorPerMinuteDisp -ForegroundColor yellow
+			#
+			# github version info
+			$currentVersion = " - "
+			$_gitVersionDispColor = "red"
+			if ($null -ne $gitVersion) {
+				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
+				$_gitVersionDispColor = "green"
+				#Write-Host "$($gitVersion[0])" -nonewline -ForegroundColor Green
+			}
+			Write-Host "Latest github advanced CLI version  : " -nonewline
+			Write-Host "$($currentVersion)" -nonewline -ForegroundColor $_gitVersionDispColor
+			#
+			$_third_block_top_data_spacer = "----------------------------------------------------------------------------"
+			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Latest github advanced CLI version  : ").Length - $currentVersion.Length
+			$_third_block_top_data_spacer_label = fBuildDynamicSpacer $_third_block_top_data_spacer_gap " "
+			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
+			#Write-Host "                 | " -nonewline -ForegroundColor gray
+			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
+			Write-Host "Min/sector (avg): " -nonewline
 			$avgMinutesPerSectorCursorPosition = $host.UI.RawUI.CursorPosition
 			Write-Host $_avgMinutesPerSectorDisp -ForegroundColor yellow
+
+
+
+
 			#
-			Write-Host "Overall plotting progress: $overallProgress% complete"  -BackgroundColor white -ForegroundColor black
+			Write-Host "------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
-			Write-Host ""
+			##
+			#Write summary header and data table
+			echo `n
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "                                                  Summary by disk:                                                 " -ForegroundColor cyan
 			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#
 			#Sub-header label definition
 			$diskLabel 				= "Disk"
 			$driveLabel 			= "Disk "
 			$diskSizeLabel 			= "Space allocated      "
 			$rewardLabel 			= "Rewards"
 			$missesLabel 			= "Misses"
-			$sectorPlotSpeedLabel 	= "Sectors"
-			$minutesPerSectorLabel 	= "Minutes"
-			$plottingSpeedLabel 	= "Plotting "
+			$sectorPlotSpeedLabel 	= "Sectors/h"
+			$minutesPerSectorLabel 	= "Min/  "
+			$plottingSpeedLabel 	= "Plot   "
 			$_eta_Label 			= "ETA   "
 			$plotStatusLabel 		= "Plot  "
 			$replotStatusLabel 		= "Replot"
@@ -530,9 +602,9 @@ function main {
 			$diskSizeLabel2 		= "                     "
 			$rewardLabel2 			= "       "
 			$missesLabel2			= "      "
-			$sectorPlotSpeedLabel2 	= "per    "
-			$minutesPerSectorLabel2	= "per    "
-			$plottingSpeedLabel2	= "speed    "
+			$sectorPlotSpeedLabel2 	= "         "
+			$minutesPerSectorLabel2	= "sector"
+			$plottingSpeedLabel2	= "speed  "
 			$_eta_Label2 			= "(d)   "
 			$plotStatusLabel2 		= "status"
 			$replotStatusLabel2 	= "status"
@@ -543,9 +615,9 @@ function main {
 			$diskSizeLabel3 		= "                     "
 			$rewardLabel3 			= "       "
 			$missesLabel3			= "      "
-			$sectorPlotSpeedLabel3 	= "hour   "
-			$minutesPerSectorLabel3	= "sector "
-			$plottingSpeedLabel3	= "(MiB/min)  "
+			$sectorPlotSpeedLabel3 	= "         "
+			$minutesPerSectorLabel3	= "      "
+			$plottingSpeedLabel3	= "(MiB/m)"
 			$_eta_Label3 			= "      "
 			$plotStatusLabel3 		= "      "
 			$replotStatusLabel3 	= "      "
@@ -802,11 +874,14 @@ function main {
 					Start-Sleep 5
 				}
 				###### Auto refresh
-				$gitNewVersion = Get-gitNewVersion
-				if ($gitNewVersion) {
-					$gitVersion = $gitNewVersion
+				$HoursElapsed = $Stopwatch.Elapsed.TotalHours
+				if ($HoursElapsed -ge 1) {
+					$gitNewVersion = Get-gitNewVersion
+					if ($gitNewVersion) {
+						$gitVersion = $gitNewVersion
+					}
+					$Stopwatch.Restart()
 				}
-				$Stopwatch.Restart()
 				######
 			}
 			else {
@@ -814,9 +889,13 @@ function main {
 				$uRefreshRequest = Read-Host 'Type (R) to refresh, (X) to Exit and press Enter'
 				if ($uRefreshRequest.ToLower() -eq 'r') {
 					$bRefreshPage = $true
-					$gitNewVersion = Get-gitNewVersion
-					if ($gitNewVersion) {
-						$gitVersion = $gitNewVersion
+					$HoursElapsed = $Stopwatch.Elapsed.TotalHours
+					if ($HoursElapsed -ge 1) {
+						$gitNewVersion = Get-gitNewVersion
+						if ($gitNewVersion) {
+							$gitVersion = $gitNewVersion
+						}
+						$Stopwatch.Restart()
 					}
 				}
 				elseif ($uRefreshRequest.ToLower() -eq 'x') {
