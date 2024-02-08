@@ -573,7 +573,7 @@ function main {
 
 
 			#
-			Write-Host "------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			##
 			#Write summary header and data table
@@ -664,12 +664,7 @@ function main {
 				$sectorPlotRate = "-"
 				$minutesPerSector = "-"
 				$plottingRate = "-"
-				#Write-Host "plotSpeedByDiskArr[$arrPos]: " $plotSpeedByDiskArr[$arrPos]
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
-					#Write-Host "--" -NoNewline
-					#Write-Host $sectorCountByDiskArr[$arrPos] -NoNewline
-					#Write-Host " | " $plotSpeedByDiskArr[$arrPos] - NoNewline
-					#Write-Host "--" 
 					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 3600) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
 					$plottingRate = [math]::Round(($sectorPlotRate * $singleSectorSize) / 60 , 1)
@@ -718,6 +713,7 @@ function main {
 				Write-Host $summaryData
 				#
 			}
+			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#remember the last written summary data for later repositioning after writing averages in sub-header at a high-level
 			$mostRecentSummaryDataCursorPosition = $host.UI.RawUI.CursorPosition
 			#
@@ -778,7 +774,8 @@ function main {
 				}
 				#
 				if ($bHeaderOther -or $bWarnAndErrHeaderPrinted -eq $false) {
-					Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+					#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+					echo `n
 					Write-Host "                                            " $subHeaderText -ForegroundColor $subHeaderColor
 					Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 				}
@@ -854,12 +851,12 @@ function main {
 			}
 			
 			#Finalize
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			#$currentDate = Get-Date -Format HH:mm:ss
 			$currentDate = (Get-Date).ToLocalTime()
 			# Refresh
-			Write-Host `n                
+			echo `n
 			Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
 			#
 			####
