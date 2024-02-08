@@ -560,7 +560,7 @@ function main {
 			Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
 			#
 			$_third_block_top_data_spacer = "----------------------------------------------------------------------------"
-			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Latest github advanced CLI version  : ").Length - $currentVersion.Length
+			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Latest github advanced CLI version  : ").Length - $_gitVersionDisp.Length
 			$_third_block_top_data_spacer_label = fBuildDynamicSpacer $_third_block_top_data_spacer_gap " "
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host "                 | " -nonewline -ForegroundColor gray
