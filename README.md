@@ -20,6 +20,7 @@ Key features:
   - Warning/Error messages summary with duplicates removed to show only unique entries
   - Option for customizable auto-refresh time set-up or choice for manual refresh
   - Local Time Zone display
+  - Choice of summary only view
 
 Pre-requisites:
 - Ensure that advance CLI is used for the farmer
