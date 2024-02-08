@@ -455,8 +455,8 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host "                | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Total rewards: " -nonewline
-			Write-Host $rewardCount -ForegroundColor Yellow
+			Write-Host "Total rewards        : " -nonewline
+			Write-Host $rewardCount -ForegroundColor green
 			#
 			# Sync and uptime header info
 			Write-host "Node synced: " -NoNewline
@@ -484,7 +484,7 @@ function main {
 			#Write-Host "          | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
 			Write-Host "Total space allocated: " -nonewline
-			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor yellow
+			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor green
 			#
 			# display running version info
 			Write-Host "----------------------------------------------------------------------------" -nonewline -ForegroundColor gray
@@ -543,9 +543,9 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host " | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Sectors/h (avg): " -nonewline
+			Write-Host "Sectors/h (avg)      : " -nonewline
 			$avgSectorsPerMinuteCursorPosition = $host.UI.RawUI.CursorPosition
-			Write-Host $_avgSectorPerMinuteDisp -ForegroundColor yellow
+			Write-Host $_avgSectorPerMinuteDisp -ForegroundColor green
 			#
 			# github version info
 			$_gitVersionDisp = " - "
@@ -565,9 +565,9 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host "                 | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Min/sector (avg): " -nonewline
+			Write-Host "Min/sector (avg)     : " -nonewline
 			$avgMinutesPerSectorCursorPosition = $host.UI.RawUI.CursorPosition
-			Write-Host $_avgMinutesPerSectorDisp -ForegroundColor yellow
+			Write-Host $_avgMinutesPerSectorDisp -ForegroundColor green
 
 
 
