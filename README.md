@@ -35,7 +35,7 @@ Pre-requisites:
             # Add "| Tee-Object -file <log file name>" at the end to write console oyutput to log file:
             #    - in example shown below current date is added to the log file name so it retains history in log file by date if the farmer were to be restarted due to a new release
             #
-            $host.UI.RawUI.WindowTitle = "Subspace Farmer - Gemini 3g"
+            $host.UI.RawUI.WindowTitle = "Subspace Farmer - Gemini 3h"
             $currentDate = Get-Date -Format "yyyy-MM-dd"
             $logFile = "ss_log_" + $currentDate + ".txt"
             .\subspace-farmer-windows-x86_64-skylake-gemini-3h-2024-feb-5.exe farm --reward-address WALLET_ADDRESS path=PATH_TO_FARM,size=PLOT_SIZE | Tee-Object -file $logFile
