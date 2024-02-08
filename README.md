@@ -42,6 +42,7 @@ Pre-requisites:
 
 - powershell version 5.1 is installed
   
-This script will open a windows dialog box at start asking user to select the log file. Please select appropriate subspace farmer log file and follow the prompts.
+Notes:
+- At start, there will be a prompt via windows dialog box to select the subspace farmer log file. Please select appropriate file and follow the prompts.
 
-Thank you for using this script. Feedback is appreciated.
+* For questions and feedback please contact (rs_00) in subspace discord channel.
