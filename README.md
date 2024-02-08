@@ -38,7 +38,7 @@ Pre-requisites:
             $host.UI.RawUI.WindowTitle = "Subspace Farmer - Gemini 3g"
             $currentDate = Get-Date -Format "yyyy-MM-dd"
             $logFile = "ss_log_" + $currentDate + ".txt"
-            .\subspace-farmer-windows-x86_64-skylake-gemini-3g-2024-jan-29.exe farm --reward-address WALLET_ADDRESS path=PATH_TO_FARM,size=PLOT_SIZE | Tee-Object -file $logFile
+            .\subspace-farmer-windows-x86_64-skylake-gemini-3h-2024-feb-5.exe farm --reward-address WALLET_ADDRESS path=PATH_TO_FARM,size=PLOT_SIZE | Tee-Object -file $logFile
 
 - powershell version 5.1 is installed
   
