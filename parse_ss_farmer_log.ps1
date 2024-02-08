@@ -596,7 +596,7 @@ function main {
 			$replotStatusLabel 		= "Replot"
 			$lastRewardLabel 		= "Last reward on     "
 			
-			$spacerLabel = " "
+			$spacerLabel = "|"
 
 			$diskLabel2 			= "#   "
 			$driveLabel2 			= "label"
@@ -641,23 +641,23 @@ function main {
 			#$avgMinutesPerSectorDiskCount = 0
 			for ($arrPos = 0; $arrPos -lt $rewardByDiskCountArr.Count; $arrPos++) {
 				$diskText = $arrPos.ToString()
-				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$diskLabel.Length-$diskText.Length-1)
 				$driveSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$driveText = $driveArr[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$driveLabel.Length-$driveText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$driveLabel.Length-$driveText.Length-1)
 				$diskSizeSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$diskSizeText = $diskSizeArr[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$diskSizeLabel.Length-$diskSizeText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$diskSizeLabel.Length-$diskSizeText.Length-1)
 				$diskRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				$rewardByDiskText = $rewardByDiskCountArr[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$rewardLabel.Length-$rewardByDiskText.Length-1)
 				$missesSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$missesByDiskText = $missesByDiskCountArr[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$missesLabel.Length-$missesByDiskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$missesLabel.Length-$missesByDiskText.Length-1)
 				$plottingSpeedByDiskSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				#$plotSpeedByDiskArr[0]*$singleSectorSize
@@ -680,33 +680,33 @@ function main {
 					#$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
 				}
 				$sectorPlotSpeedByDiskText = $sectorPlotRate.ToString()
-				$spacerLength = [int]($spacerLabel.Length+$sectorPlotSpeedLabel.Length-$sectorPlotSpeedByDiskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$sectorPlotSpeedLabel.Length-$sectorPlotSpeedByDiskText.Length-1)
 				$sectorPlotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$minutesPerSectorText = $minutesPerSector.ToString()
-				$spacerLength = [int]($spacerLabel.Length+$minutesPerSectorLabel.Length-$minutesPerSectorText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$minutesPerSectorLabel.Length-$minutesPerSectorText.Length-1)
 				$minutesPerSectorSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$plottingSpeedByDiskText = $plottingRate.ToString()
-				$spacerLength = [int]($spacerLabel.Length+$plottingSpeedLabel.Length-$plottingSpeedByDiskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$plottingSpeedLabel.Length-$plottingSpeedByDiskText.Length-1)
 				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
 				$_eta_Text = $_eta_ByDisk[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$_eta_Label.Length-$_eta_Text.Length)
+				$spacerLength = [int]($spacerLabel.Length+$_eta_Label.Length-$_eta_Text.Length-1)
 				$_eta_SpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				#if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
 				#	$plotSizeByDiskCountArr[$arrPos] = "100%"
 				#}
 				$plotSizeByDiskText = $plotSizeByDiskCountArr[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$plotStatusLabel.Length-$plotSizeByDiskText.Length-1)
 				$replotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
 				$replotSizeByDiskText = $replotSizeByDiskCountArr[$arrPos].ToString()
-				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length)
+				$spacerLength = [int]($spacerLabel.Length+$replotStatusLabel.Length-$replotSizeByDiskText.Length-1)
 				$lastRewardSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				$summaryData =  $diskText + $driveSpacerLabel + $driveText + $diskSizeSpacerLabel + $diskSizeText + $diskRewardSpacerLabel + $rewardByDiskText + $missesSpacerLabel
+				$summaryData =  $diskText + $driveSpacerLabel + $spacerLabel + $driveText + $diskSizeSpacerLabel + $spacerLabel + $diskSizeText + $diskRewardSpacerLabel + $spacerLabel + $rewardByDiskText + $missesSpacerLabel + $spacerLabel
 				Write-Host $summaryData -NoNewline
 				if ([int]$missesByDiskText -eq 0) {
 					Write-Host $missesByDiskText -NoNewline
@@ -714,7 +714,7 @@ function main {
 				else {
 					Write-Host $missesByDiskText -NoNewline -ForegroundColor red
 				}
-				$summaryData = $plottingSpeedByDiskSpacerLabel + $sectorPlotSpeedByDiskText + $sectorPlotSpacerLabel + $minutesPerSectorText + $minutesPerSectorSpacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $_eta_Text + $_eta_SpacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $lastRewardTimestampArr[$arrPos]
+				$summaryData = $plottingSpeedByDiskSpacerLabel + $spacerLabel + $sectorPlotSpeedByDiskText + $sectorPlotSpacerLabel + $spacerLabel + $minutesPerSectorText + $minutesPerSectorSpacerLabel + $spacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $spacerLabel + $_eta_Text + $_eta_SpacerLabel + $spacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $spacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $spacerLabel + $lastRewardTimestampArr[$arrPos]
 				Write-Host $summaryData
 				#
 			}
