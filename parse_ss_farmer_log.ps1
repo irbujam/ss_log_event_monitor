@@ -449,9 +449,11 @@ function main {
 					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
 					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
 					#
-					if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
-						$plotSizeByDiskCountArr[$arrPos] = "100%"
-					}
+				}
+				if ($bPlottingStarted -and $plotSizeByDiskCountArr[$arrPos] -eq "-") {
+					$plotSizeByDiskCountArr[$arrPos] = "100%"
+				}
+				if ($bPlottingStarted) {
 					$plotRateForProgressBar = $plotRateForProgressBar + [double]($plotSizeByDiskCountArr[$arrPos].SubString(0,$plotSizeByDiskCountArr[$arrPos].IndexOf("%")))
 				}
 			}
