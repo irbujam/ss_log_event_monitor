@@ -548,15 +548,16 @@ function main {
 			Write-Host $_avgSectorPerMinuteDisp -ForegroundColor yellow
 			#
 			# github version info
-			$currentVersion = " - "
+			$_gitVersionDisp = " - "
 			$_gitVersionDispColor = "red"
 			if ($null -ne $gitVersion) {
 				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
+				$_gitVersionDisp = $gitVersion[0]
 				$_gitVersionDispColor = "green"
 				#Write-Host "$($gitVersion[0])" -nonewline -ForegroundColor Green
 			}
 			Write-Host "Latest github advanced CLI version  : " -nonewline
-			Write-Host "$($currentVersion)" -nonewline -ForegroundColor $_gitVersionDispColor
+			Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
 			#
 			$_third_block_top_data_spacer = "----------------------------------------------------------------------------"
 			$_third_block_top_data_spacer_gap =  $_third_block_top_data_spacer.Length - ("Latest github advanced CLI version  : ").Length - $currentVersion.Length
