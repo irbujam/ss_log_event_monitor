@@ -11,8 +11,8 @@ Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertEPetP
 #
 Auto-refresh(seconds) : 300
 
-## insert a new line for each node/farmer like shown in sample below
-## change IP and port to match your node and farmer set-up
+## insert a new line for each node like shown in sample below
+## change IP and port to match your node set-up
 #
 Node : 192.168.2.251:19595
 
