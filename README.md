@@ -36,4 +36,4 @@ Note: If you recently restarted Farmer please wait for few minutes and the metri
           - time of last reward received  
   - Warning/Error messages summary with duplicates removed
 
-* For questions and feedback please contact (rs_00) in subspace discord channel.
+*** For questions and feedback please contact (rs_00) in subspace discord channel.
