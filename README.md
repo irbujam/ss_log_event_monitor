@@ -11,7 +11,7 @@ Note: If you recently restarted Farmer please wait for few minutes and the metri
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 
-*8Key features:**
+**Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   - Removed the need for log file as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
