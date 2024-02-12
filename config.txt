@@ -1,0 +1,14 @@
+#Sample config below contains user defined environment values
+#Please change IP, port and adjust screen refresh time accordingly as per your needs
+#Please dont change format
+#Insert a new line for each node/farmer like shown in sample below
+
+Node:192.168.2.251:19595
+
+Farmer:192.168.2.251:18585
+Farmer:192.168.2.203:18585
+Farmer:192.168.2.105:18585
+
+Auto-refresh(seconds):300
+
+#End of config
