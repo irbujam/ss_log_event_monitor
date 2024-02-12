@@ -7,7 +7,7 @@
 #
 Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertEPetP7YsTH298yH2xtoxgl............
 
-## adjust screen refresh time as apppropriate (if 0 is provided the valeu will default to 30 seconds)
+## adjust screen refresh time as apppropriate (if 0 is provided the value will default to 30 seconds)
 #
 Auto-refresh(seconds) : 300
 
