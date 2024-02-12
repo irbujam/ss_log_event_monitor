@@ -15,11 +15,17 @@ function main {
 		Clear-Host
 
 		$_b_first_time = $True
+		$_line_spacer_color = "gray"
+		$_farmer_header_color = "yellow"
+		$_disk_header_color = "cyan"
+
 		$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
 		$_configFile = "./config.txt"
 		$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
 		for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
 		{
+			$_farmer_metrics_raw = ""
+			[array]$_process_state_arr = $null
 			if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "") {
 				$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
 				$_process_type = $_config[0].toString()
@@ -42,13 +48,16 @@ function main {
 					#}
 					$_hostname = $_host_ip
 
-					$_b_process_running_ok = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+					#$_b_process_running_ok = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+					$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+					$_b_process_running_ok = $_process_state_arr[1]
 
 					if ($_process_type.toLower() -eq "farmer") {
 						$_total_spacer_length = ("------------------------------------------------------------------------").Length
 						$_spacer_length = $_total_spacer_length
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-						Write-Host $_label_spacer
+						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+						#echo `n
 					}
 					
 					$_console_msg = $_process_type + " status: "
@@ -69,12 +78,8 @@ function main {
 
 				if ($_process_type.toLower() -ne "farmer") { continue }
 
-				$_total_spacer_length = ("------------------------------------------------------------------------").Length
-				$_spacer_length = $_total_spacer_length
-				$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-				Write-Host $_label_spacer
-
-				$_farmer_metrics_raw = fPingMetricsUrl $_host_url
+				#$_farmer_metrics_raw = fPingMetricsUrl $_host_url
+				$_farmer_metrics_raw = $_process_state_arr[0]
 				$_tempArr_ = $_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
 				$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 				
@@ -92,9 +97,42 @@ function main {
 				#
 				$_disk_sector_performance_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
 				$_disk_rewards_arr = fGetDiskProvingMetrics $_farmer_metrics_formatted_arr
-				#for ($arrPos = 0; $arrPos -lt $_disk_sector_performance_arr.Count; $arrPos++)
+
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
+					
+					if ($_disk_sector_performance_obj) {
+					 if ($_disk_sector_performance_obj.Id -eq "overall") {
+						$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
+						$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
+						
+						$_uptime = fGetElapsedTime $_disk_sector_performance_obj.TotalSeconds
+						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
+
+						Write-Host "Uptime: " -nonewline 
+						Write-Host $_uptime_disp -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host ", " -nonewline
+						Write-Host "Sectors/Hour (avg): " -nonewline 
+						Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host ", " -nonewline
+						Write-Host "Minutes/Sector (avg): " -nonewline
+						Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_color
+						break
+					 }
+					}
+				}
+
+				$_total_spacer_length = ("------------------------------------------------------------------------").Length
+				$_spacer_length = $_total_spacer_length
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+				Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+
+				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
+				{
+					if ($_disk_sector_performance_obj) {
+						if ($_disk_sector_performance_obj.Id -eq "overall") { continue }
+					}
+					
 					# write header if not already done
 					if ($_b_write_header -eq $True) {
 						# Host name header info
@@ -110,39 +148,14 @@ function main {
 							$_b_first_time = $False
 						}
 						 
-						#$_spacer_length = 1
-						#$_label_spacer = fBuildDynamicSpacer $_spacer_length "|"
-						#Write-Host $_label_spacer -nonewline
-						
-						#$_spacer_length = $_total_spacer_length / 3
-						#$_label_spacer = fBuildDynamicSpacer $_spacer_length " "
-						#Write-Host $_label_spacer -nonewline
-						#Write-host $_label_hostname -nonewline
-
-						#$_spacer_length = 1
-						#$_label_spacer = fBuildDynamicSpacer $_spacer_length ":"
-						#Write-Host $_label_spacer -nonewline
-						#Write-host $_hostname -nonewline
-
-						#$_curr_cursor_position = $host.UI.RawUI.CursorPosition
-						#$_curr_cursor_position_x = $_curr_cursor_position.X
-						#Write-Host "cursor: "  $_curr_cursor_position.X
-
-						#$_spacer_length = $_total_spacer_length - $_curr_cursor_position_x - 1
-						#$_label_spacer = fBuildDynamicSpacer $_spacer_length " "
-						#Write-Host $_label_spacer -nonewline
-						
-						#$_spacer_length = 1
-						#$_label_spacer = fBuildDynamicSpacer $_spacer_length "|"
-						#Write-Host $_label_spacer
 						#
 						# Host disk header info
 						# draw line
-						if ($_disk_sector_performance_obj -ne $null) {
-							$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
-						}
-						else {$_spacer_length = ("------------------------------------------------------------------------").Length}
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+						#if ($_disk_sector_performance_obj -ne $null) {
+						#	$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+						#}
+						#else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+						#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 						#Write-Host $_label_spacer
 
 						$_spacer_length = 0
@@ -150,33 +163,33 @@ function main {
 						$_label_spacer = $_label_spacer + "|"
 						Write-Host $_label_spacer -nonewline
 
-						Write-Host $_label_diskid -nonewline
+						Write-Host $_label_diskid -nonewline -ForegroundColor $_disk_header_color
 						if ($_disk_sector_performance_obj -ne $null) {
 							$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length - $_label_diskid.Length + 1
 						}
 						else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_sectors_per_hour -nonewline
+						Write-Host $_label_spacer -nonewline 
+						Write-Host $_label_sectors_per_hour -nonewline -ForegroundColor $_disk_header_color
 
 						$_spacer_length = 0
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_label_spacer = $_label_spacer + "|"
 						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_minutes_per_sectors -nonewline
+						Write-Host $_label_minutes_per_sectors -nonewline -ForegroundColor $_disk_header_color
 
 						$_spacer_length = 0
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_label_spacer = $_label_spacer + "|"
 						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_rewards -nonewline
+						Write-Host $_label_rewards -nonewline -ForegroundColor $_disk_header_color
 						
 						$_spacer_length = 0
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_label_spacer = $_label_spacer + "|"
 						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_misses -nonewline
+						Write-Host $_label_misses -nonewline -ForegroundColor $_disk_header_color
 
 						$_spacer_length = 0
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -189,7 +202,7 @@ function main {
 						}
 						else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-						Write-Host $_label_spacer
+						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 						#
 						$_b_write_header = $False
 					}
@@ -198,12 +211,14 @@ function main {
 					$_b_counted_missed_rewards = $False
 					$_b_data_printed = $False
 					$_missed_rewards_count = 0
+					$_missed_rewards_color = "white"
 					foreach ($_disk_rewards_obj in $_disk_rewards_arr)
 					{
 						if ($_disk_sector_performance_obj.Id -eq $_disk_rewards_obj.Id) {
 							if ($_disk_rewards_obj.Misses -gt 0) {
 								$_b_counted_missed_rewards = $True
 								$_missed_rewards_count = $_disk_rewards_obj.Misses
+								$_missed_rewards_color = "red"
 								continue
 							}
 
@@ -238,7 +253,7 @@ function main {
 							$_label_spacer = $_label_spacer + "|"
 							Write-Host $_label_spacer -nonewline
 							#Write-Host $_disk_rewards_obj.Misses -nonewline
-							Write-Host $_missed_rewards_count -nonewline
+							Write-Host $_missed_rewards_count -nonewline -ForegroundColor $_missed_rewards_color
 
 							$_spacer_length = [int]($_label_misses.Length - $_disk_rewards_obj.Misses.toString().Length)
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -292,12 +307,15 @@ function main {
 		}
 		#
 		# draw finish line
-		if ($_disk_sector_performance_obj -ne $null) {
-			$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+		if ($_disk_sector_performance_obj) {
+			if ($_disk_sector_performance_obj.Id -ne "overall") {
+				$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+			}
+			else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 		}
 		else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-		Write-Host $_label_spacer
+		Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 		
 		##
 		#$currentDate = Get-Date -Format HH:mm:ss
@@ -328,6 +346,12 @@ function main {
 		}
 		######
 	}
+}
+
+function fGetElapsedTime ([string]$_io_time_seconds) {
+	$_resp_total_uptime =  New-TimeSpan -seconds $_io_time_seconds
+	
+	return $_resp_total_uptime
 }
 
 function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
@@ -451,6 +475,9 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
 	$_farmer_disk_sector_plot_time = 0.00
 	$_farmer_disk_sector_plot_count = 0
 	
+	$_total_sectors_plot_count = 0
+	$_total_sectors_plot_time_seconds = 0
+	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
 		if ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
@@ -465,8 +492,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
 			{
 				$_farmer_disk_id = $_metrics_obj.Instance
 				$_b_identifier_set = $True
-				if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) {$_farmer_disk_sector_plot_time = [double]($_metrics_obj.Value)}
-				if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) {$_farmer_disk_sector_plot_count = [int]($_metrics_obj.Value)}
+				if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_metrics_obj.Value) }
+				if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_metrics_obj.Value) }
 				if ($_farmer_disk_sector_plot_time -gt 0 -and $_farmer_disk_sector_plot_count -gt 0) 
 				{
 					$_sectors_per_hour = 0.0
@@ -475,14 +502,17 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
 						"seconds" 	{
 							$_sectors_per_hour = [math]::Round(($_farmer_disk_sector_plot_count * 3600) / $_farmer_disk_sector_plot_time, 1)
 							$_minutes_per_sector = [math]::Round($_farmer_disk_sector_plot_time / ($_farmer_disk_sector_plot_count * 60), 1)
+							$_total_sectors_plot_time_seconds += $_farmer_disk_sector_plot_time
 						}
 						"minutes" 	{
 							$_sectors_per_hour = [math]::Round($_farmer_disk_sector_plot_count / $_farmer_disk_sector_plot_time, 1)
 							$_minutes_per_sector = [math]::Round($_farmer_disk_sector_plot_time / $_farmer_disk_sector_plot_count, 1)
+							$_total_sectors_plot_time_seconds += ($_farmer_disk_sector_plot_time * 60)
 						}
 						"hours" 	{
 							$_sectors_per_hour = [math]::Round($_farmer_disk_sector_plot_count / ($_farmer_disk_sector_plot_time * 60), 1)
 							$_minutes_per_sector = [math]::Round(($_farmer_disk_sector_plot_time * 60) / $_farmer_disk_sector_plot_count, 1)
+							$_total_sectors_plot_time_seconds += ($_farmer_disk_sector_plot_time * 3600)
 						}
 					}
 					$_farmer_disk_sector_plot_time = 0.00
@@ -497,7 +527,16 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
 				}
 			}
 		}
+		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) { $_total_sectors_plot_count = [int]($_metrics_obj.Value) }
 	}
+	#
+	$_disk_sector_perf = [PSCustomObject]@{
+		Id					= "overall"
+		TotalSectors		= $_total_sectors_plot_count
+		TotalSeconds		= $_total_sectors_plot_time_seconds
+	}
+	$_resp_sector_perf_arr += $_disk_sector_perf
+
 	return $_resp_sector_perf_arr
 }
 
@@ -551,6 +590,8 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg){
 
 function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url){
 
+	$_resp_process_state_arr = [System.Collections.ArrayList]@()
+
 	$_b_process_alert_set = $False
 	$_b_process_running_state = $False
 	$_process_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -563,7 +604,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 	}
 	#
 	# get process state, send notification if process is stopped/not running
-	$_resp = fPingMetricsUrl $_io_host_ip
+	$_resp = fPingMetricsUrl $_io_host_ip		# needs to be outside of elapsed time check as response is used downstream to eliminiate dup call
 	if ($_resp -eq "") {
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		if ($_b_process_alert_set -eq $False) {
@@ -578,7 +619,10 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 	}
 	else { $_b_process_running_state = $True }
 
-	return $_b_process_running_state
+	[void]$_resp_process_state_arr.add($_resp)
+	[void]$_resp_process_state_arr.add($_b_process_running_state)
+	#return $_b_process_running_state
+	return $_resp_process_state_arr
 }
 
 function Get-gitNewVersion {
