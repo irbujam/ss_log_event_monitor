@@ -262,7 +262,7 @@ function main {
 						}
 					}
 					if ($_b_counted_missed_rewards -and $_b_data_printed -eq $False) {
-							# write data
+							# write data - combine missed and rewards into single line of display
 							$_b_data_printed = $True
 							$_spacer_length = 0
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -286,7 +286,7 @@ function main {
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
 							Write-Host $_label_spacer -nonewline
-							Write-Host 0 -nonewline
+							Write-Host 0 -nonewline		#no rewards data (only misses data) populated in endpoint
 
 							$_spacer_length = [int]($_label_rewards.Length - $_disk_rewards_obj.Rewards.toString().Length)
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -294,6 +294,45 @@ function main {
 							Write-Host $_label_spacer -nonewline
 							#Write-Host $_disk_rewards_obj.Misses -nonewline
 							Write-Host $_missed_rewards_count -nonewline
+
+							$_spacer_length = [int]($_label_misses.Length - $_disk_rewards_obj.Misses.toString().Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							Write-Host $_label_spacer
+					}
+					elseif($_b_data_printed -eq $False) {
+							# write data - no rewards/misses data populated in endpoint
+							$_b_data_printed = $True
+							$_spacer_length = 0
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							Write-Host $_label_spacer -nonewline
+							Write-Host $_disk_sector_performance_obj.Id -nonewline
+
+							$_spacer_length = 1
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							Write-Host $_label_spacer -nonewline
+							Write-Host $_disk_sector_performance_obj.SectorsPerHour -nonewline
+
+							$_spacer_length = [int]($_label_sectors_per_hour.Length - $_disk_sector_performance_obj.SectorsPerHour.toString().Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							Write-Host $_label_spacer -nonewline
+							Write-Host $_disk_sector_performance_obj.MinutesPerSector -nonewline
+
+							$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_disk_sector_performance_obj.MinutesPerSector.toString().Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							Write-Host $_label_spacer -nonewline
+							Write-Host 0 -nonewline				# no rewards data populated in endpoint
+
+							$_spacer_length = [int]($_label_rewards.Length - $_disk_rewards_obj.Rewards.toString().Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							Write-Host $_label_spacer -nonewline
+							#Write-Host $_disk_rewards_obj.Misses -nonewline
+							Write-Host 0 -nonewline				# no misses data populated in endpoint
 
 							$_spacer_length = [int]($_label_misses.Length - $_disk_rewards_obj.Misses.toString().Length)
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
