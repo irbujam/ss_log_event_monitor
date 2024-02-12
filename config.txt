@@ -3,7 +3,7 @@
 ## don't change format
 
 
-## change webhook to you own
+## change webhook to your own
 #
 Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertEPetP7YsTH298yH2xtoxgl............
 
