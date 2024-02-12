@@ -1,6 +1,6 @@
 # Readme: subspace_advanced_CLI_monitor.ps1
 A simple to run Windows Powershell script that captures information from subspace advance CLI farmer metrics endpoint. 
-To launch save the ps1 file to your pc, double click and follow prompts. Ensure that you have read the pre-requisites below.
+To launch save the ps1 and config file in samr folder on local pc. change config to your needs and double click ps1 file. Ensure that you have read the pre-requisites below.
 
 Pre-requisites:
 - Ensure that advance CLI is used for the node and farmer
