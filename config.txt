@@ -1,14 +1,27 @@
-#Sample config below contains user defined environment values
-#Please change IP, port and adjust screen refresh time accordingly as per your needs
-#Please dont change format
-#Insert a new line for each node/farmer like shown in sample below
+## start of config file
+## sample config below contains user defined environment values
+## don't change format
 
-Node:192.168.2.251:19595
 
-Farmer:192.168.2.251:18585
-Farmer:192.168.2.203:18585
-Farmer:192.168.2.105:18585
+## change webhook to you own
+#
+Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertEPetP7YsTH298yH2xtoxgl............
 
-Auto-refresh(seconds):300
+## adjust screen refresh time as apppropriate (if 0 is provided the valeu will default to 30 seconds)
+#
+Auto-refresh(seconds) : 300
 
-#End of config
+## insert a new line for each node/farmer like shown in sample below
+## change IP and port to match your node and farmer set-up
+#
+Node : 192.168.2.251:19595
+
+## insert a new line for each farmer like shown in sample below
+## change IP and port to match your farmer set-up
+#
+Farmer : 192.168.2.251:18585
+Farmer : 192.168.2.203:18585
+Farmer : 192.168.2.105:18585
+
+
+## end of config file
