@@ -32,6 +32,6 @@ Upcoming features (Not yet available):
           - Time to completion
           - plotting and replotting progress % completion 
           - time of last reward received  
-  - Warning/Error messages summary with duplicates removed to show only unique entries
+  - Warning/Error messages summary with duplicates removed
 
 *** For questions and feedback please contact (rs_00) in subspace discord channel.
