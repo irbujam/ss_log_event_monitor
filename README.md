@@ -7,7 +7,7 @@ Pre-requisites:
 - powershell version 5.1 is installed
 - Add --prometheus-listen-on <ip:port> to your node start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:1111)  
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
-- Change settings in the config.txt file so the ip:port are matching to your node and farmer set-up
+- Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 
 Key features:
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
