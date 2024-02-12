@@ -26,7 +26,7 @@ function main {
 		{
 			$_farmer_metrics_raw = ""
 			[array]$_process_state_arr = $null
-			if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "") {
+			if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -le 0) {
 				$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
 				$_process_type = $_config[0].toString()
 				if ($_process_type.toLower().IndexOf("discord") -ge 0) { $_url_discord = "https:" + $_config[2].toString() }
