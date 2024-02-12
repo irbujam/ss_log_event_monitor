@@ -14,7 +14,7 @@ Key features:
   - Removed the need for log file as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
-  - Metrics information per farmer by disk including:
+  - Metrics information per farmer  including:
       - Node state
       - Farmer state
       - Per disk metrics:
