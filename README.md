@@ -20,7 +20,7 @@ Key features:
       - Per Farmer disk level metrics:
           - plotting performance
           - rewards and misses
-  - auto-refresh custom timer set-up
+  - Auto-refresh custom timer set-up
   - Local Time Zone display
   
 Upcoming features (Not yet available):
