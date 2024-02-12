@@ -18,7 +18,6 @@ function main {
 		$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
 		$_configFile = "./config.txt"
 		$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
-		#Write-Host "Total Farmer count: " $_farmers_ip_arr.Count
 		for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
 		{
 			if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "") {
@@ -30,20 +29,18 @@ function main {
 					$_host_port = $_config[2].toString()
 					$_host_url = $_host_ip + ":" + $_host_port
 					$_hostname = ""
-					try {
-						$_hostname_obj = Resolve-DnsName -Name $_host_ip | select NameHost
-						$_hostname = $_hostname_obj.NameHost
-					}
-					catch 
-					{
-						$_hostname = $_host_ip
-					}
-
-					#Write-Host "_process_type: " $_process_type
-					#Write-Host "_host ip: " $_host_ip
-					#Write-Host "_host port: " $_hostport
-					#Write-Host "_host_url: " $_host_url
-					#Write-Host "_hostname: " $_hostname
+					
+					## below code is not working for some users, so replacing hostname with local ip in display
+					#
+					#try {
+					#	$_hostname_obj = Resolve-DnsName -Name $_host_ip | select NameHost
+					#	$_hostname = $_hostname_obj.NameHost
+					#}
+					#catch 
+					#{
+					#	$_hostname = $_host_ip
+					#}
+					$_hostname = $_host_ip
 
 					$_b_process_running_ok = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
 
@@ -304,7 +301,7 @@ function main {
 		
 		##
 		#$currentDate = Get-Date -Format HH:mm:ss
-		$currentDate = (Get-Date).ToLocalTime()
+		$currentDate = (Get-Date).ToLocalTime().toString()
 		# Refresh
 		echo `n
 		Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
