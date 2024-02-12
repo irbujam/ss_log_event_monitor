@@ -3,7 +3,7 @@ A simple to run lightweight Windows Powershell script that captures information 
 To launch save the ps1 and config file in same folder on a local computer, change config to your needs and double click ps1 file. Ensure that you have read the pre-requisites below.
 
 Pre-requisites:
-- Ensure that advance CLI is used for the node and farmer
+- must use advanced CLI for the node and farmer
 - powershell version 5.1 is installed
 - Add --prometheus-listen-on <ip:port> to your node start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:1111)  
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
