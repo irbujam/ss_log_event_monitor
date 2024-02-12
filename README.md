@@ -20,10 +20,8 @@ Key features:
       - Per disk metrics:
           - plotting performance metrics
           - rewards and misses  
-  - Warning/Error messages summary with duplicates removed to show only unique entries
   - auto-refresh custom timer set-up
   - Local Time Zone display
-  - Choice of summary only view
   
 Upcoming features (Not yet available):
   - Add latest github version check and display if running version of node or farmer is outdated
