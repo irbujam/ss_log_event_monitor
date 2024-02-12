@@ -13,7 +13,7 @@ Key features:
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   - Removed the need for log file as monitoring is moved using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
-      - Node and Farmer process state is determined and notification is sent to discord if either is offline (assuming node and farmer is running on single pc)  
+      - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Metrics information per farmer by disk including:
       - Node sync status
       - Farmer status
