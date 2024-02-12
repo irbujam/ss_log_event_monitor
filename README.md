@@ -2,7 +2,8 @@
 A simple to run lightweight windows powershell script that captures information from subspace advanced CLI farmer metrics endpoint. 
 To launch save the ps1 and config file in same folder on a local computer, change config to your needs and double click ps1 file. Ensure that you have read the pre-requisites below.
 
-Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
+```diff
++ Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
 
 **Pre-requisites:**
 - Must use advanced CLI for the node and farmer
