@@ -19,7 +19,8 @@ To launch save the ps1 and config file in same folder on a local computer, chang
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Metrics information including:
       - Node(s) state
-      - Farmer(s) state
+      - Farmer(s) state and uptime
+      - plotting performance averages 
       - Per Farmer disk level metrics:
           - plotting performance
           - rewards and misses
@@ -29,7 +30,6 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 **Upcoming features (Not yet available):**
   - Add latest github version check and display if running version of node or farmer is outdated
   - Add overall plotting progress % completion
-  - Add average overall progress rate by sector
   - Per disk metrics display to be added:
           - disk label and space allocated
           - Time to completion
