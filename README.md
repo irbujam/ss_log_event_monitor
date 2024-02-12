@@ -11,7 +11,7 @@ Note: If you recently restarted Farmer please wait for few minutes and the metri
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 
-Key features:
+*8Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   - Removed the need for log file as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
@@ -25,7 +25,7 @@ Key features:
   - Auto-refresh custom timer set-up
   - Local Time Zone display
   
-Upcoming features (Not yet available):
+**Upcoming features (Not yet available):**
   - Add latest github version check and display if running version of node or farmer is outdated
   - Add overall plotting progress % completion
   - Add average overall progress rate by sector
@@ -36,4 +36,4 @@ Upcoming features (Not yet available):
           - time of last reward received  
   - Warning/Error messages summary with duplicates removed
 
-*** For questions and feedback please contact (rs_00) in subspace discord channel.
+* For questions and feedback please contact (rs_00) in subspace discord channel.
