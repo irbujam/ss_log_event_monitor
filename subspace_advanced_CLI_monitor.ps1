@@ -395,7 +395,7 @@ function main {
 function fGetElapsedTime ([object]$_io_obj) {
 	$_time_in_seconds = 0
 	if ($_io_obj) {
-		$_time_in_seconds = $_io_obj.TotalSeconds
+		$_time_in_seconds = $_io_obj.Uptime
 	}
 	$_resp_total_uptime =  New-TimeSpan -seconds $_time_in_seconds
 	
@@ -527,6 +527,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_farmer_disk_sector_plot_time = 0.00
 	$_farmer_disk_sector_plot_count = 0
 	$_total_sectors_plot_count = 0
+	$_uptime_seconds = 0
 	$_total_sectors_plot_time_seconds = 0
 	$_total_disk_per_farmer = 0
 	#
@@ -538,7 +539,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	{
 		if ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		{
-			$_total_sectors_plot_time_seconds = $_metrics_obj.Value
+			$_uptime_seconds = $_metrics_obj.Value
 			$_unique_farm_id = $_metrics_obj.Instance
 			$_farm_id_info = [PSCustomObject]@{
 				Id		= $_unique_farm_id
@@ -565,14 +566,17 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						"seconds" 	{
 							$_sectors_per_hour = [math]::Round(($_farmer_disk_sector_plot_count * 3600) / $_farmer_disk_sector_plot_time, 1)
 							$_minutes_per_sector = [math]::Round($_farmer_disk_sector_plot_time / ($_farmer_disk_sector_plot_count * 60), 1)
+							$_total_sectors_plot_time_seconds += $_farmer_disk_sector_plot_time
 						}
 						"minutes" 	{
 							$_sectors_per_hour = [math]::Round($_farmer_disk_sector_plot_count / $_farmer_disk_sector_plot_time, 1)
 							$_minutes_per_sector = [math]::Round($_farmer_disk_sector_plot_time / $_farmer_disk_sector_plot_count, 1)
+							$_total_sectors_plot_time_seconds += ($_farmer_disk_sector_plot_time * 60)
 						}
 						"hours" 	{
 							$_sectors_per_hour = [math]::Round($_farmer_disk_sector_plot_count / ($_farmer_disk_sector_plot_time * 60), 1)
 							$_minutes_per_sector = [math]::Round(($_farmer_disk_sector_plot_time * 60) / $_farmer_disk_sector_plot_count, 1)
+							$_total_sectors_plot_time_seconds += ($_farmer_disk_sector_plot_time * 3600)
 						}
 					}
 					$_total_disk_per_farmer += 1
@@ -624,6 +628,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		TotalSectors		= $_total_sectors_plot_count
 		TotalSeconds		= $_total_sectors_plot_time_seconds
 		TotalDisks			= $_total_disk_per_farmer
+		Uptime				= $_uptime_seconds
 	}
 	$_resp_sector_perf_arr += $_disk_sector_perf
 
