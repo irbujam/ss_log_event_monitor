@@ -14,6 +14,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
+  - can read metrics from any OS machine running subspace farmer and node
   - Ability to add or remove node/farmer ip(s) in config without restarting the script
   - Removed the need for log file as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
