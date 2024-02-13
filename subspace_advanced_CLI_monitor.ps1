@@ -37,16 +37,20 @@ function main {
 					$_host_url = $_host_ip + ":" + $_host_port
 					$_hostname = ""
 					
-					## below code is not working for some users, so replacing hostname with local ip in display
+					## Experimental
+					## Message: start changes here in case of host name resolution related issues while using this tool
 					#
+					# START COMMENT - Type # in front of the line until the line where it says "STOP COMMENT"
+					## What is happening here is an attempt to hide IP info on screen display and use hostname instead
 					#try {
-					#	$_hostname_obj = Resolve-DnsName -Name $_host_ip | select NameHost
+					#	$_hostname_obj = [system.net.dns]::gethostentry($_host_ip)
 					#	$_hostname = $_hostname_obj.NameHost
 					#}
 					#catch 
 					#{
 					#	$_hostname = $_host_ip
 					#}
+					# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
 					$_hostname = $_host_ip
 
 					$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
@@ -112,10 +116,16 @@ function main {
 					
 					if ($_disk_sector_performance_obj) {
 					 if ($_disk_sector_performance_obj.Id -eq "overall") {
-						$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
-						$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
+						$_avg_sectors_per_hour = 0.0
+						$_avg_minutes_per_sector = 0.0
+						if ($_disk_sector_performance_obj.TotalSeconds -gt 0) {
+							$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
+						}
+						if ($_disk_sector_performance_obj.TotalSectors) {
+							$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
+						}
 						
-						$_uptime = fGetElapsedTime $_disk_sector_performance_obj.TotalSeconds
+						$_uptime = fGetElapsedTime $_disk_sector_performance_obj
 						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
 
 						Write-Host ", " -nonewline
@@ -397,8 +407,12 @@ function main {
 	}
 }
 
-function fGetElapsedTime ([string]$_io_time_seconds) {
-	$_resp_total_uptime =  New-TimeSpan -seconds $_io_time_seconds
+function fGetElapsedTime ([object]$_io_obj) {
+	$_time_in_seconds = 0
+	if ($_io_obj -and $_io_obj.TotalDisks -gt 0) {
+		$_time_in_seconds = [double]($_io_obj.TotalSeconds / $_io_obj.TotalDisks)
+	}
+	$_resp_total_uptime =  New-TimeSpan -seconds $_time_in_seconds
 	
 	return $_resp_total_uptime
 }
@@ -527,6 +541,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_farmer_disk_sector_plot_count = 0
 	$_total_sectors_plot_count = 0
 	$_total_sectors_plot_time_seconds = 0
+	$_total_disk_per_farmer = 0
 	#
 	$_farmer_disk_id_rewards = ""
 	$_farmer_disk_proving_success_count = 0
@@ -567,6 +582,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							$_total_sectors_plot_time_seconds += ($_farmer_disk_sector_plot_time * 3600)
 						}
 					}
+					$_total_disk_per_farmer += 1
+					
 					$_farmer_disk_sector_plot_time = 0.00
 					$_farmer_disk_sector_plot_count = 0
 					#
@@ -613,6 +630,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		Id					= "overall"
 		TotalSectors		= $_total_sectors_plot_count
 		TotalSeconds		= $_total_sectors_plot_time_seconds
+		TotalDisks			= $_total_disk_per_farmer
 	}
 	$_resp_sector_perf_arr += $_disk_sector_perf
 
