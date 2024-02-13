@@ -16,8 +16,9 @@ function main {
 
 		$_b_first_time = $True
 		$_line_spacer_color = "gray"
-		$_farmer_header_color = "yellow"
-		$_disk_header_color = "cyan"
+		$_farmer_header_color = "cyan"
+		$_farmer_header_data_color = "yellow"
+		$_disk_header_color = "white"
 
 		$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
 		$_configFile = "./config.txt"
@@ -48,7 +49,6 @@ function main {
 					#}
 					$_hostname = $_host_ip
 
-					#$_b_process_running_ok = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
 					$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
 					$_b_process_running_ok = $_process_state_arr[1]
 
@@ -61,19 +61,20 @@ function main {
 					}
 					
 					$_console_msg = $_process_type + " status: "
-					Write-Host $_console_msg -nonewline
+					Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
 					if ($_b_process_running_ok -eq $True) {
 						Write-Host "Running" -ForegroundColor green -nonewline
 					}
 					else {
 						Write-Host "Stopped" -ForegroundColor red -nonewline
 					}
-					$_console_msg = ", Hostname: " + $_hostname
+					Write-Host ", " -nonewline
+					Write-Host "Hostname: " -nonewline -ForegroundColor $_farmer_header_color
 					if ($_process_type.toLower() -eq "farmer") {
-						Write-Host $_console_msg -nonewline
+						Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
 					}
 					else {
-						Write-Host $_console_msg
+						Write-Host $_hostname
 					}
 				}
 				elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
@@ -85,7 +86,7 @@ function main {
 
 				#$_farmer_metrics_raw = fPingMetricsUrl $_host_url
 				$_farmer_metrics_raw = $_process_state_arr[0]
-				$_tempArr_ = $_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
+				[void]$_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
 				$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 				
 				# header lables
@@ -100,8 +101,11 @@ function main {
 				$_spacer = " "
 				$_total_header_labels = 5
 				#
-				$_disk_sector_performance_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
-				$_disk_rewards_arr = fGetDiskProvingMetrics $_farmer_metrics_formatted_arr
+				$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+				#$_disk_rewards_arr = fGetDiskProvingMetrics $_farmer_metrics_formatted_arr
+				$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
+				$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
+
 
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
@@ -115,14 +119,14 @@ function main {
 						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
 
 						Write-Host ", " -nonewline
-						Write-Host "Uptime: " -nonewline 
-						Write-Host $_uptime_disp -ForegroundColor $_farmer_header_color
+						Write-Host "Uptime: " -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host $_uptime_disp -ForegroundColor $_farmer_header_data_color
 						#Write-Host ", " -nonewline
 						Write-Host "Sectors/Hour (avg): " -nonewline 
-						Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
 						Write-Host ", " -nonewline
 						Write-Host "Minutes/Sector (avg): " -nonewline
-						Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_color
+						Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_data_color
 						break
 					 }
 					}
@@ -399,7 +403,7 @@ function fGetElapsedTime ([string]$_io_time_seconds) {
 	return $_resp_total_uptime
 }
 
-function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType){
+function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType) {
 	$dataSpacerLabel = ""
 	for ($k=1;$k -le $ioSpacerLength;$k++) {
 		$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
@@ -511,17 +515,22 @@ function fParseMetricsToObj ([string]$_io_rest_str) {
 	return $_response_metrics
 }
 
-function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
-{
+function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
+	$_resp_disk_metrics_arr = [System.Collections.ArrayList]@()
+
 	[array]$_resp_sector_perf_arr = $null
+	[array]$_resp_rewards_arr = $null
+
 	$_unit_type = ""
 	$_farmer_disk_id = ""
-	$_b_identifier_set = $False
 	$_farmer_disk_sector_plot_time = 0.00
 	$_farmer_disk_sector_plot_count = 0
-	
 	$_total_sectors_plot_count = 0
 	$_total_sectors_plot_time_seconds = 0
+	#
+	$_farmer_disk_id_rewards = ""
+	$_farmer_disk_proving_success_count = 0
+	$_farmer_disk_proving_misses_count = 0
 	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
@@ -531,12 +540,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
 			{
 				$_unit_type = $_metrics_obj.Value.toLower()
 				$_farmer_disk_id = ""
-				$_b_identifier_set  = $False
 			}
 			elseif ($_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 			{
 				$_farmer_disk_id = $_metrics_obj.Instance
-				$_b_identifier_set = $True
 				if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_metrics_obj.Value) }
 				if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_metrics_obj.Value) }
 				if ($_farmer_disk_sector_plot_time -gt 0 -and $_farmer_disk_sector_plot_count -gt 0) 
@@ -572,50 +579,26 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr)
 				}
 			}
 		}
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) { $_total_sectors_plot_count = [int]($_metrics_obj.Value) }
-	}
-	#
-	$_disk_sector_perf = [PSCustomObject]@{
-		Id					= "overall"
-		TotalSectors		= $_total_sectors_plot_count
-		TotalSeconds		= $_total_sectors_plot_time_seconds
-	}
-	$_resp_sector_perf_arr += $_disk_sector_perf
-
-	return $_resp_sector_perf_arr
-}
-
-function fGetDiskProvingMetrics ([array]$_io_farmer_metrics_arr)
-{
-	[array]$_resp_rewards_arr = $null
-
-	$_unit_type = ""
-	$_farmer_disk_id = ""
-	$_b_identifier_set = $False
-	$_farmer_disk_proving_success_count = 0
-	$_farmer_disk_proving_misses_count = 0
-	
-	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
-	{
-		if ($_metrics_obj.Name.IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
+		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) 
+		{
+			$_total_sectors_plot_count = [int]($_metrics_obj.Value) 
+		}
+		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
 		{
 			if ($_metrics_obj.Id.toLower().IndexOf("unit") -ge 0 -or $_metrics_obj.Id.toLower().IndexOf("type") -ge 0)
 			{
-				$_unit_type = $_metrics_obj.Value.toLower()
-				$_farmer_disk_id = ""
-				$_b_identifier_set  = $False
+				$_farmer_disk_id_rewards = ""
 			}
 			elseif ($_metrics_obj.Id.IndexOf("farm_id") -ge 0 -and $_metrics_obj.Name.toLower().IndexOf("count") -ge 0) 
 			{
 				$_farmer_id = $_metrics_obj.Instance -split ","
-				$_farmer_disk_id = $_farmer_id[0]
-				$_b_identifier_set = $True
+				$_farmer_disk_id_rewards = $_farmer_id[0]
 				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {$_farmer_disk_proving_success_count = [int]($_metrics_obj.Value)}
 				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -lt 0) {$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)}
 				#
 				#
 				$_disk_rewards_metric = [PSCustomObject]@{
-					Id		= $_farmer_disk_id
+					Id		= $_farmer_disk_id_rewards
 					Rewards	= $_farmer_disk_proving_success_count
 					Misses	= $_farmer_disk_proving_misses_count
 				}
@@ -625,48 +608,51 @@ function fGetDiskProvingMetrics ([array]$_io_farmer_metrics_arr)
 			}
 		}
 	}
-	return $_resp_rewards_arr
+	#
+	$_disk_sector_perf = [PSCustomObject]@{
+		Id					= "overall"
+		TotalSectors		= $_total_sectors_plot_count
+		TotalSeconds		= $_total_sectors_plot_time_seconds
+	}
+	$_resp_sector_perf_arr += $_disk_sector_perf
+
+	$_disk_metrics = [PSCustomObject]@{
+		Performance	= $_resp_sector_perf_arr
+		Rewards		= $_resp_rewards_arr
+	}
+	[void]$_resp_disk_metrics_arr.add($_disk_metrics)
+
+	#return $_resp_sector_perf_arr
+	#return $_resp_rewards_arr
+	return $_resp_disk_metrics_arr
 }
 
-function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg){
+function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 	$JSON = @{ "content" = $ioMsg; } | convertto-json
 	Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 }
 
-function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url){
-
+function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url) {
 	$_resp_process_state_arr = [System.Collections.ArrayList]@()
 
-	$_b_process_alert_set = $False
 	$_b_process_running_state = $False
-	$_process_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-	#
-	#check if last alert sent was within an hour of start, exception is for first notification that can be sent within this window
-	$_alert_hours_elapsed = $_process_alert_stopwatch.Elapsed.TotalHours
-	if ($_alert_hours_elapsed -ge 1) {
-		$_process_alert_stopwatch.Restart()
-		$_b_process_alert_set = $False
-	}
 	#
 	# get process state, send notification if process is stopped/not running
 	$_resp = fPingMetricsUrl $_io_host_ip		# needs to be outside of elapsed time check as response is used downstream to eliminiate dup call
 	if ($_resp -eq "") {
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
-		if ($_b_process_alert_set -eq $False) {
-			try {
-				fSendDiscordNotification $_io_alert_url $_alert_text
-			}
-			catch {}
-			#
-			$_b_process_alert_set = $True
-			$_b_process_running_state = $False
+		try {
+			fSendDiscordNotification $_io_alert_url $_alert_text
 		}
+		catch {}
+		#
+		$_b_process_running_state = $False
 	}
 	else { $_b_process_running_state = $True }
 
 	[void]$_resp_process_state_arr.add($_resp)
 	[void]$_resp_process_state_arr.add($_b_process_running_state)
-	#return $_b_process_running_state
+
 	return $_resp_process_state_arr
 }
 
