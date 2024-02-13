@@ -69,7 +69,12 @@ function main {
 						Write-Host "Stopped" -ForegroundColor red -nonewline
 					}
 					$_console_msg = ", Hostname: " + $_hostname
-					Write-Host $_console_msg -nonewline
+					if ($_process_type.toLower() -eq "farmer") {
+						Write-Host $_console_msg -nonewline
+					}
+					else {
+						Write-Host $_console_msg
+					}
 				}
 				elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 					$refreshTimeScaleInSeconds = [int]$_config[1].toString()
