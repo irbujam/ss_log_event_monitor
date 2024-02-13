@@ -69,7 +69,7 @@ function main {
 						Write-Host "Stopped" -ForegroundColor red -nonewline
 					}
 					$_console_msg = ", Hostname: " + $_hostname
-					Write-Host $_console_msg
+					Write-Host $_console_msg -nonewline
 				}
 				elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 					$refreshTimeScaleInSeconds = [int]$_config[1].toString()
@@ -109,9 +109,10 @@ function main {
 						$_uptime = fGetElapsedTime $_disk_sector_performance_obj.TotalSeconds
 						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
 
-						Write-Host "Uptime: " -nonewline 
-						Write-Host $_uptime_disp -nonewline -ForegroundColor $_farmer_header_color
 						Write-Host ", " -nonewline
+						Write-Host "Uptime: " -nonewline 
+						Write-Host $_uptime_disp -ForegroundColor $_farmer_header_color
+						#Write-Host ", " -nonewline
 						Write-Host "Sectors/Hour (avg): " -nonewline 
 						Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_color
 						Write-Host ", " -nonewline
@@ -327,7 +328,7 @@ function main {
 							Write-Host $_label_spacer -nonewline
 							Write-Host 0 -nonewline				# no rewards data populated in endpoint
 
-							$_spacer_length = [int]($_label_rewards.Length - $_disk_rewards_obj.Rewards.toString().Length)
+							$_spacer_length = [int]($_label_rewards.Length - ("0").Length)
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
 							Write-Host $_label_spacer -nonewline
