@@ -29,7 +29,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
   - Auto-refresh custom timer set-up with ability to change value in config without restarting the script
   - Local Time Zone display
   
-**Upcoming features (Not yet available):**
+**Upcoming features (not yet available):**
   - Add latest github version check and display if running version of node or farmer is outdated
   - Add overall plotting progress % completion
   - Per disk metrics display to be added:
