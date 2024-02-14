@@ -9,428 +9,802 @@ function main {
 	$gitVersion = Get-gitNewVersion
 	$refreshTimeScaleInSeconds = 30		# defined in config, defaults to 30 if not provided
 	$_url_discord = ""
+	#
+	$_b_console_disabled = $false
+	####
+	$_b_listener_running = $false
+	$_api_enabled = "N"
+	$_api_host = ""
+	$_api_host_ip = ""
+	$_api_host_port = ""
+	$_url_prefix_listener = ""
+	#
+	$_html = $null
+	$_font_size = 5
+	####
 	Clear-Host
 	
-	while ($true) {
-		Clear-Host
+	try {
+		while ($true) {
+			Clear-Host
 
-		$_b_first_time = $True
-		$_line_spacer_color = "gray"
-		$_farmer_header_color = "cyan"
-		$_farmer_header_data_color = "yellow"
-		$_disk_header_color = "white"
+			$_b_first_time = $True
+			$_line_spacer_color = "gray"
+			$_farmer_header_color = "cyan"
+			$_farmer_header_data_color = "green"
+			$_disk_header_color = "white"
+			$_html_red = "red"
+			$_html_green = "green"
+			$_html_blue = "blue"
+			$_html_black = "black"
 
-		$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
-		$_node_metrics_raw_arr = [System.Collections.ArrayList]@()
+			$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
+			$_node_metrics_raw_arr = [System.Collections.ArrayList]@()
 
-		$_configFile = "./config.txt"
-		$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
-		for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
-		{
-			$_farmer_metrics_raw = ""
-			$_node_metrics_raw = ""
-			[array]$_process_state_arr = $null
-			if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -le 0) {
-				$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
-				$_process_type = $_config[0].toString()
-				if ($_process_type.toLower().IndexOf("discord") -ge 0) { $_url_discord = "https:" + $_config[2].toString() }
-				elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
-					$_host_ip = $_config[1].toString()
-					$_host_port = $_config[2].toString()
-					$_host_url = $_host_ip + ":" + $_host_port
-					$_hostname = ""
+			$_configFile = "./config.txt"
+			$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
+
+			for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
+			{
+				if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
+					$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
+					$_process_type = $_config[0].toString()
+					if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $_api_enabled = $_config[1].toString()}
+					elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
+				}
+			}
+			###Check if API mode enabled and we have a host
+			if ($_api_enabled.toLower() -eq "y" -and $_api_host -ne $null -and $_api_host -ne "")
+			{
+				$_b_console_disabled = $true
+				#### create listener object for later use
+				# create a listener for inbound http request
+				$_api_host_arr = $_api_host.split(":").Trim(" ")
+				$_api_host_ip = $_api_host_arr[0]
+				$_api_host_port = $_api_host_arr[1]
+				
+				$_api_host_url = "localhost:" + $_api_host_port
+				if ($_api_host_ip -ne "127.0.0.1" -and $_api_host_ip -ne "localhost" ){ $_api_host_url = "*:" + $_api_host_port }
+				
+				$_url_prefix = "http://" + $_api_host_url + "/"
+				$_url_prefix_listener = $_url_prefix.toString().replace("http://127.0.0.1", "http://localhost")
+
+				$_http_listener = New-Object System.Net.HttpListener
+				$_http_listener.Prefixes.Add($_url_prefix_listener)
+
+				$_http_listener.Start()
+				$_b_listener_running = $true
+				
+				# wait for request - async
+				$_context_task = $_http_listener.GetContextAsync()
+				#### - build html before proceeding further
+				$_html = "<html><body>"
+				$_html += "<table border=0>"
+			}
+
+			for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
+			{
+				$_farmer_metrics_raw = ""
+				$_node_metrics_raw = ""
+				[array]$_process_state_arr = $null
+				if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
+					$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
+					$_process_type = $_config[0].toString()
+					if ($_process_type.toLower().IndexOf("discord") -ge 0) { $_url_discord = "https:" + $_config[2].toString() }
+					elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+						$_host_ip = $_config[1].toString()
+						$_host_port = $_config[2].toString()
+						$_host_url = $_host_ip + ":" + $_host_port
+						$_hostname = ""
+						
+						## Experimental
+						## Message: start changes here in case of host name resolution related issues while using this tool
+						#
+						# START COMMENT - Type # in front of the line until the line where it says "STOP COMMENT"
+						## What is happening here is an attempt to hide IP info on screen display and use hostname instead
+						#try {
+						#	$_hostname_obj = [system.net.dns]::gethostentry($_host_ip)
+						#	$_hostname = $_hostname_obj.NameHost
+						#}
+						#catch 
+						#{
+						#	$_hostname = $_host_ip
+						#}
+						# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
+						$_hostname = $_host_ip
+
+						$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+						$_b_process_running_ok = $_process_state_arr[1]
+						
+						if ($_b_console_disabled) {
+								if ($_process_type.toLower() -eq "farmer") {
+									$_total_spacer_length = ("------------------------------------------------------------------------").Length
+									$_spacer_length = $_total_spacer_length
+									$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+									$_html += "<br>"
+								}
+								else {				# get node metrics
+									$_node_metrics_raw = $_process_state_arr[0]
+									[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
+									$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
+
+									$_node_metrics_arr = fGetNodeMetrics $_node_metrics_formatted_arr
+									$_node_sync_state = $_node_metrics_arr[0].Sync.State
+									$_node_peers_connected = $_node_metrics_arr[0].Peers.Connected
+								}
+								
+								$_console_msg = $_process_type + " status: "
+								$_html += "<tr>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_console_msg +  "</td>"
+								if ($_b_process_running_ok -eq $True) {
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + "Running" +  "</td>"
+								}
+								else {
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_red + "'>" + "Stopped" +  "</td>"
+								}
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Hostname" +  "</td>"
+								if ($_process_type.toLower() -eq "farmer") {
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_hostname +  "</td>"
+								}
+								else {
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_hostname +  "</td>"
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+									$_html += "</tr>"
+									$_html += "<tr>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Synced: " +  "</td>"
+									$_node_sync_state_disp_color = $_html_green
+									$_node_sync_state_disp = "Yes"
+									if ($_node_sync_state -eq 1) {
+										$_node_sync_state_disp = "No"
+										$_node_sync_state_disp_color = $_html_red
+									}
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_node_sync_state_disp_color + "'>" + $_node_sync_state_disp +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Peers: " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_node_peers_connected +  "</td>"
+									$_html += "</tr>"
+								}
+						}
+						else 
+						{
+							if ($_process_type.toLower() -eq "farmer") {
+								$_total_spacer_length = ("------------------------------------------------------------------------").Length
+								$_spacer_length = $_total_spacer_length
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+								Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+								#echo `n
+							}
+							else {				# get node metrics
+								$_node_metrics_raw = $_process_state_arr[0]
+								[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
+								$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
+
+								$_node_metrics_arr = fGetNodeMetrics $_node_metrics_formatted_arr
+								$_node_sync_state = $_node_metrics_arr[0].Sync.State
+								$_node_peers_connected = $_node_metrics_arr[0].Peers.Connected
+							}
+							
+							$_console_msg = $_process_type + " status: "
+							Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
+							if ($_b_process_running_ok -eq $True) {
+								Write-Host "Running" -ForegroundColor green -nonewline
+							}
+							else {
+								Write-Host "Stopped" -ForegroundColor red -nonewline
+							}
+							Write-Host ", " -nonewline
+							Write-Host "Hostname: " -nonewline -ForegroundColor $_farmer_header_color
+							if ($_process_type.toLower() -eq "farmer") {
+								Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
+							}
+							else {
+								Write-Host $_hostname -nonewline
+								
+								Write-Host ", " -nonewline
+								Write-Host "Synced: " -nonewline -ForegroundColor $_farmer_header_color
+								$_node_sync_state_disp_color = $_html_green
+								$_node_sync_state_disp = "Yes"
+								if ($_node_sync_state -eq 1) {
+									$_node_sync_state_disp = "No"
+									$_node_sync_state_disp_color = $_html_red
+								}
+								Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
+								Write-Host ", " -nonewline
+								Write-Host "Peers: " -nonewline -ForegroundColor $_farmer_header_color
+								Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
+							}
+						}
+					}
+					elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
+						$refreshTimeScaleInSeconds = [int]$_config[1].toString()
+						if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = 30}
+					}
+
+					if ($_process_type.toLower() -ne "farmer") { continue }
+
+					#$_farmer_metrics_raw = fPingMetricsUrl $_host_url
+					$_farmer_metrics_raw = $_process_state_arr[0]
+					[void]$_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
+					$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 					
-					## Experimental
-					## Message: start changes here in case of host name resolution related issues while using this tool
+					# header lables
+					$_b_write_header = $True
 					#
-					# START COMMENT - Type # in front of the line until the line where it says "STOP COMMENT"
-					## What is happening here is an attempt to hide IP info on screen display and use hostname instead
-					#try {
-					#	$_hostname_obj = [system.net.dns]::gethostentry($_host_ip)
-					#	$_hostname = $_hostname_obj.NameHost
-					#}
-					#catch 
-					#{
-					#	$_hostname = $_host_ip
-					#}
-					# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
-					$_hostname = $_host_ip
-
-					$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
-					$_b_process_running_ok = $_process_state_arr[1]
-
-					if ($_process_type.toLower() -eq "farmer") {
-						$_total_spacer_length = ("------------------------------------------------------------------------").Length
-						$_spacer_length = $_total_spacer_length
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
-						#echo `n
-					}
-					else {				# get node metrics
-						$_node_metrics_raw = $_process_state_arr[0]
-						[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
-						$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
-
-						$_node_metrics_arr = fGetNodeMetrics $_node_metrics_formatted_arr
-						$_node_sync_state = $_node_metrics_arr[0].Sync.State
-						$_node_peers_connected = $_node_metrics_arr[0].Peers.Connected
-					}
+					$_label_hostname = "Hostname"
+					$_label_diskid = "Disk Id"
+					$_label_sectors_per_hour = "Sectors/Hour"
+					$_label_minutes_per_sectors = "Minutes/Sector"
+					$_label_rewards = "Rewards"
+					$_label_misses = "Misses"
+					$_spacer = " "
+					$_total_header_labels = 5
+					#
 					
-					$_console_msg = $_process_type + " status: "
-					Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
-					if ($_b_process_running_ok -eq $True) {
-						Write-Host "Running" -ForegroundColor green -nonewline
-					}
-					else {
-						Write-Host "Stopped" -ForegroundColor red -nonewline
-					}
-					Write-Host ", " -nonewline
-					Write-Host "Hostname: " -nonewline -ForegroundColor $_farmer_header_color
-					if ($_process_type.toLower() -eq "farmer") {
-						Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
-					}
-					else {
-						Write-Host $_hostname -nonewline
-						
-						Write-Host ", " -nonewline
-						Write-Host "Synced: " -nonewline -ForegroundColor $_farmer_header_color
-						$_node_sync_state_disp_color = "green"
-						$_node_sync_state_disp = "Yes"
-						if ($_node_sync_state -eq 1) {
-							$_node_sync_state_disp = "No"
-							$_node_sync_state_disp_color = "red"
-						}
-						Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
-						Write-Host ", " -nonewline
-						Write-Host "Peers: " -nonewline -ForegroundColor $_farmer_header_color
-						Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
-					}
-				}
-				elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
-					$refreshTimeScaleInSeconds = [int]$_config[1].toString()
-					if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = 30}
-				}
+					##
+					$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+					$_disk_UUId_arr = $_disk_metrics_arr[0].Id
+					$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
+					$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
 
-				if ($_process_type.toLower() -ne "farmer") { continue }
-
-				#$_farmer_metrics_raw = fPingMetricsUrl $_host_url
-				$_farmer_metrics_raw = $_process_state_arr[0]
-				[void]$_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
-				$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
-				
-				# header lables
-				$_b_write_header = $True
-				#
-				$_label_hostname = "Hostname"
-				$_label_diskid = "Disk Id"
-				$_label_sectors_per_hour = "Sectors/Hour"
-				$_label_minutes_per_sectors = "Minutes/Sector"
-				$_label_rewards = "Rewards"
-				$_label_misses = "Misses"
-				$_spacer = " "
-				$_total_header_labels = 5
-				#
-				
-				##
-				$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
-				$_disk_UUId_arr = $_disk_metrics_arr[0].Id
-				$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
-				$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
-
-				# Write uptime information to console
-				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
-				{
-					
-					if ($_disk_sector_performance_obj) {
-					 if ($_disk_sector_performance_obj.Id -eq "overall") {
-						$_avg_sectors_per_hour = 0.0
-						$_avg_minutes_per_sector = 0.0
-						if ($_disk_sector_performance_obj.TotalSeconds -gt 0) {
-							$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
-						}
-						if ($_disk_sector_performance_obj.TotalSectors) {
-							$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
-						}
-						
-						$_uptime = fGetElapsedTime $_disk_sector_performance_obj
-						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
-
-						Write-Host ", " -nonewline
-						Write-Host "Uptime: " -nonewline -ForegroundColor $_farmer_header_color
-						Write-Host $_uptime_disp -ForegroundColor $_farmer_header_data_color
-						#Write-Host ", " -nonewline
-						Write-Host "Sectors/Hour (avg): " -nonewline 
-						Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
-						Write-Host ", " -nonewline
-						Write-Host "Minutes/Sector (avg): " -nonewline
-						Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_data_color
-						break
-					 }
-					}
-				}
-
-				$_total_spacer_length = ("------------------------------------------------------------------------").Length
-				$_spacer_length = $_total_spacer_length
-				$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-				Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
-
-				#foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
-				foreach ($_disk_UUId_obj in $_disk_UUId_arr)
-				{
-					# write header if not already done
-					if ($_b_write_header -eq $True) {
-						# Host name header info
-						# draw line
-						if ($_disk_UUId_obj -ne $null) {
-							$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
-						}
-						else {$_total_spacer_length = ("------------------------------------------------------------------------").Length}
-						$_spacer_length = $_total_spacer_length
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-						if ($_b_first_time -eq $True) {
-							$_b_first_time = $False
-						}
-						 
-						#
-						$_spacer_length = 0
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-
-						Write-Host $_label_diskid -nonewline -ForegroundColor $_disk_header_color
-						if ($_disk_UUId_obj -ne $null) {
-							$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
-						}
-						else {$_spacer_length = ("------------------------------------------------------------------------").Length}
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline 
-						Write-Host $_label_sectors_per_hour -nonewline -ForegroundColor $_disk_header_color
-
-						$_spacer_length = 0
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_minutes_per_sectors -nonewline -ForegroundColor $_disk_header_color
-
-						$_spacer_length = 0
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_rewards -nonewline -ForegroundColor $_disk_header_color
-						
-						$_spacer_length = 0
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host $_label_misses -nonewline -ForegroundColor $_disk_header_color
-
-						$_spacer_length = 0
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer
-						#
-						# draw line
-						if ($_disk_UUId_obj -ne $null) {
-							$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
-						}
-						else {$_spacer_length = ("------------------------------------------------------------------------").Length}
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
-						#
-						$_b_write_header = $False
-					}
-					#$_disk_sector_performance_obj = $_disk_sector_performance_arr[$arrPos]
-					#$_disk_rewards_obj = $_disk_rewards_arr[$arrPos]
-
-					# write data
-					$_spacer_length = 0
-					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-					$_label_spacer = $_label_spacer + "|"
-					Write-Host $_label_spacer -nonewline
-					Write-Host $_disk_UUId_obj.Id -nonewline
-					
-					# Build and write data to console
-					$_b_printed_perf_metrics = $False
-					$_minutes_per_sector_data_disp = "-"
+					# Write uptime information to console
 					foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 					{
+						
 						if ($_disk_sector_performance_obj) {
-							if ($_disk_sector_performance_obj.Id -eq "overall" -or $_disk_UUId_obj.Id -ne $_disk_sector_performance_obj.Id) { continue }
+							if ($_disk_sector_performance_obj.Id -eq "overall") {
+								$_avg_sectors_per_hour = 0.0
+								$_avg_minutes_per_sector = 0.0
+								if ($_disk_sector_performance_obj.TotalSeconds -gt 0) {
+									$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
+								}
+								if ($_disk_sector_performance_obj.TotalSectors) {
+									$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
+								}
+								
+								$_uptime = fGetElapsedTime $_disk_sector_performance_obj
+								$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
+
+								if ($_b_console_disabled) {
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Uptime: " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_uptime_disp +  "</td>"
+									$_html += "</tr>"
+									$_html += "<br>"
+									$_html += "<tr>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Sectors/Hour (avg): " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_avg_sectors_per_hour.toString() +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Minutes/Sector (avg): " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_avg_minutes_per_sector.toString() +  "</td>"
+									$_html += "</tr>"
+									break
+								}
+								else
+								{
+									Write-Host ", " -nonewline
+									Write-Host "Uptime: " -nonewline -ForegroundColor $_farmer_header_color
+									Write-Host $_uptime_disp -ForegroundColor $_farmer_header_data_color
+									#Write-Host ", " -nonewline
+									Write-Host "Sectors/Hour (avg): " -nonewline 
+									Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+									Write-Host ", " -nonewline
+									Write-Host "Minutes/Sector (avg): " -nonewline
+									Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_data_color
+									break
+								}
+							}
 						}
-						#
-						$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
-
-						$_spacer_length = 1
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host $_disk_sector_performance_obj.SectorsPerHour -nonewline
-
-						$_spacer_length = [int]($_label_sectors_per_hour.Length - ($_disk_sector_performance_obj.SectorsPerHour).toString().Length)
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host $_disk_sector_performance_obj.MinutesPerSector -nonewline
-
-						$_b_printed_perf_metrics = $True
-					}
-					if ($_b_printed_perf_metrics -eq $False)
-					{
-						$_spacer_length = 1
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host "-" -nonewline
-
-						$_spacer_length = [int]($_label_sectors_per_hour.Length - ("-").toString().Length)
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						$_label_spacer = $_label_spacer + "|"
-						Write-Host $_label_spacer -nonewline
-						Write-Host "-" -nonewline
 					}
 
-					
-					$_b_counted_missed_rewards = $False
-					$_b_data_printed = $False
-					$_missed_rewards_count = 0
-					$_missed_rewards_color = "white"
-					$_b_printed_reward_metrics = $False
-					foreach ($_disk_rewards_obj in $_disk_rewards_arr)
+					$_total_spacer_length = ("------------------------------------------------------------------------").Length
+					$_spacer_length = $_total_spacer_length
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+					if ($_b_console_disabled) {
+						$_html += "<br>"
+					}
+					else 
 					{
-						if ($_disk_UUId_obj.Id -eq $_disk_rewards_obj.Id) {
-							if ($_disk_rewards_obj.Misses -gt 0) {
-								$_b_counted_missed_rewards = $True
-								$_missed_rewards_count = $_disk_rewards_obj.Misses
-								$_missed_rewards_color = "red"
-								continue
+						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+					}
+
+					#foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
+					$_html += "<tr><table border=1>"
+					foreach ($_disk_UUId_obj in $_disk_UUId_arr)
+					{
+						# write header if not already done
+						if ($_b_write_header -eq $True) {
+							# Host name header info
+							# draw line
+							if ($_disk_UUId_obj -ne $null) {
+								$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+							}
+							else {$_total_spacer_length = ("------------------------------------------------------------------------").Length}
+							$_spacer_length = $_total_spacer_length
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+							if ($_b_first_time -eq $True) {
+								$_b_first_time = $False
+							}
+							 
+							#
+							$_spacer_length = 0
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+
+							if ($_b_console_disabled) {
+								$_html += "<tr>"
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_diskid +  "</td>"
+								if ($_disk_UUId_obj -ne $null) {
+									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
+								}
+								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_sectors_per_hour +  "</td>"
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_minutes_per_sectors +  "</td>"
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_rewards +  "</td>"
+								
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_misses +  "</td>"
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "</tr>"
+								#
+								# draw line
+								if ($_disk_UUId_obj -ne $null) {
+									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+								}
+								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+								#$_html += "<tr>"
+								#$_html += '<hr style="width:50%;text-align:left;margin-left:0">'
+								#$_html += "</tr>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+
+								Write-Host $_label_diskid -nonewline -ForegroundColor $_disk_header_color
+								if ($_disk_UUId_obj -ne $null) {
+									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
+								}
+								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline 
+								Write-Host $_label_sectors_per_hour -nonewline -ForegroundColor $_disk_header_color
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_label_minutes_per_sectors -nonewline -ForegroundColor $_disk_header_color
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_label_rewards -nonewline -ForegroundColor $_disk_header_color
+								
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_label_misses -nonewline -ForegroundColor $_disk_header_color
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer
+								#
+								# draw line
+								if ($_disk_UUId_obj -ne $null) {
+									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+								}
+								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
+								Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+							}
+							#
+							$_b_write_header = $False
+						}
+						#$_disk_sector_performance_obj = $_disk_sector_performance_arr[$arrPos]
+						#$_disk_rewards_obj = $_disk_rewards_arr[$arrPos]
+
+						# write data
+						$_spacer_length = 0
+						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+						$_label_spacer = $_label_spacer + "|"
+
+						if ($_b_console_disabled) {
+							$_html += "<tr>"
+							#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+							$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_UUId_obj.Id +  "</td>"
+						}
+						else 
+						{
+							Write-Host $_label_spacer -nonewline
+							Write-Host $_disk_UUId_obj.Id -nonewline
+						}
+						
+						# Build and write data to console
+						$_b_printed_perf_metrics = $False
+						$_minutes_per_sector_data_disp = "-"
+						foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
+						{
+							if ($_disk_sector_performance_obj) {
+								if ($_disk_sector_performance_obj.Id -eq "overall" -or $_disk_UUId_obj.Id -ne $_disk_sector_performance_obj.Id) { continue }
+							}
+							#
+							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
+
+							$_spacer_length = 1
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+						
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_sector_performance_obj.SectorsPerHour +  "</td>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_disk_sector_performance_obj.SectorsPerHour -nonewline
 							}
 
-							$_b_data_printed = $True
+							$_spacer_length = [int]($_label_sectors_per_hour.Length - ($_disk_sector_performance_obj.SectorsPerHour).toString().Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
 							
-							$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_sector_performance_obj.MinutesPerSector +  "</td>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_disk_sector_performance_obj.MinutesPerSector -nonewline
+							}
+
+							$_b_printed_perf_metrics = $True
+						}
+						if ($_b_printed_perf_metrics -eq $False)
+						{
+							$_spacer_length = 1
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer -nonewline
-							Write-Host $_disk_rewards_obj.Rewards -nonewline
+							
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+								Write-Host "-" -nonewline
+							}
 
-							$_spacer_length = [int]($_label_rewards.Length - $_disk_rewards_obj.Rewards.toString().Length)
+							$_spacer_length = [int]($_label_sectors_per_hour.Length - ("-").toString().Length)
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer -nonewline
-							#Write-Host $_disk_rewards_obj.Misses -nonewline
-							Write-Host $_missed_rewards_count -nonewline -ForegroundColor $_missed_rewards_color
+							
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+								Write-Host "-" -nonewline
+							}
+						}
 
-							$_spacer_length = [int]($_label_misses.Length - $_disk_rewards_obj.Misses.toString().Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer
-							$_b_printed_reward_metrics = $True
+						
+						$_b_counted_missed_rewards = $False
+						$_b_data_printed = $False
+						$_missed_rewards_count = 0
+						$_missed_rewards_color = "white"
+						$_b_printed_reward_metrics = $False
+						foreach ($_disk_rewards_obj in $_disk_rewards_arr)
+						{
+							if ($_disk_UUId_obj.Id -eq $_disk_rewards_obj.Id) {
+								if ($_disk_rewards_obj.Misses -gt 0) {
+									$_b_counted_missed_rewards = $True
+									$_missed_rewards_count = $_disk_rewards_obj.Misses
+									$_missed_rewards_color = $_html_red
+									continue
+								}
 
+								$_b_data_printed = $True
+								
+								$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+							
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_rewards_obj.Rewards +  "</td>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer -nonewline
+									Write-Host $_disk_rewards_obj.Rewards -nonewline
+								}
+
+								$_spacer_length = [int]($_label_rewards.Length - $_disk_rewards_obj.Rewards.toString().Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_missed_rewards_color + "'>" + $_missed_rewards_count +  "</td>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer -nonewline
+									#Write-Host $_disk_rewards_obj.Misses -nonewline
+									Write-Host $_missed_rewards_count -nonewline -ForegroundColor $_missed_rewards_color
+								}
+
+								$_spacer_length = [int]($_label_misses.Length - $_disk_rewards_obj.Misses.toString().Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "</tr>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer
+								}
+								
+								$_b_printed_reward_metrics = $True
+
+							}
+						}
+						if ($_b_counted_missed_rewards -eq $True -and $_b_data_printed -eq $False) {
+								# write data - combine missed and rewards into single line of display
+								$_b_data_printed = $True
+
+								$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "0" +  "</td>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer -nonewline
+									Write-Host 0 -nonewline		#no rewards data (only misses data) populated in endpoint
+								}
+
+								$_spacer_length = [int]($_label_rewards.Length - (0).toString().Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_missed_rewards_count +  "</td>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer -nonewline
+									#Write-Host $_disk_rewards_obj.Misses -nonewline
+									Write-Host $_missed_rewards_count -nonewline
+								}
+
+								$_spacer_length = [int]($_label_misses.Length - $_missed_rewards_count.toString().Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "</tr>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer
+								}
+						}				
+						if ($_b_printed_reward_metrics -eq $False) 				# rewards/misses not published yet in endpoint
+						{
+								$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer -nonewline
+									Write-Host "-" -nonewline
+								}
+
+								$_spacer_length = [int]($_label_rewards.Length - ("-").toString().Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer -nonewline
+									Write-Host "-" -nonewline
+								}
+
+								$_spacer_length = [int]($_label_misses.Length - ("-").toString().Length)
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "</tr>"
+								}
+								else 
+								{
+									Write-Host $_label_spacer
+								}
 						}
 					}
-					if ($_b_counted_missed_rewards -eq $True -and $_b_data_printed -eq $False) {
-							# write data - combine missed and rewards into single line of display
-							$_b_data_printed = $True
-
-							$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer -nonewline
-							Write-Host 0 -nonewline		#no rewards data (only misses data) populated in endpoint
-
-							$_spacer_length = [int]($_label_rewards.Length - (0).toString().Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer -nonewline
-							#Write-Host $_disk_rewards_obj.Misses -nonewline
-							Write-Host $_missed_rewards_count -nonewline
-
-							$_spacer_length = [int]($_label_misses.Length - $_missed_rewards_count.toString().Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer
-					}				
-					if ($_b_printed_reward_metrics -eq $False) 				# rewards/misses not published yet in endpoint
-					{
-							$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer -nonewline
-							Write-Host "-" -nonewline
-
-							$_spacer_length = [int]($_label_rewards.Length - ("-").toString().Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer -nonewline
-							Write-Host "-" -nonewline
-
-							$_spacer_length = [int]($_label_misses.Length - ("-").toString().Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							Write-Host $_label_spacer
-					}
+					$_html += "</table>"
+					#
 				}
-				#
 			}
-		}
-		#
-		# draw finish line
-		if ($_disk_sector_performance_obj) {
-			if ($_disk_sector_performance_obj.Id -ne "overall") {
-				$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+			#
+			# draw finish line
+			if ($_disk_sector_performance_obj) {
+				if ($_disk_sector_performance_obj.Id -ne "overall") {
+					$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+				}
+				else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 			}
 			else {$_spacer_length = ("------------------------------------------------------------------------").Length}
-		}
-		else {$_spacer_length = ("------------------------------------------------------------------------").Length}
-		$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-		Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
-		
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 
-		# display latest github version info
-		$_gitVersionDisp = " - "
-		$_gitVersionDispColor = "red"
-		if ($null -ne $gitVersion) {
-			$currentVersion = $gitVersion[0] -replace "[^.0-9]"
-			$_gitVersionDisp = $gitVersion[0]
-			$_gitVersionDispColor = "green"
-		}
-		echo `n
-		Write-Host "Latest github version : " -nonewline
-		Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
-
-		##
-		# display last refresh time 
-		#$currentDate = Get-Date -Format HH:mm:ss
-		$currentDate = (Get-Date).ToLocalTime().toString()
-		# Refresh
-		echo `n
-		Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
-		#
-		####
-		## Auto refresh wait cycle
-		#Write-Host "Auto-refresh scheduled for every " -nonewline 
-		#Write-Host $refreshTimeScaleInSeconds -nonewline -ForegroundColor yellow
-		#Write-Host " seconds"
-		#[System.Console]::CursorVisible = $false
-		#$iterations = [math]::Ceiling($refreshTimeScaleInSeconds / 5)       
-		#for ($i = 0; $i -lt $iterations; $i++) {
-		#	Write-Host -NoNewline "." -ForegroundColor Cyan
-		#	Start-Sleep 5
-		#}
-		fStartCountdownTimer $refreshTimeScaleInSeconds
-		
-		###### Auto refresh
-		$HoursElapsed = $Stopwatch.Elapsed.TotalHours
-		if ($HoursElapsed -ge 1) {
-			$gitNewVersion = Get-gitNewVersion
-			if ($gitNewVersion) {
-				$gitVersion = $gitNewVersion
+			if ($_b_console_disabled) {
+				#$_html += "<tr>"
+				#$_html += '<hr style="width:50%;text-align:left;margin-left:0">'
+				#$_html += "</tr>"
 			}
-			$Stopwatch.Restart()
+			else 
+			{
+				Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+			}
+			
+			# display latest github version info
+			$_gitVersionDisp = " - "
+			$_gitVersionDispColor = $_html_red
+			if ($null -ne $gitVersion) {
+				$currentVersion = $gitVersion[0] -replace "[^.0-9]"
+				$_gitVersionDisp = $gitVersion[0]
+				$_gitVersionDispColor = $_html_green
+			}
+
+			if ($_b_console_disabled) {
+				$_html += "<br>"
+				$_html += "<tr>"
+				$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Latest github version : " +  "</td>"
+				$_html += "<td><font size='" + $_font_size + "' color='" + $_gitVersionDispColor + "'>" + $_gitVersionDisp +  "</td>"
+				$_html += "</tr>"
+				$_html += "</table>"
+				$_html += "</body></html>"
+			}
+			else 
+			{
+				echo `n
+				Write-Host "Latest github version : " -nonewline
+				Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+			}
+
+			##
+			# display last refresh time 
+			#$currentDate = Get-Date -Format HH:mm:ss
+			$currentDate = (Get-Date).ToLocalTime().toString()
+			# Refresh
+			echo `n
+			Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
+			#
+			####
+			## Auto refresh wait cycle
+			#Write-Host "Auto-refresh scheduled for every " -nonewline 
+			#Write-Host $refreshTimeScaleInSeconds -nonewline -ForegroundColor yellow
+			#Write-Host " seconds"
+			#[System.Console]::CursorVisible = $false
+			#$iterations = [math]::Ceiling($refreshTimeScaleInSeconds / 5)       
+			#for ($i = 0; $i -lt $iterations; $i++) {
+			#	Write-Host -NoNewline "." -ForegroundColor Cyan
+			#	Start-Sleep 5
+			#}
+
+			if ($_b_console_disabled) {
+				fInvokeHttpRequestListener $_html
+				$_http_listener.Stop()	
+			}
+			else{
+				fStartCountdownTimer $refreshTimeScaleInSeconds
+			}
+			
+			###### Auto refresh
+			$HoursElapsed = $Stopwatch.Elapsed.TotalHours
+			if ($HoursElapsed -ge 1) {
+				$gitNewVersion = Get-gitNewVersion
+				if ($gitNewVersion) {
+					$gitVersion = $gitNewVersion
+				}
+				$Stopwatch.Restart()
+			}
+			######
 		}
-		######
 	}
+	finally 
+	{
+		if ($_b_listener_running -eq $true) 
+		{
+			$_http_listener.Stop()	
+			Write-Host "Listener stopped";
+		}
+	}
+}
+
+function fInvokeHttpRequestListener ([string]$_io_html) {
+	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) {}
+	# process request received
+	$_context = $_context_task.GetAwaiter().GetResult()
+	
+	# read request properties
+	$_request_method = $_context.Request.HttpMethod
+	$_request_url = $_context.Request.Url
+	
+	# adjust matching for localhost url flavours
+	$_request_url_for_matching = $_request_url.toString().replace("http://127.0.0.1", "http://localhost")
+	$_request_url_endpoint = ($_request_url_for_matching -split $_api_host_port)[1]
+
+	# set and send response 
+	$_context.Response.StatusCode = 200
+	if (($_request_method -eq "GET" -or $_request_method -eq "get") -and $_request_url_endpoint -eq "/summary") {
+		$_console_log =  "valid url: " + $_request_url + ", method: " + $_request_method
+		#Write-Host $_console_log
+		$_response = $_io_html
+		$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
+		$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
+	}
+	else {
+		$_console_log =  "invalid url: " + $_request_url + ", method: " + $_request_method
+		#Write-Host $_console_log
+		$_response = "<html><body>Invalid url...</body></html>"
+		$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
+		$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
+	}
+
+	# end response and close listener
+	#Start-Sleep -Milliseconds 900
+	Start-Sleep -Seconds 1
+	$_context.Response.Close()
 }
 
 Function fStartCountdownTimer ([int]$_io_timer_duration) {
@@ -439,18 +813,16 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 	$_spinnerPos = 0
 	$_end_dt = [datetime]::UtcNow.AddSeconds($_io_timer_duration)
 	[System.Console]::CursorVisible = $false
-	try {
-		while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
-			Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
-			#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
-			Write-Host "Refreshing in " -NoNewline 
-			Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
-			Write-Host " seconds..." -NoNewline 
-			Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
-		}
-		Write-Host
+	
+	while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
+		Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
+		#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
+		Write-Host "Refreshing in " -NoNewline 
+		Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
+		Write-Host " seconds..." -NoNewline 
+		#Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
 	}
-	catch { }
+	Write-Host
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
