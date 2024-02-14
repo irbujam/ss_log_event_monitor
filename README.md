@@ -20,7 +20,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
-  - ```diff
+  ```diff
   - (New: Experimental) web enabled monitor as a service - now you can see metrics on your phone
   ```
   - Ability to read metrics for farmer/node running on windows/linux systems
