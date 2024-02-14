@@ -11,6 +11,11 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 - Add --prometheus-listen-on <ip:port> to your node start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:1111)  
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
+```diff
+- For enabling web access, do the following:
+> must run the ps11 file as admin in powershell console
+> ensure that windows firewall has incoming rule set-on specified api listening port and port is not in use 
+
 
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
