@@ -13,7 +13,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 ```diff
 - For enabling web access, do the following:
-> must run the ps11 file as admin in powershell console
+> must run the ps1 file as admin in powershell console
 > ensure that windows firewall has incoming rule set-on specified api listening port and port is not in use
 ```
 
