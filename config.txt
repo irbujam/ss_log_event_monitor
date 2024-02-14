@@ -8,6 +8,7 @@
 #
 # You can use either localhost or an IP. 
 # If using an IP please ensure that windows firewall has incoming rule set-on specified port and port is not in use
+# API endpoint to use on web browser http://ip:port/summary (example http://127.0.0.1:15004/summary)
 #------------------------------------------------------------------------------------------------------------------
 
 Enable-API: N
