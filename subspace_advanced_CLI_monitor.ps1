@@ -384,7 +384,21 @@ function main {
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 		Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 		
+
+		# display latest github version info
+		$_gitVersionDisp = " - "
+		$_gitVersionDispColor = "red"
+		if ($null -ne $gitVersion) {
+			$currentVersion = $gitVersion[0] -replace "[^.0-9]"
+			$_gitVersionDisp = $gitVersion[0]
+			$_gitVersionDispColor = "green"
+		}
+		echo `n
+		Write-Host "Latest github version : " -nonewline
+		Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+
 		##
+		# display last refresh time 
 		#$currentDate = Get-Date -Format HH:mm:ss
 		$currentDate = (Get-Date).ToLocalTime().toString()
 		# Refresh
@@ -393,15 +407,17 @@ function main {
 		#
 		####
 		## Auto refresh wait cycle
-		Write-Host "Auto-refresh scheduled for every " -nonewline 
-		Write-Host $refreshTimeScaleInSeconds -nonewline -ForegroundColor yellow
-		Write-Host " seconds"
-		[System.Console]::CursorVisible = $false
-		$iterations = [math]::Ceiling($refreshTimeScaleInSeconds / 5)       
-		for ($i = 0; $i -lt $iterations; $i++) {
-			Write-Host -NoNewline "." -ForegroundColor Cyan
-			Start-Sleep 5
-		}
+		#Write-Host "Auto-refresh scheduled for every " -nonewline 
+		#Write-Host $refreshTimeScaleInSeconds -nonewline -ForegroundColor yellow
+		#Write-Host " seconds"
+		#[System.Console]::CursorVisible = $false
+		#$iterations = [math]::Ceiling($refreshTimeScaleInSeconds / 5)       
+		#for ($i = 0; $i -lt $iterations; $i++) {
+		#	Write-Host -NoNewline "." -ForegroundColor Cyan
+		#	Start-Sleep 5
+		#}
+		fStartCountdownTimer $refreshTimeScaleInSeconds
+		
 		###### Auto refresh
 		$HoursElapsed = $Stopwatch.Elapsed.TotalHours
 		if ($HoursElapsed -ge 1) {
@@ -413,6 +429,26 @@ function main {
 		}
 		######
 	}
+}
+
+Function fStartCountdownTimer ([int]$_io_timer_duration) {
+	$_sleep_interval_milliseconds = 1000
+	$_spinner = '|', '/', '-', '\'
+	$_spinnerPos = 0
+	$_end_dt = [datetime]::UtcNow.AddSeconds($_io_timer_duration)
+	[System.Console]::CursorVisible = $false
+	try {
+		while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
+			Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
+			#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
+			Write-Host "Refreshing in " -NoNewline 
+			Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
+			Write-Host " seconds..." -NoNewline 
+			Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
+		}
+		Write-Host
+	}
+	catch { }
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
