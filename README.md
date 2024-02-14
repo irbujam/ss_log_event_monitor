@@ -14,7 +14,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 ```diff
 - For enabling web access, do the following:
 > must run the ps1 file as admin in powershell console
-> ensure that windows firewall has incoming rule set-on specified api listening port and port is not in use
+> ensure that windows firewall has incoming rule set for api listening port as specified in the config file. This must be done on the pc hosting ps1 script
 ```
 
 
