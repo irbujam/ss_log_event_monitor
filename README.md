@@ -20,7 +20,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Metrics information including:
-      - Node(s) state
+      - Node(s) running/sync state and peers connected
       - Farmer(s) state and uptime
       - plotting performance averages 
       - Per Farmer disk level metrics:
