@@ -92,7 +92,8 @@ function main {
 					else {
 						Write-Host $_hostname -nonewline
 						
-						Write-Host ", Synced: " -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host ", " -nonewline
+						Write-Host "Synced: " -nonewline -ForegroundColor $_farmer_header_color
 						$_node_sync_state_disp_color = "green"
 						$_node_sync_state_disp = "Yes"
 						if ($_node_sync_state -eq 1) {
@@ -100,7 +101,8 @@ function main {
 							$_node_sync_state_disp_color = "red"
 						}
 						Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
-						Write-Host ", Peers: " -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host ", " -nonewline
+						Write-Host "Peers: " -nonewline -ForegroundColor $_farmer_header_color
 						Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
 					}
 				}
