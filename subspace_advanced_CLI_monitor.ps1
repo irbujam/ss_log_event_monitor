@@ -21,11 +21,14 @@ function main {
 		$_disk_header_color = "white"
 
 		$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
+		$_node_metrics_raw_arr = [System.Collections.ArrayList]@()
+
 		$_configFile = "./config.txt"
 		$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
 		for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
 		{
 			$_farmer_metrics_raw = ""
+			$_node_metrics_raw = ""
 			[array]$_process_state_arr = $null
 			if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -le 0) {
 				$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
@@ -63,6 +66,15 @@ function main {
 						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 						#echo `n
 					}
+					else {				# get node metrics
+						$_node_metrics_raw = $_process_state_arr[0]
+						[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
+						$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
+
+						$_node_metrics_arr = fGetNodeMetrics $_node_metrics_formatted_arr
+						$_node_sync_state = $_node_metrics_arr[0].Sync.State
+						$_node_peers_connected = $_node_metrics_arr[0].Peers.Connected
+					}
 					
 					$_console_msg = $_process_type + " status: "
 					Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
@@ -78,7 +90,18 @@ function main {
 						Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
 					}
 					else {
-						Write-Host $_hostname
+						Write-Host $_hostname -nonewline
+						
+						Write-Host ", Synced: " -nonewline -ForegroundColor $_farmer_header_color
+						$_node_sync_state_disp_color = "green"
+						$_node_sync_state_disp = "Yes"
+						if ($_node_sync_state -eq 1) {
+							$_node_sync_state_disp = "No"
+							$_node_sync_state_disp_color = "red"
+						}
+						Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
+						Write-Host ", Peers: " -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
 					}
 				}
 				elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
@@ -112,6 +135,7 @@ function main {
 				$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 				$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
 
+				# Write uptime information to console
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
 					
@@ -224,7 +248,7 @@ function main {
 					Write-Host $_label_spacer -nonewline
 					Write-Host $_disk_UUId_obj.Id -nonewline
 					
-					
+					# Build and write data to console
 					$_b_printed_perf_metrics = $False
 					$_minutes_per_sector_data_disp = "-"
 					foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
@@ -303,7 +327,6 @@ function main {
 
 						}
 					}
-					#Write-Host "     _minutes_per_sector_data_disp : " $_minutes_per_sector_data_disp " >>>"
 					if ($_b_counted_missed_rewards -eq $True -and $_b_data_printed -eq $False) {
 							# write data - combine missed and rewards into single line of display
 							$_b_data_printed = $True
@@ -512,6 +535,50 @@ function fParseMetricsToObj ([string]$_io_rest_str) {
 		}
 	}
 	return $_response_metrics
+}
+
+function fGetNodeMetrics ([array]$_io_node_metrics_arr) {
+	$_resp_node_metrics_arr = [System.Collections.ArrayList]@()
+
+	[array]$_node_sync_arr = $null
+	[array]$_node_peers_arr = $null
+
+	$_chain_id_sync = ""
+	$_chain_id_peer = ""
+	$_node_sync_status = 0
+	$_node_peer_count = 0
+	#
+	foreach ($_metrics_obj in $_io_node_metrics_arr)
+	{
+		if ($_metrics_obj.Name.IndexOf("substrate_sub_libp2p_is_major_syncing") -ge 0 -and $_metrics_obj.Name.IndexOf("chain") -ge 0) 
+		{
+			$_node_sync_status = $_metrics_obj.Value
+			$_chain_id_sync = $_metrics_obj.Instance
+			$_node_sync_info = [PSCustomObject]@{
+				Id			= $_chain_id_sync
+				State		= $_node_sync_status
+			}
+			$_node_sync_arr += $_node_sync_info
+		}
+		elseif ($_metrics_obj.Name.IndexOf("substrate_sub_libp2p_peers_count") -ge 0 -and $_metrics_obj.Name.IndexOf("chain") -ge 0) 
+		{
+			$_node_peer_count = $_metrics_obj.Value
+			$_chain_id_peer = $_metrics_obj.Instance
+			$_node_peer_info = [PSCustomObject]@{
+				Id				= $_chain_id_peer
+				Connected		= $_node_peer_count
+			}
+			$_node_peers_arr += $_node_peer_info
+		}
+	}
+	#
+	$_node_metrics = [PSCustomObject]@{
+		Sync		= $_node_sync_arr
+		Peers		= $_node_peers_arr
+	}
+	[void]$_resp_node_metrics_arr.add($_node_metrics)
+
+	return $_resp_node_metrics_arr
 }
 
 function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
