@@ -28,15 +28,16 @@ To launch save the ps1 and config file in same folder on a local computer, chang
           - rewards and misses
   - Auto-refresh custom timer set-up with ability to change value in config without restarting the script
   - Local Time Zone display
+  - Display subspace advanced CLI latest github version
   
 **Upcoming features (not yet available):**
-  - Add latest github version check and display if running version of node or farmer is outdated
+  - Show variance bewteen subspace advanced CLI latest github version v/s running node and farmer version(s)
   - Add overall plotting progress % completion
-  - Per disk metrics display to be added:
+  - Add disk metrics information as below:
           - disk label and space allocated
           - Time to completion
           - plotting and replotting progress % completion 
-          - time of last reward received  
+          - time of last reward received
   - Warning/Error messages summary with duplicates removed
 ```diff
 *** For questions and feedback please contact (rs_00) in subspace discord channel.
