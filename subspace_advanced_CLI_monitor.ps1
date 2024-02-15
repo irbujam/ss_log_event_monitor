@@ -290,7 +290,10 @@ function main {
 									Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
 									Write-Host ", " -nonewline
 									Write-Host "Minutes/Sector (avg): " -nonewline
-									Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_data_color
+									Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+									Write-Host ", " -nonewline
+									Write-Host "Rewards: " -nonewline
+									Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
 									break
 								}
 							}
@@ -1011,6 +1014,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_farmer_disk_id_rewards = ""
 	$_farmer_disk_proving_success_count = 0
 	$_farmer_disk_proving_misses_count = 0
+	$_total_rewards_per_farmer = 0
 	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
@@ -1086,6 +1090,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				$_farmer_disk_id_rewards = $_farmer_id[0]
 				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {$_farmer_disk_proving_success_count = [int]($_metrics_obj.Value)}
 				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -lt 0) {$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)}
+				$_total_rewards_per_farmer += $_farmer_disk_proving_success_count
 				#
 				#
 				$_disk_rewards_metric = [PSCustomObject]@{
@@ -1106,6 +1111,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		TotalSeconds		= $_total_sectors_plot_time_seconds
 		TotalDisks			= $_total_disk_per_farmer
 		Uptime				= $_uptime_seconds
+		TotalRewards		= $_total_rewards_per_farmer
 	}
 	$_resp_sector_perf_arr += $_disk_sector_perf
 
