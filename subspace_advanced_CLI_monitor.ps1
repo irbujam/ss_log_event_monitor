@@ -820,7 +820,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 		Write-Host "Refreshing in " -NoNewline 
 		Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
 		Write-Host " seconds..." -NoNewline 
-		#Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
+		Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
 	}
 	Write-Host
 }
