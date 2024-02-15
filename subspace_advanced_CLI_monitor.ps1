@@ -246,6 +246,7 @@ function main {
 					$_disk_UUId_arr = $_disk_metrics_arr[0].Id
 					$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 					$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
+					$_disk_misses_arr = $_disk_metrics_arr[0].Misses
 
 					# Write uptime information to console
 					foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
@@ -519,82 +520,105 @@ function main {
 								Write-Host "-" -nonewline
 							}
 						}
-
 						
 						$_b_counted_missed_rewards = $False
 						$_b_data_printed = $False
 						$_missed_rewards_count = 0
 						$_missed_rewards_color = "white"
-						$_b_printed_reward_metrics = $False
+						$_b_reward_data_printed = $false
+						$_rewards_data_disp = "-"
 						foreach ($_disk_rewards_obj in $_disk_rewards_arr)
 						{
-							if ($_disk_UUId_obj.Id -eq $_disk_rewards_obj.Id) {
-								if ($_disk_rewards_obj.Misses -gt 0) {
-									$_b_counted_missed_rewards = $True
-									$_missed_rewards_count = $_disk_rewards_obj.Misses
-									$_missed_rewards_color = $_html_red
+							if ($_disk_UUId_obj.Id -ne $_disk_rewards_obj.Id) {
 									continue
-								}
+							}
+							$_rewards_data_disp = $_disk_rewards_obj.Rewards.ToString()
 
-								$_b_data_printed = $True
-								
+							$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+						
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_rewards_obj.Rewards +  "</td>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_disk_rewards_obj.Rewards -nonewline
+							}
+							
+							$_b_reward_data_printed = $true
+						}
+						if ($_b_reward_data_printed -eq $false) 				# rewards not published yet in endpoint
+						{
 								$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 								$_label_spacer = $_label_spacer + "|"
-							
+								
 								if ($_b_console_disabled) {
 									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_rewards_obj.Rewards +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
 								}
 								else 
 								{
 									Write-Host $_label_spacer -nonewline
-									Write-Host $_disk_rewards_obj.Rewards -nonewline
+									Write-Host "-" -nonewline
 								}
-
-								$_spacer_length = [int]($_label_rewards.Length - $_disk_rewards_obj.Rewards.toString().Length)
-								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-								$_label_spacer = $_label_spacer + "|"
-								
-								if ($_b_console_disabled) {
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_missed_rewards_color + "'>" + $_missed_rewards_count +  "</td>"
-								}
-								else 
-								{
-									Write-Host $_label_spacer -nonewline
-									#Write-Host $_disk_rewards_obj.Misses -nonewline
-									Write-Host $_missed_rewards_count -nonewline -ForegroundColor $_missed_rewards_color
-								}
-
-								$_spacer_length = [int]($_label_misses.Length - $_disk_rewards_obj.Misses.toString().Length)
-								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-								$_label_spacer = $_label_spacer + "|"
-								
-								if ($_b_console_disabled) {
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "</tr>"
-								}
-								else 
-								{
-									Write-Host $_label_spacer
-								}
-								
-								$_b_printed_reward_metrics = $True
-
-							}
 						}
-						if ($_b_counted_missed_rewards -eq $True -and $_b_data_printed -eq $False) {
+
+
+						$_b_misses_data_printed = $false
+						foreach ($_disk_misses_obj in $_disk_misses_arr)
+						{
+							if ($_disk_UUId_obj.Id -ne $_disk_misses_obj.Id) {
+									continue
+							}
+							
+							if ($_disk_misses_obj.Misses -gt 0) {
+								$_missed_rewards_color = $_html_red
+							}
+							
+							$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							
+							if ($_b_console_disabled) {
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_missed_rewards_color + "'>" + $_disk_misses_obj.Misses +  "</td>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer -nonewline
+								Write-Host $_disk_misses_obj.Misses -nonewline -ForegroundColor $_missed_rewards_color
+							}
+
+							$_spacer_length = [int]($_label_misses.Length - $_disk_misses_obj.Misses.toString().Length)
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							$_label_spacer = $_label_spacer + "|"
+							
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "</tr>"
+							}
+							else 
+							{
+								Write-Host $_label_spacer
+							}
+							
+							$_b_misses_data_printed = $true
+						}
+						if ($_b_misses_data_printed -eq $false) 				# misses not published yet in endpoint
+						{
 								# write data - combine missed and rewards into single line of display
 								$_b_data_printed = $True
 
-								$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+								$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 								$_label_spacer = $_label_spacer + "|"
 								
 								if ($_b_console_disabled) {
 									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "0" +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
 								}
 								else 
 								{
@@ -602,22 +626,7 @@ function main {
 									Write-Host 0 -nonewline		#no rewards data (only misses data) populated in endpoint
 								}
 
-								$_spacer_length = [int]($_label_rewards.Length - (0).toString().Length)
-								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-								$_label_spacer = $_label_spacer + "|"
-
-								if ($_b_console_disabled) {
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_missed_rewards_count +  "</td>"
-								}
-								else 
-								{
-									Write-Host $_label_spacer -nonewline
-									#Write-Host $_disk_rewards_obj.Misses -nonewline
-									Write-Host $_missed_rewards_count -nonewline
-								}
-
-								$_spacer_length = [int]($_label_misses.Length - $_missed_rewards_count.toString().Length)
+								$_spacer_length = [int]($_label_misses.Length - ("-").toString().Length)
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 								$_label_spacer = $_label_spacer + "|"
 								
@@ -630,49 +639,6 @@ function main {
 									Write-Host $_label_spacer
 								}
 						}				
-						if ($_b_printed_reward_metrics -eq $False) 				# rewards/misses not published yet in endpoint
-						{
-								$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
-								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-								$_label_spacer = $_label_spacer + "|"
-								
-								if ($_b_console_disabled) {
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
-								}
-								else 
-								{
-									Write-Host $_label_spacer -nonewline
-									Write-Host "-" -nonewline
-								}
-
-								$_spacer_length = [int]($_label_rewards.Length - ("-").toString().Length)
-								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-								$_label_spacer = $_label_spacer + "|"
-
-								if ($_b_console_disabled) {
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
-								}
-								else 
-								{
-									Write-Host $_label_spacer -nonewline
-									Write-Host "-" -nonewline
-								}
-
-								$_spacer_length = [int]($_label_misses.Length - ("-").toString().Length)
-								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-								$_label_spacer = $_label_spacer + "|"
-
-								if ($_b_console_disabled) {
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-									$_html += "</tr>"
-								}
-								else 
-								{
-									Write-Host $_label_spacer
-								}
-						}
 					}
 					$_html += "</table>"
 					#
@@ -1000,6 +966,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	[array]$_resp_UUId_arr = $null
 	[array]$_resp_sector_perf_arr = $null
 	[array]$_resp_rewards_arr = $null
+	[array]$_resp_misses_arr = $null
 
 	$_unit_type = ""
 	$_unique_farm_id = ""
@@ -1088,17 +1055,29 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_farmer_id = $_metrics_obj.Instance -split ","
 				$_farmer_disk_id_rewards = $_farmer_id[0]
-				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {$_farmer_disk_proving_success_count = [int]($_metrics_obj.Value)}
-				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -lt 0) {$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)}
+				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {
+					$_farmer_disk_proving_success_count = [int]($_metrics_obj.Value)
+					
+					$_disk_rewards_metric = [PSCustomObject]@{
+						Id		= $_farmer_disk_id_rewards
+						Rewards	= $_farmer_disk_proving_success_count
+						#Misses	= $_farmer_disk_proving_misses_count
+					}
+					$_resp_rewards_arr += $_disk_rewards_metric
+				}
+				elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
+					$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)
+					
+					$_disk_misses_metric = [PSCustomObject]@{
+						Id		= $_farmer_disk_id_rewards
+						#Rewards	= $_farmer_disk_proving_success_count
+						Misses	= $_farmer_disk_proving_misses_count
+					}
+					$_resp_misses_arr += $_disk_misses_metric
+				}
 				$_total_rewards_per_farmer += $_farmer_disk_proving_success_count
 				#
 				#
-				$_disk_rewards_metric = [PSCustomObject]@{
-					Id		= $_farmer_disk_id_rewards
-					Rewards	= $_farmer_disk_proving_success_count
-					Misses	= $_farmer_disk_proving_misses_count
-				}
-				$_resp_rewards_arr += $_disk_rewards_metric
 				$_farmer_disk_proving_success_count = 0
 				$_farmer_disk_proving_misses_count = 0
 			}
@@ -1119,6 +1098,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		Id			= $_resp_UUId_arr
 		Performance	= $_resp_sector_perf_arr
 		Rewards		= $_resp_rewards_arr
+		Misses		= $_resp_misses_arr
 	}
 	[void]$_resp_disk_metrics_arr.add($_disk_metrics)
 
