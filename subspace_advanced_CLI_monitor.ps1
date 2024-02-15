@@ -18,6 +18,7 @@ function main {
 	$_api_host_ip = ""
 	$_api_host_port = ""
 	$_url_prefix_listener = ""
+	$_b_request_processed = $false
 	#
 	$_html = $null
 	$_font_size = 5
@@ -57,24 +58,30 @@ function main {
 			if ($_api_enabled.toLower() -eq "y" -and $_api_host -ne $null -and $_api_host -ne "")
 			{
 				$_b_console_disabled = $true
-				#### create listener object for later use
-				# create a listener for inbound http request
-				$_api_host_arr = $_api_host.split(":").Trim(" ")
-				$_api_host_ip = $_api_host_arr[0]
-				$_api_host_port = $_api_host_arr[1]
-				
-				$_api_host_url = "localhost:" + $_api_host_port
-				if ($_api_host_ip -ne "127.0.0.1" -and $_api_host_ip -ne "localhost" ){ $_api_host_url = "*:" + $_api_host_port }
-				
-				$_url_prefix = "http://" + $_api_host_url + "/"
-				$_url_prefix_listener = $_url_prefix.toString().replace("http://127.0.0.1", "http://localhost")
 
-				$_http_listener = New-Object System.Net.HttpListener
-				$_http_listener.Prefixes.Add($_url_prefix_listener)
+				if ($_b_request_processed -eq $false) 
+				{
+					#### create listener object for later use
+					# create a listener for inbound http request
+					$_api_host_arr = $_api_host.split(":").Trim(" ")
+					$_api_host_ip = $_api_host_arr[0]
+					$_api_host_port = $_api_host_arr[1]
+					
+					#Write-Host ("_api_host_ip: " + $_api_host_ip)
+					#Write-Host ("_api_host_port: " + $_api_host_port)
+					$_api_host_url = $_api_host_ip + ":" + $_api_host_port
+					if ($_api_host_ip -eq "0.0.0.0" ){ $_api_host_url = "*:" + $_api_host_port }
+					
+					$_url_prefix = "http://" + $_api_host_url + "/"
+					$_url_prefix_listener = $_url_prefix.toString().replace("http://127.0.0.1", "http://localhost")
+					#Write-Host ("_url_prefix_listener: " + $_url_prefix_listener)
 
-				$_http_listener.Start()
-				$_b_listener_running = $true
-				
+					$_http_listener = New-Object System.Net.HttpListener
+					$_http_listener.Prefixes.Add($_url_prefix_listener)
+
+					$_http_listener.Start()
+					$_b_listener_running = $true
+				}
 				# wait for request - async
 				$_context_task = $_http_listener.GetContextAsync()
 				#### - build html before proceeding further
@@ -714,8 +721,8 @@ function main {
 			#}
 
 			if ($_b_console_disabled) {
-				fInvokeHttpRequestListener $_html
-				$_http_listener.Stop()	
+				$_b_request_processed = fInvokeHttpRequestListener $_html
+				#$_http_listener.Close()	
 			}
 			else{
 				fStartCountdownTimer $refreshTimeScaleInSeconds
@@ -737,7 +744,7 @@ function main {
 	{
 		if ($_b_listener_running -eq $true) 
 		{
-			$_http_listener.Stop()	
+			$_http_listener.Close()	
 			Write-Host "Listener stopped";
 		}
 	}
@@ -765,18 +772,19 @@ function fInvokeHttpRequestListener ([string]$_io_html) {
 		$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
 		$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
 	}
-	else {
-		$_console_log =  "invalid url: " + $_request_url + ", method: " + $_request_method
-		#Write-Host $_console_log
-		$_response = "<html><body>Invalid url...</body></html>"
-		$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
-		$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
-	}
+	#else {
+	#	$_console_log =  "invalid url: " + $_request_url + ", method: " + $_request_method
+	#	#Write-Host $_console_log
+	#	$_response = "<html><body>Invalid url...</body></html>"
+	#	$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
+	#	$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
+	#}
 
 	# end response and close listener
-	#Start-Sleep -Milliseconds 900
-	Start-Sleep -Seconds 1
+	Start-Sleep -Milliseconds 600
+	#Start-Sleep -Seconds 1
 	$_context.Response.Close()
+	return $true 
 }
 
 Function fStartCountdownTimer ([int]$_io_timer_duration) {
