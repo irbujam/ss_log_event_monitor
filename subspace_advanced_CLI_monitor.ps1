@@ -149,9 +149,9 @@ function main {
 								}
 								else {
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_hostname +  "</td>"
-									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
-									$_html += "</tr>"
-									$_html += "<tr>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+									#$_html += "</tr>"
+									#$_html += "<tr>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Synced: " +  "</td>"
 									$_node_sync_state_disp_color = $_html_green
 									$_node_sync_state_disp = "Yes"
