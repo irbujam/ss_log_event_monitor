@@ -590,6 +590,12 @@ function main {
 								$_label_spacer = $_label_spacer + "|"
 								Write-Host $_label_spacer -nonewline
 								Write-Host "-" -nonewline
+
+								$_spacer_length = $_label_size.Length - ("-").Length
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline
+								Write-Host "-" -nonewline
 							}
 						}
 
