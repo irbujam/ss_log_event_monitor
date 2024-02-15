@@ -125,7 +125,7 @@ function main {
 						
 						if ($_b_console_disabled) {
 								if ($_process_type.toLower() -eq "farmer") {
-									$_total_spacer_length = ("------------------------------------------------------------------------").Length
+									$_total_spacer_length = ("------------------------------------------------------------------------------").Length
 									$_spacer_length = $_total_spacer_length
 									$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 									$_html += "<br><br>"
@@ -176,7 +176,7 @@ function main {
 						else 
 						{
 							if ($_process_type.toLower() -eq "farmer") {
-								$_total_spacer_length = ("------------------------------------------------------------------------").Length
+								$_total_spacer_length = ("--------------------------------------------------------------------------------------------------------").Length
 								$_spacer_length = $_total_spacer_length
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 								Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -240,12 +240,17 @@ function main {
 					#
 					$_label_hostname = "Hostname"
 					$_label_diskid = "Disk Id"
+					$_label_size = "Size     "
+					$_label_percent_complete = "% Complete"
+					$_label_eta = "ETA       "
 					$_label_sectors_per_hour = "Sectors/Hour"
 					$_label_minutes_per_sectors = "Minutes/Sector"
 					$_label_rewards = "Rewards"
 					$_label_misses = "Misses"
 					$_spacer = " "
-					$_total_header_labels = 5
+					$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
+					$_total_header_labels = 8
+					
 					#
 					
 					##
@@ -254,6 +259,8 @@ function main {
 					$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 					$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
 					$_disk_misses_arr = $_disk_metrics_arr[0].Misses
+					$_disk_plots_completed_arr = $_disk_metrics_arr[0].PlotsCompleted
+					$_disk_plots_remaining_arr = $_disk_metrics_arr[0].PlotsRemaining
 
 					# Write uptime information to console
 					foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
@@ -264,6 +271,7 @@ function main {
 								$_avg_sectors_per_hour = 0.0
 								$_avg_minutes_per_sector = 0.0
 								if ($_disk_sector_performance_obj.TotalSeconds -gt 0) {
+								#if ($_disk_sector_performance_obj.TotalSeconds -and $_disk_sector_performance_obj.TotalSeconds -gt 0) {
 									$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
 								}
 								if ($_disk_sector_performance_obj.TotalSectors) {
@@ -311,7 +319,7 @@ function main {
 						}
 					}
 
-					$_total_spacer_length = ("------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("--------------------------------------------------------------------------------------------------------").Length
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					if ($_b_console_disabled) {
@@ -331,7 +339,7 @@ function main {
 							# Host name header info
 							# draw line
 							if ($_disk_UUId_obj -ne $null) {
-								$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+								$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 							}
 							else {$_total_spacer_length = ("------------------------------------------------------------------------").Length}
 							$_spacer_length = $_total_spacer_length
@@ -355,7 +363,10 @@ function main {
 								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 								$_label_spacer = $_label_spacer + "|"
-								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_size +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_percent_complete +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_eta +  "</td>"
 								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_sectors_per_hour +  "</td>"
 
 								$_spacer_length = 0
@@ -384,7 +395,7 @@ function main {
 								#
 								# draw line
 								if ($_disk_UUId_obj -ne $null) {
-									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 								}
 								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
@@ -401,6 +412,25 @@ function main {
 									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
 								}
 								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline 
+								Write-Host $_label_size -nonewline -ForegroundColor $_disk_header_color
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline 
+								Write-Host $_label_percent_complete -nonewline -ForegroundColor $_disk_header_color
+
+								$_spacer_length = 0
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline 
+								Write-Host $_label_eta -nonewline -ForegroundColor $_disk_header_color
+
+								$_spacer_length = 0
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 								$_label_spacer = $_label_spacer + "|"
 								Write-Host $_label_spacer -nonewline 
@@ -431,7 +461,7 @@ function main {
 								#
 								# draw line
 								if ($_disk_UUId_obj -ne $null) {
-									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
+									$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 								}
 								else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
@@ -443,7 +473,7 @@ function main {
 						#$_disk_sector_performance_obj = $_disk_sector_performance_arr[$arrPos]
 						#$_disk_rewards_obj = $_disk_rewards_arr[$arrPos]
 
-						# write data
+						# write data table
 						$_spacer_length = 0
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_label_spacer = $_label_spacer + "|"
@@ -458,10 +488,10 @@ function main {
 							Write-Host $_label_spacer -nonewline
 							Write-Host $_disk_UUId_obj.Id -nonewline
 						}
-						
-						# Build and write data to console
-						$_b_printed_perf_metrics = $False
+
+						# get performance data - write after eta is calculated
 						$_minutes_per_sector_data_disp = "-"
+						$_sectors_per_hour_data_disp = "-"
 						foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 						{
 							if ($_disk_sector_performance_obj) {
@@ -469,67 +499,169 @@ function main {
 							}
 							#
 							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
+							$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
+						}
 
-							$_spacer_length = 1
+						# write size, % progresion and ETA
+						$_b_printed_size_metrics = $False
+						$_size_data_disp = "-"
+						foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
+						{
+							if ($_disk_plots_completed_obj) {
+								if ($_disk_UUId_obj.Id -ne $_disk_plots_completed_obj.Id) { continue }
+							}
+							else {break}
+							#
+							#Write-Host "_disk_plots_completed_obj : " $_disk_plots_completed_obj
+							$_size_data_disp = $_disk_plots_completed_obj.Sectors
+
+							foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
+							{
+								if ($_disk_plots_remaining_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
+								}
+								else {break}
+								
+								$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
+								$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
+								$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
+								$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
+								$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
+								$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
+								$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
+								$_eta = "-"
+								$_eta_disp = "-"
+								if ($_minutes_per_sector_data_disp -ne "-") {
+									$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
+									$_eta_disp = $_eta.toString() + " days"
+								}
+								
+								if ($_b_console_disabled) {
+									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_total_disk_sectors_disp +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_plotting_percent_complete_disp +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_eta_disp +  "</td>"
+								}
+								else 
+								{
+									$_spacer_length = 1
+									$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+									$_label_spacer = $_label_spacer + "|"
+									Write-Host $_label_spacer -nonewline
+									Write-Host $_total_disk_sectors_disp -nonewline
+
+									$_spacer_length = $_label_size.Length - $_total_disk_sectors_disp.Length
+									$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+									$_label_spacer = $_label_spacer + "|"
+									Write-Host $_label_spacer -nonewline
+									Write-Host $_plotting_percent_complete_disp -nonewline
+
+									$_spacer_length = $_label_percent_complete.Length - $_plotting_percent_complete_disp.Length
+									$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+									$_label_spacer = $_label_spacer + "|"
+									Write-Host $_label_spacer -nonewline
+									Write-Host $_eta_disp -nonewline
+								}
+							}
+
+							$_b_printed_size_metrics = $True
+						}
+						if ($_b_printed_size_metrics -eq $False)
+						{
+							if ($_b_console_disabled) {
+								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+							}
+							else 
+							{
+								$_spacer_length = 1
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline
+								Write-Host "-" -nonewline
+								
+								$_spacer_length = $_label_size.Length - ("-").Length
+								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+								$_label_spacer = $_label_spacer + "|"
+								Write-Host $_label_spacer -nonewline
+								Write-Host "-" -nonewline
+							}
+						}
+
+						# write performance data
+						#$_b_printed_perf_metrics = $False
+						#$_minutes_per_sector_data_disp = "-"
+						#foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
+						#{
+						#	if ($_disk_sector_performance_obj) {
+						#		if ($_disk_sector_performance_obj.Id -eq "overall" -or $_disk_UUId_obj.Id -ne $_disk_sector_performance_obj.Id) { continue }
+						#	}
+						#	#
+						#	$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
+
+							$_spacer_length = $_label_percent_complete.Length - $_eta_disp.Length
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
 						
 							if ($_b_console_disabled) {
-								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_sector_performance_obj.SectorsPerHour +  "</td>"
+							#	$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_sector_performance_obj.SectorsPerHour +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_sectors_per_hour_data_disp +  "</td>"
 							}
 							else 
 							{
 								Write-Host $_label_spacer -nonewline
-								Write-Host $_disk_sector_performance_obj.SectorsPerHour -nonewline
+							#	Write-Host $_disk_sector_performance_obj.SectorsPerHour -nonewline
+								Write-Host $_sectors_per_hour_data_disp -nonewline
 							}
 
-							$_spacer_length = [int]($_label_sectors_per_hour.Length - ($_disk_sector_performance_obj.SectorsPerHour).toString().Length)
+							$_spacer_length = [int]($_label_sectors_per_hour.Length - $_sectors_per_hour_data_disp.Length)
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
 							
 							if ($_b_console_disabled) {
-								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_sector_performance_obj.MinutesPerSector +  "</td>"
+							#	$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_disk_sector_performance_obj.MinutesPerSector +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_minutes_per_sector_data_disp +  "</td>"
 							}
 							else 
 							{
 								Write-Host $_label_spacer -nonewline
-								Write-Host $_disk_sector_performance_obj.MinutesPerSector -nonewline
+							#	Write-Host $_disk_sector_performance_obj.MinutesPerSector -nonewline
+								Write-Host $_minutes_per_sector_data_disp -nonewline
 							}
 
-							$_b_printed_perf_metrics = $True
-						}
-						if ($_b_printed_perf_metrics -eq $False)
-						{
-							$_spacer_length = 1
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							
-							if ($_b_console_disabled) {
-								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
-							}
-							else 
-							{
-								Write-Host $_label_spacer -nonewline
-								Write-Host "-" -nonewline
-							}
-
-							$_spacer_length = [int]($_label_sectors_per_hour.Length - ("-").toString().Length)
-							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-							$_label_spacer = $_label_spacer + "|"
-							
-							if ($_b_console_disabled) {
-								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
-								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
-							}
-							else 
-							{
-								Write-Host $_label_spacer -nonewline
-								Write-Host "-" -nonewline
-							}
-						}
+						#	$_b_printed_perf_metrics = $True
+						#}
+						#if ($_b_printed_perf_metrics -eq $False)
+						#{
+						#	$_spacer_length = $_label_percent_complete.Length - $_eta_disp.Length
+						#	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+						#	$_label_spacer = $_label_spacer + "|"
+						#	
+						#	if ($_b_console_disabled) {
+						#		#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+						#		$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+						#	}
+						#	else 
+						#	{
+						#		Write-Host $_label_spacer -nonewline
+						#		Write-Host "-" -nonewline
+						#	}
+						#
+						#	$_spacer_length = [int]($_label_sectors_per_hour.Length - ("-").toString().Length)
+						#	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+						#	$_label_spacer = $_label_spacer + "|"
+						#	
+						#	if ($_b_console_disabled) {
+						#		#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+						#		$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
+						#	}
+						#	else 
+						#	{
+						#		Write-Host $_label_spacer -nonewline
+						#		Write-Host "-" -nonewline
+						#	}
+						#}
 						
 						$_b_counted_missed_rewards = $False
 						$_b_data_printed = $False
@@ -656,11 +788,8 @@ function main {
 			}
 			#
 			# draw finish line
-			if ($_disk_sector_performance_obj) {
-				if ($_disk_sector_performance_obj.Id -ne "overall") {
-					$_spacer_length =  $_disk_sector_performance_obj.Id.toString().Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length +  $_label_misses.Length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
-				}
-				else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+			if ($_disk_UUId_obj) {
+				$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 			}
 			else {$_spacer_length = ("------------------------------------------------------------------------").Length}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
@@ -978,6 +1107,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	[array]$_resp_sector_perf_arr = $null
 	[array]$_resp_rewards_arr = $null
 	[array]$_resp_misses_arr = $null
+	[array]$_resp_plots_completed_arr = $null
+	[array]$_resp_plots_remaining_arr = $null
 
 	$_unit_type = ""
 	$_unique_farm_id = ""
@@ -996,7 +1127,25 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
-		if ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		if ($_metrics_obj.Name.IndexOf("subspace_farmer_sectors_total_sectors") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		{
+			$_plot_id = ($_metrics_obj.Instance -split ",")[0]
+			$_plot_state = $_metrics_obj.Criteria.ToString().Trim('"')
+			$_sectors = $_metrics_obj.Value
+			
+			$_plots_info = [PSCustomObject]@{
+				Id			= $_plot_id
+				PlotState	= $_plot_state
+				Sectors		= $_sectors
+			}
+			if ($_plot_state.toLower() -eq "notplotted") {
+				$_resp_plots_remaining_arr += $_plots_info
+			}
+			else{
+				$_resp_plots_completed_arr += $_plots_info
+			}
+		}
+		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		{
 			$_uptime_seconds = $_metrics_obj.Value
 			$_unique_farm_id = $_metrics_obj.Instance
@@ -1106,10 +1255,12 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_resp_sector_perf_arr += $_disk_sector_perf
 
 	$_disk_metrics = [PSCustomObject]@{
-		Id			= $_resp_UUId_arr
-		Performance	= $_resp_sector_perf_arr
-		Rewards		= $_resp_rewards_arr
-		Misses		= $_resp_misses_arr
+		Id				= $_resp_UUId_arr
+		Performance		= $_resp_sector_perf_arr
+		Rewards			= $_resp_rewards_arr
+		Misses			= $_resp_misses_arr
+		PlotsCompleted	= $_resp_plots_completed_arr
+		PlotsRemaining	= $_resp_plots_remaining_arr
 	}
 	[void]$_resp_disk_metrics_arr.add($_disk_metrics)
 
