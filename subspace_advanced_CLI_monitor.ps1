@@ -79,7 +79,7 @@ function main {
 				$_context_task = $_http_listener.GetContextAsync()
 				#### - build html before proceeding further
 				$_html = "<html><body>"
-				$_html += "<table border=0>"
+				#$_html += "<table border=0>"
 			}
 
 			for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
@@ -121,7 +121,7 @@ function main {
 									$_total_spacer_length = ("------------------------------------------------------------------------").Length
 									$_spacer_length = $_total_spacer_length
 									$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-									$_html += "<br>"
+									$_html += "<br><br>"
 								}
 								else {				# get node metrics
 									$_node_metrics_raw = $_process_state_arr[0]
@@ -278,6 +278,9 @@ function main {
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Minutes/Sector (avg): " +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_avg_minutes_per_sector.toString() +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Rewards: " +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_disk_sector_performance_obj.TotalRewards.toString() +  "</td>"
 									$_html += "</tr>"
 									break
 								}
