@@ -49,7 +49,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
           - plotting and replotting progress % completion 
           - time of last reward received
   - Warning/Error messages summary with duplicates removed
-```diff
-*** For questions and feedback please contact (rs_00) in subspace discord channel.
-disclaimer: this is a open source tool. You are free to use it, and if you do chose to use this tool, please understand that I can not be held liable for anything.   
+
+>*** For questions and feedback please contact (rs_00) in subspace discord channel.
+>** disclaimer: this is a open source tool. You are free to use it, and if you do chose to use this tool, please understand that I can not be held liable for anything.   
 ```
