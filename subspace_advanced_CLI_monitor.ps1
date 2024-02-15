@@ -31,7 +31,7 @@ function main {
 			$_b_first_time = $True
 			$_line_spacer_color = "gray"
 			$_farmer_header_color = "cyan"
-			$_farmer_header_data_color = "green"
+			$_farmer_header_data_color = "yellow"
 			$_disk_header_color = "white"
 			$_html_red = "red"
 			$_html_green = "green"
@@ -145,10 +145,10 @@ function main {
 								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
 								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Hostname: " +  "</td>"
 								if ($_process_type.toLower() -eq "farmer") {
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_hostname +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_hostname +  "</td>"
 								}
 								else {
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_hostname +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_hostname +  "</td>"
 									#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
 									$_html += "</tr>"
 									$_html += "<tr>"
@@ -162,7 +162,7 @@ function main {
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_node_sync_state_disp_color + "'>" + $_node_sync_state_disp +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Peers: " +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_node_peers_connected +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_node_peers_connected +  "</td>"
 									$_html += "</tr>"
 								}
 						}
@@ -199,7 +199,7 @@ function main {
 								Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
 							}
 							else {
-								Write-Host $_hostname -nonewline
+								Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
 								
 								Write-Host ", " -nonewline
 								Write-Host "Synced: " -nonewline -ForegroundColor $_farmer_header_color
@@ -268,15 +268,15 @@ function main {
 								if ($_b_console_disabled) {
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Uptime: " +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_uptime_disp +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_uptime_disp +  "</td>"
 									$_html += "</tr>"
 									$_html += "<br>"
 									$_html += "<tr>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Sectors/Hour (avg): " +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_avg_sectors_per_hour.toString() +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_avg_sectors_per_hour.toString() +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Minutes/Sector (avg): " +  "</td>"
-									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_avg_minutes_per_sector.toString() +  "</td>"
+									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_avg_minutes_per_sector.toString() +  "</td>"
 									$_html += "</tr>"
 									break
 								}
