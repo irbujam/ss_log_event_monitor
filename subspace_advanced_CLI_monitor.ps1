@@ -573,7 +573,7 @@ function main {
 						if ($_b_printed_size_metrics -eq $False)
 						{
 							if ($_b_console_disabled) {
-								#$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_label_spacer +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
 								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
 								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
 							}
