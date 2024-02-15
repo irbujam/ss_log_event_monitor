@@ -34,6 +34,9 @@ To launch save the ps1 and config file in same folder on a local computer, chang
       - Farmer(s) state and uptime
       - plotting performance averages 
       - Per Farmer disk level metrics:
+          - space allocated
+          - % completion 
+          - Estimated time remaining to complete plotting (ETA)
           - plotting performance
           - rewards and misses
   - Auto-refresh custom timer set-up with ability to change value in config without restarting the script
@@ -44,9 +47,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
   - Show variance bewteen subspace advanced CLI latest github version v/s running node and farmer version(s)
   - Add overall plotting progress % completion
   - Add disk metrics information as below:
-          - disk label and space allocated
-          - Time to completion
-          - plotting and replotting progress % completion 
+          - disk label
           - time of last reward received
   - Warning/Error messages summary with duplicates removed
 
