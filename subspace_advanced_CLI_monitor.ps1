@@ -527,8 +527,12 @@ function main {
 								$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 								$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
 								$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
-								$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
-								$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
+								$_plotting_percent_complete = "-"
+								$_plotting_percent_complete_disp = "-"
+								if ($_total_sectors_GiB -ne 0) {
+									$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
+									$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
+								}
 								$_eta = "-"
 								$_eta_disp = "-"
 								if ($_minutes_per_sector_data_disp -ne "-") {
