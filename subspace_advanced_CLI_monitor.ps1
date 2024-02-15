@@ -505,6 +505,10 @@ function main {
 						# write size, % progresion and ETA
 						$_b_printed_size_metrics = $False
 						$_size_data_disp = "-"
+						$_plotting_percent_complete = "-"
+						$_plotting_percent_complete_disp = "-"
+						$_eta = "-"
+						$_eta_disp = "-"
 						foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
 						{
 							if ($_disk_plots_completed_obj) {
@@ -527,14 +531,10 @@ function main {
 								$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 								$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
 								$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
-								$_plotting_percent_complete = "-"
-								$_plotting_percent_complete_disp = "-"
 								if ($_total_sectors_GiB -ne 0) {
 									$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
 									$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 								}
-								$_eta = "-"
-								$_eta_disp = "-"
 								if ($_minutes_per_sector_data_disp -ne "-") {
 									$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
 									$_eta_disp = $_eta.toString() + " days"
@@ -591,7 +591,7 @@ function main {
 								Write-Host $_label_spacer -nonewline
 								Write-Host "-" -nonewline
 
-								$_spacer_length = $_label_size.Length - ("-").Length
+								$_spacer_length = $_label_percent_complete.Length - ("-").Length
 								$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 								$_label_spacer = $_label_spacer + "|"
 								Write-Host $_label_spacer -nonewline
@@ -610,7 +610,7 @@ function main {
 						#	#
 						#	$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
 
-							$_spacer_length = $_label_percent_complete.Length - $_eta_disp.Length
+							$_spacer_length = $_label_eta.Length - $_eta_disp.Length
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 							$_label_spacer = $_label_spacer + "|"
 						
