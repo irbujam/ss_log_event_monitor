@@ -22,7 +22,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   ```diff
-  + (New) choice of using web service to view stats on a web browser on phone/pc, Or could still use the console based monitor on any windows pc
+  + (New) choice of using web service to view stats using a web browser on phone/pc, Or could still use the console based monitor on any windows pc
   ```
   - Ability to read metrics for farmer/node running on windows/linux systems
   - Ability to add or remove node/farmer ip(s) in config without restarting the script
@@ -51,4 +51,5 @@ To launch save the ps1 and config file in same folder on a local computer, chang
   - Warning/Error messages summary with duplicates removed
 ```diff
 *** For questions and feedback please contact (rs_00) in subspace discord channel.
+disclaimer: this is a open source tool. You are free to use it, and if you do chose to use this tool, please understand that I can not be held liable for anything.   
 ```
