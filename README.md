@@ -15,7 +15,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 > To enable web access, do the following:
 > - Ensure to create an inbound roule under windows defender firewall for http listening port as specified in the config file. This must be done on the computer that hosts ps1 script
 > - Must run the ps1 file as admin in powershell console
-> - The endpoint to use is http://<ip>:<port>/summary
+> - The endpoint to use is http://ip:port/summary
 
 
 
