@@ -143,7 +143,7 @@ function main {
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_html_red + "'>" + "Stopped" +  "</td>"
 								}
 								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
-								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Hostname" +  "</td>"
+								$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Hostname: " +  "</td>"
 								if ($_process_type.toLower() -eq "farmer") {
 									$_html += "<td><font size='" + $_font_size + "' color='" + $_farmer_header_data_color + "'>" + $_hostname +  "</td>"
 								}
