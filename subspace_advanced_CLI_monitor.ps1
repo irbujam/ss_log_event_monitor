@@ -10,6 +10,7 @@ function main {
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
 	#
+	$_b_first_time = $true
 	$_b_console_disabled = $false
 	####
 	$_b_listener_running = $false
@@ -20,6 +21,9 @@ function main {
 	$_url_prefix_listener = ""
 	$_b_request_processed = $false
 	#
+	$_discord_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$_b_alert_due = $true
+	$_process_state_alert_arr = [System.Collections.ArrayList]@()
 	####
 	Clear-Host
 	
@@ -27,7 +31,6 @@ function main {
 		while ($true) {
 			Clear-Host
 
-			$_b_first_time = $True
 			$_line_spacer_color = "gray"
 			$_farmer_header_color = "cyan"
 			$_farmer_header_data_color = "yellow"
@@ -43,19 +46,37 @@ function main {
 			$_configFile = "./config.txt"
 			$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
 
+			$_ss_process_counter = 0
 			for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
 			{
 				if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 					$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
 					$_process_type = $_config[0].toString()
-					if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $_api_enabled = $_config[1].toString()}
-					elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
+					if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $_api_enabled = $_config[1].toString() }
+					elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) { $_api_host = $_config[1].toString() + ":" + $_config[2].toString() }
 					elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 						$refreshTimeScaleInSeconds = [int]$_config[1].toString()
-						if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = $_refresh_duration_default}
+						if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) { $refreshTimeScaleInSeconds = $_refresh_duration_default }
+					}
+					elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+						$_ss_process_counter += 1
+						if ($_b_first_time) {
+							[void]$_process_state_alert_arr.add("running")
+						}
 					}
 				}
 			}
+			#
+			if ($_ss_process_counter -gt 0 -and $_ss_process_counter -ne $_process_state_alert_arr.Count) {
+				$_reset_process_state_alert_arr = [System.Collections.ArrayList]@()
+				for ($_arr_pos=0; $_arr_pos -lt $_ss_process_counter; $_arr_pos++)
+				{
+					[void]$_reset_process_state_alert_arr.add("running")
+				}
+				$_process_state_alert_arr = $_reset_process_state_alert_arr
+			}
+			$_b_first_time = $false
+			#
 			###Check if API mode enabled and we have a host
 			if ($_api_enabled.toLower() -eq "y" -and $_api_host -ne $null -and $_api_host -ne "")
 			{
@@ -84,17 +105,21 @@ function main {
 					$_http_listener.Start()
 					$_b_listener_running = $true
 				}
-				# wait for request - async
-				#$_context_task = $_http_listener.GetContextAsync()
-				$_prompt_listening_mode = "Ready to Listen, please open statistics using url: " + $_url_prefix_listener + "summary"
+				
+				$_prompt_listening_mode = "Listening...please open url: " + $_url_prefix_listener + "summary" + " to view metrics" 
 				Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
+				
+				# wait for request - async
+				$_context_task = $_http_listener.GetContextAsync()
+				<#
 				$_context_task = $_http_listener.GetContext()
+				#>
 			}
 
 			#Write-Host "_b_console_disabled: " $_b_console_disabled
 			#Write data to appropriate destination
 			if ($_b_console_disabled) {
-				$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task
+				$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task $_url_prefix_listener
 				#$_http_listener.Close()	
 			}
 			else{
@@ -102,7 +127,7 @@ function main {
 				fStartCountdownTimer $refreshTimeScaleInSeconds
 			}
 			
-			###### Auto refresh
+			###### Auto refresh - git version
 			$HoursElapsed = $Stopwatch.Elapsed.TotalHours
 			if ($HoursElapsed -ge 1) {
 				$gitNewVersion = fCheckGitNewVersion
@@ -119,19 +144,27 @@ function main {
 		if ($_b_listener_running -eq $true) 
 		{
 			$_http_listener.Close()	
-			Write-Host "Listener stopped";
+			Write-Host ""
+			Write-Host "Listener stopped"
 		}
 	}
 }
 
-function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task) {
+function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task, [string]$_io_url_listener) {
 	$_io_html = $null
 	$_font_size = 5
-	#while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { $_io_html = fBuildHtml $_io_farmers_ip_arr $_io_url_prefix_listener}
-	## process request received
-	#$_context = $_context_task.GetAwaiter().GetResult()
+	#
+	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { $_io_html = fBuildHtml $_io_farmers_ip_arr}
+	# process request received
+	$_context = $_context_task.GetAwaiter().GetResult()
+	<#
 	$_io_html = fBuildHtml $_io_farmers_ip_arr
 	$_context = $_io_context_task
+	#>
+
+	#$_http_listener.EndGetContext($_http_listener.AsyncState)
+
+
 	# read request properties
 	$_request_method = $_context.Request.HttpMethod
 	$_request_url = $_context.Request.Url
@@ -146,8 +179,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 		$_console_log =  "valid url: " + $_request_url + ", method: " + $_request_method
 		#Write-Host $_console_log
 		$_response = $_io_html
-		$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
-		$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
+		if ($_response) {
+			$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
+			$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
+		}
 	}
 	#else {
 	#	$_console_log =  "invalid url: " + $_request_url + ", method: " + $_request_method
@@ -161,6 +196,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	#Start-Sleep -Milliseconds 200
 	#Start-Sleep -Seconds 1
 	$_context.Response.Close()
+
 	return $true 
 }
 
@@ -389,7 +425,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			if ($_plot_state.toLower() -eq "notplotted") {
 				$_resp_plots_remaining_arr += $_plots_info
 			}
-			else{
+			elseif ($_plot_state.toLower() -eq "plotted") {
 				$_resp_plots_completed_arr += $_plots_info
 			}
 		}
@@ -522,23 +558,36 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 	Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 }
 
-function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url) {
+function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url, [int]$_io_alert_check_arr_pos) {
 	$_resp_process_state_arr = [System.Collections.ArrayList]@()
 
-	$_b_process_running_state = $False
+	$_b_process_running_state = $false
+
+	#check if last discord alert sent was within an hour of start, exception is for first notification that can be sent within this window
+	$_alert_hours_elapsed = $_discord_alert_stopwatch.Elapsed.TotalSeconds
+	if ($_alert_hours_elapsed -ge 3600) {
+		$_discord_alert_stopwatch.Restart()
+		$_b_alert_due = $true
+		Write-Host "here"
+	}
 	#
+	
 	# get process state, send notification if process is stopped/not running
 	$_resp = fPingMetricsUrl $_io_host_ip		# needs to be outside of elapsed time check as response is used downstream to eliminiate dup call
 	if ($_resp -eq "") {
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
-		try {
-			fSendDiscordNotification $_io_alert_url $_alert_text
+		if (($_process_state_alert_arr[$_io_alert_check_arr_pos].toLower() -eq "stopped" -and $_b_alert_due -eq $true) -or $_process_state_alert_arr[$_io_alert_check_arr_pos].toLower() -eq "running") {
+			try {
+				fSendDiscordNotification $_io_alert_url $_alert_text
+				$_process_state_alert_arr[$_io_alert_check_arr_pos] = "stopped"
+				$_b_alert_due = $false
+			}
+			catch {}
 		}
-		catch {}
 		#
-		$_b_process_running_state = $False
+		$_b_process_running_state = $false
 	}
-	else { $_b_process_running_state = $True }
+	else { $_b_process_running_state = $true }
 
 	[void]$_resp_process_state_arr.add($_resp)
 	[void]$_resp_process_state_arr.add($_b_process_running_state)
@@ -561,11 +610,13 @@ function fCheckGitNewVersion {
 
 function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_url_discord = ""
+	$_alert_check_arr_pos = 0
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_ip_arr.Count; $arrPos++)
 	{
 		$_farmer_metrics_raw = ""
 		$_node_metrics_raw = ""
 		[array]$_process_state_arr = $null
+		#
 		if ($_io_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 			$_config = $_io_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
 			$_process_type = $_config[0].toString()
@@ -592,9 +643,11 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
 				$_hostname = $_host_ip
 
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord $_alert_check_arr_pos
+				$_alert_check_arr_pos += 1
 				$_b_process_running_ok = $_process_state_arr[1]
 				
+				$_node_peers_connected = "0"
 				if ($_process_type.toLower() -eq "farmer") {
 					$_total_spacer_length = ("--------------------------------------------------------------------------------------------------------").Length
 					$_spacer_length = $_total_spacer_length
@@ -614,9 +667,10 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				$_console_msg = $_process_type + " status: "
 				Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
+				#Write-Host $_console_msg -ForegroundColor $_farmer_header_color
 				$_console_msg = ""
 				$_console_msg_color = ""
-				if ($_b_process_running_ok -eq $True) {
+				if ($_b_process_running_ok -eq $true) {
 					$_console_msg = "Running"
 					$_console_msg_color = $_html_green
 				}
@@ -633,7 +687,12 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					Write-Host "Synced: " -nonewline -ForegroundColor $_farmer_header_color
 					$_node_sync_state_disp_color = $_html_green
 					$_node_sync_state_disp = "Yes"
-					if ($_node_sync_state -eq 1) {
+					if ($_node_sync_state -eq $null) {
+						$_node_peers_connected = "-"
+						$_node_sync_state_disp = "-"
+						$_node_sync_state_disp_color = $_html_red
+					}
+					elseif ($_node_sync_state -eq 1 -or $_b_process_running_ok -ne $true) {
 						$_node_sync_state_disp = "No"
 						$_node_sync_state_disp_color = $_html_red
 					}
@@ -656,7 +715,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			
 			# header lables
-			$_b_write_header = $True
+			$_b_write_header = $true
 			#
 			$_label_hostname = "Hostname"
 			$_label_diskid = "Disk Id"
@@ -728,7 +787,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				# write header if not already done
-				if ($_b_write_header -eq $True) {
+				if ($_b_write_header -eq $true) {
 					# Host name header info
 					# draw line
 					if ($_disk_UUId_obj -ne $null) {
@@ -737,9 +796,6 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					else {$_total_spacer_length = ("------------------------------------------------------------------------").Length}
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-					if ($_b_first_time -eq $True) {
-						$_b_first_time = $False
-					}
 					 
 					#
 					$_spacer_length = 0
@@ -808,7 +864,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 					#
-					$_b_write_header = $False
+					$_b_write_header = $false
 				}
 
 				# write data table
@@ -833,7 +889,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				}
 
 				# write size, % progresion and ETA
-				$_b_printed_size_metrics = $False
+				$_b_printed_size_metrics = $false
 				$_size_data_disp = "-"
 				$_plotting_percent_complete = "-"
 				$_plotting_percent_complete_disp = "-"
@@ -888,9 +944,9 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 						Write-Host $_eta_disp -nonewline
 					}
 
-					$_b_printed_size_metrics = $True
+					$_b_printed_size_metrics = $true
 				}
-				if ($_b_printed_size_metrics -eq $False)
+				if ($_b_printed_size_metrics -eq $false)
 				{
 					$_spacer_length = 1
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -926,8 +982,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				Write-Host $_label_spacer -nonewline
 				Write-Host $_minutes_per_sector_data_disp -nonewline
 				
-				$_b_counted_missed_rewards = $False
-				$_b_data_printed = $False
+				$_b_counted_missed_rewards = $false
+				$_b_data_printed = $false
 				$_missed_rewards_count = 0
 				$_missed_rewards_color = "white"
 				$_b_reward_data_printed = $false
@@ -988,7 +1044,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				if ($_b_misses_data_printed -eq $false) 				# misses not published yet in endpoint
 				{
 					# write data - combine missed and rewards into single line of display
-					$_b_data_printed = $True
+					$_b_data_printed = $true
 
 					$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1032,23 +1088,51 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 
 	##
 	# display last refresh time 
-	$currentDate = (Get-Date).ToLocalTime().toString()
+	$_current_date = (Get-Date).ToLocalTime().toString()
 	# Refresh
 	echo `n
-	Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
+	Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$_current_date" -ForegroundColor Green;
 	#
 }
 
 function fBuildHtml ([array]$_io_farmers_ip_arr) {
 	$_url_discord = ""
 	#### - build html before proceeding further
-	$_html = "<html><body>"
+	#$_html = "<html><body>"
+	$_html = '<html>
+				<head>
+				<meta name="viewport" content="width=device-width, initial-scale=1">
+				<style>
+				body {
+				  #padding: 25px;
+				  background-color: white;
+				  color: black;
+				  #font-size: 25px;
+				}
+				.dark-mode {
+				  background-color: black;
+				  color: white;
+				}
+				</style>
+				</head>
+				<button onclick="fToggleDisplayMode()"><font size=4>Toggle dark mode</font></button>
+				<script>
+				function fToggleDisplayMode() {
+				   var element = document.body;
+				   element.classList.toggle("dark-mode");
+				}
+				</script>'
+	$_html += "<body>"
+	$_html += "<div class='body'>"
 	#$_html += "<table border=0>"
+
+	$_alert_check_arr_pos = 0
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_ip_arr.Count; $arrPos++)
 	{
 		$_farmer_metrics_raw = ""
 		$_node_metrics_raw = ""
 		[array]$_process_state_arr = $null
+		#
 		if ($_io_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 			$_config = $_io_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
 			$_process_type = $_config[0].toString()
@@ -1075,9 +1159,11 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 				# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
 				$_hostname = $_host_ip
 
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord $_alert_check_arr_pos
+				$_alert_check_arr_pos += 1 
 				$_b_process_running_ok = $_process_state_arr[1]
 				
+				$_node_peers_connected = "-"
 				if ($_process_type.toLower() -eq "farmer") {
 					$_total_spacer_length = ("------------------------------------------------------------------------------").Length
 					$_spacer_length = $_total_spacer_length
@@ -1092,12 +1178,13 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 					$_node_metrics_arr = fGetNodeMetrics $_node_metrics_formatted_arr
 					$_node_sync_state = $_node_metrics_arr[0].Sync.State
 					$_node_peers_connected = $_node_metrics_arr[0].Peers.Connected
+					$_html += "<br>"
 				}
 				
 				$_console_msg = $_process_type + " status: "
 				$_html += "<tr>"
 				$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_console_msg +  "</td>"
-				if ($_b_process_running_ok -eq $True) {
+				if ($_b_process_running_ok -eq $true) {
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + "Running" +  "</td>"
 				}
 				else {
@@ -1111,12 +1198,15 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 				else {
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_hostname +  "</td>"
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + ", " +  "</td>"
-					#$_html += "</tr>"
-					#$_html += "<tr>"
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Synced: " +  "</td>"
 					$_node_sync_state_disp_color = $_html_green
 					$_node_sync_state_disp = "Yes"
-					if ($_node_sync_state -eq 1) {
+					if ($_node_sync_state -eq $null) {
+						$_node_peers_connected = "-"
+						$_node_sync_state_disp = "-"
+						$_node_sync_state_disp_color = $_html_red
+					}
+					elseif ($_node_sync_state -eq 1 -or $_b_process_running_ok -eq $false) {
 						$_node_sync_state_disp = "No"
 						$_node_sync_state_disp_color = $_html_red
 					}
@@ -1140,7 +1230,7 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			
 			# header lables
-			$_b_write_header = $True
+			$_b_write_header = $true
 			#
 			$_label_hostname = "Hostname"
 			$_label_diskid = "Disk Id"
@@ -1216,7 +1306,7 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				# write header if not already done
-				if ($_b_write_header -eq $True) {
+				if ($_b_write_header -eq $true) {
 					# Host name header info
 					# draw line
 					if ($_disk_UUId_obj -ne $null) {
@@ -1225,9 +1315,6 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 					else {$_total_spacer_length = ("------------------------------------------------------------------------").Length}
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
-					if ($_b_first_time -eq $True) {
-						$_b_first_time = $False
-					}
 					 
 					#
 					$_spacer_length = 0
@@ -1283,7 +1370,7 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 					#$_html += '<hr style="width:50%;text-align:left;margin-left:0">'
 					#$_html += "</tr>"
 					#
-					$_b_write_header = $False
+					$_b_write_header = $false
 				}
 				#$_disk_sector_performance_obj = $_disk_sector_performance_arr[$arrPos]
 				#$_disk_rewards_obj = $_disk_rewards_arr[$arrPos]
@@ -1310,7 +1397,7 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 				}
 
 				# write size, % progresion and ETA
-				$_b_printed_size_metrics = $False
+				$_b_printed_size_metrics = $false
 				$_size_data_disp = "-"
 				$_plotting_percent_complete = "-"
 				$_plotting_percent_complete_disp = "-"
@@ -1351,9 +1438,9 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 						$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_eta_disp +  "</td>"
 					}
 
-					$_b_printed_size_metrics = $True
+					$_b_printed_size_metrics = $true
 				}
-				if ($_b_printed_size_metrics -eq $False)
+				if ($_b_printed_size_metrics -eq $false)
 				{
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "-" +  "</td>"
@@ -1374,8 +1461,8 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 				
 				$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + $_minutes_per_sector_data_disp +  "</td>"
 
-				$_b_counted_missed_rewards = $False
-				$_b_data_printed = $False
+				$_b_counted_missed_rewards = $false
+				$_b_data_printed = $false
 				$_missed_rewards_count = 0
 				$_missed_rewards_color = "white"
 				$_b_reward_data_printed = $false
@@ -1433,7 +1520,7 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 				if ($_b_misses_data_printed -eq $false) 				# misses not published yet in endpoint
 				{
 					# write data - combine missed and rewards into single line of display
-					$_b_data_printed = $True
+					$_b_data_printed = $true
 
 					$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1475,16 +1562,20 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 	$_html += "<td><font size='" + $_font_size + "' color='" + $_gitVersionDispColor + "'>" + $_gitVersionDisp +  "</td>"
 	$_html += "</tr>"
 	$_html += "</table>"
-	$_html += "</body></html>"
-
 	##
 	# display last refresh time 
 	#Clear-Host
-	#$currentDate = (Get-Date).ToLocalTime().toString()
+	$_current_date = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	#echo `n
-	#Write-Host "Current Time: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
+	$_html += "<br>"
+	$_html += "<tr>"
+	$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Page refreshed on: " +  "</td>"
+	$_html += "<td><font size='" + $_font_size + "' color='" + $_html_green + "'>" + $_current_date +  "</td>"
+	$_html += "</tr>"
 	#
+	$_html += "</div>"
+	$_html += "</body></html>"
+
 	return $_html
 }
 			
