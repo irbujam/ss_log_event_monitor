@@ -6,7 +6,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
 
 **Pre-requisites:**
-- Must use latest subspace advanced CLI release for the node and farmer
+- Must use subspace advanced CLI release for the node and farmer (version feb-05 or later)
 - Powershell version 5.1 is installed
 - Add --prometheus-listen-on <ip:port> to your node start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:1111)  
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
