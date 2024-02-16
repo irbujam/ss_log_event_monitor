@@ -1,5 +1,5 @@
 # subspace_advanced_CLI_monitor.ps1
-A web-enabled, simple to run and lightweight windows powershell script that captures information from subspace advanced CLI farmer and node metrics endpoint (farmer and node themselves can run on any OS).
+A simple to run and lightweight windows powershell script that captures information from subspace advanced CLI farmer and node metrics endpoint (farmer and node themselves can run on any OS).
 To launch save the ps1 and config file in same folder on a local computer, change config to your needs and run ps1 file. Ensure that you have read the pre-requisites below.
 ![](https://github.com/irbujam/images/blob/main/ss_console_sample.JPG)
 
@@ -12,7 +12,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 
-> To enable web access, do the following:
+> [Experimental] To enable web access, do the following:
 > - Ensure to create an inbound roule under windows defender firewall for http listening port as specified in the config file. This must be done on the computer that hosts ps1 script
 > - Must run the ps1 file as admin in powershell console
 > - The endpoint to use is http://ip:port/summary
@@ -22,7 +22,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   
-> -(New) choice of using web service to view stats using a web browser on phone/ pc, or could still use the console based monitor on pc
+> [Experimental] choice of using web service to view stats using a web browser on phone/ pc, or could still use the console based monitor on pc
   
   - Ability to read metrics for farmer/node running on windows/linux systems
   - Ability to add or remove node/farmer ip(s) in config without restarting the script
