@@ -20,6 +20,7 @@ function main {
 	$_url_prefix_listener = ""
 	$_b_request_processed = $false
 	#
+	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	####
 	Clear-Host
 	
@@ -95,11 +96,11 @@ function main {
 			#Write-Host "_b_console_disabled: " $_b_console_disabled
 			#Write data to appropriate destination
 			if ($_b_console_disabled) {
-				$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task
+				$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task $_alert_stopwatch
 				#$_http_listener.Close()	
 			}
 			else{
-				fWriteDataToConsole $_farmers_ip_arr
+				fWriteDataToConsole $_farmers_ip_arr $_alert_stopwatch
 				fStartCountdownTimer $refreshTimeScaleInSeconds
 			}
 			
@@ -126,14 +127,24 @@ function main {
 	}
 }
 
-function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task) {
+function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task, [object]$_io_alert_stopwatch) {
 	$_io_html = $null
 	$_font_size = 5
 	
-	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { $_io_html = fBuildHtml $_io_farmers_ip_arr}
+	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { 
+
+			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
+			#Write-Host "_seconds_elapsed: " $_seconds_elapsed
+			#Write-Host "refreshTimeScaleInSeconds: " $refreshTimeScaleInSeconds
+			#Write-Host "alert overdue?: " ($_seconds_elapsed -ge $refreshTimeScaleInSeconds)
+			if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds) {
+					$_io_html = fBuildHtml $_io_farmers_ip_arr $_io_alert_stopwatch
+					$_alert_stopwatch.Restart()
+			}
+	}
 	## process request received
 	$_context = $_context_task.GetAwaiter().GetResult()
-	#$_io_html = fBuildHtml $_io_farmers_ip_arr
+	$_io_html = fBuildHtml $_io_farmers_ip_arr $_io_alert_stopwatch
 	#$_context = $_io_context_task
 	
 	# read request properties
@@ -529,7 +540,7 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 	Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 }
 
-function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url) {
+function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url, [object]$_io_alert_sw) {
 	$_resp_process_state_arr = [System.Collections.ArrayList]@()
 
 	$_b_process_running_state = $False
@@ -566,7 +577,7 @@ function fCheckGitNewVersion {
 	return $gitVersionArr
 }
 
-function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
+function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch) {
 	$_url_discord = ""
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_ip_arr.Count; $arrPos++)
 	{
@@ -599,9 +610,10 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
 				$_hostname = $_host_ip
 
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord $_io_stopwatch
 				$_b_process_running_ok = $_process_state_arr[1]
 				
+				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
 					$_total_spacer_length = ("--------------------------------------------------------------------------------------------------------").Length
 					$_spacer_length = $_total_spacer_length
@@ -640,7 +652,12 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					Write-Host "Synced: " -nonewline -ForegroundColor $_farmer_header_color
 					$_node_sync_state_disp_color = $_html_green
 					$_node_sync_state_disp = "Yes"
-					if ($_node_sync_state -eq 1) {
+					if ($_node_sync_state -eq $null) {
+						$_node_peers_connected = "-"
+						$_node_sync_state_disp = "-"
+						$_node_sync_state_disp_color = $_html_red
+					}
+					elseif ($_node_sync_state -eq 1 -or $_b_process_running_ok -ne $true) {
 						$_node_sync_state_disp = "No"
 						$_node_sync_state_disp_color = $_html_red
 					}
@@ -1046,7 +1063,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 	#
 }
 
-function fBuildHtml ([array]$_io_farmers_ip_arr) {
+function fBuildHtml ([array]$_io_farmers_ip_arr, [object]$_io_alert_swatch) {
 	$_url_discord = ""
 	#### - build html before proceeding further
 	#$_html = "<html><body>"
@@ -1108,7 +1125,7 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 				# STOP COMMENT - Remove the # in front of the next 1 line directly below this line, this will display IP in display
 				$_hostname = $_host_ip
 
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord $_io_alert_swatch
 				$_b_process_running_ok = $_process_state_arr[1]
 				
 				if ($_process_type.toLower() -eq "farmer") {
@@ -1149,7 +1166,12 @@ function fBuildHtml ([array]$_io_farmers_ip_arr) {
 					$_html += "<td><font size='" + $_font_size + "' color='" + $_html_black + "'>" + "Synced: " +  "</td>"
 					$_node_sync_state_disp_color = $_html_green
 					$_node_sync_state_disp = "Yes"
-					if ($_node_sync_state -eq 1) {
+					if ($_node_sync_state -eq $null) {
+						$_node_peers_connected = "-"
+						$_node_sync_state_disp = "-"
+						$_node_sync_state_disp_color = $_html_red
+					}
+					elseif ($_node_sync_state -eq 1 -or $_b_process_running_ok -eq $false) {
 						$_node_sync_state_disp = "No"
 						$_node_sync_state_disp_color = $_html_red
 					}
