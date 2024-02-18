@@ -223,7 +223,7 @@ function fPingMetricsUrl ([string]$ioUrl) {
 		$_response = ""
 		$_fullUrl = "http://" + $ioUrl + "/metrics"
 		try {
-			$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl
+			$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl  -TimeoutSec 20
 			if ($farmerObj) {
 				$_response = $farmerObj.toString()
 			}
