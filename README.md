@@ -46,8 +46,8 @@ To launch save the three .ps1 files and config file in same folder on a local co
   - Display subspace advanced CLI latest github version
   
 **Upcoming features (not yet available):**
+  - Known issue, the config file is not read dynamically without restart of the script when web view is enabled. Fix TBD
   - Show variance bewteen subspace advanced CLI latest github version v/s running node and farmer version(s)
-  - Add overall plotting progress % completion
   - Add disk metrics information as below:
           - disk label
           - time of last reward received
