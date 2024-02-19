@@ -28,19 +28,22 @@ To launch save the three .ps1 files and config file in same folder on a local co
   
 > [Experimental] web service enabled to view stats using a web browser on phone/ pc,legacy monitor console display still exists
   
-  - Ability to read metrics for farmer/node running on windows/linux systems
-  - Ability to add or remove node/farmer ip(s) in config without restarting the script
-  - Removed the need for log file as monitoring is now using metrics endpoints
+  - metrics for farmer/node running on windows/linux systems
+  - Script can run on a pc separate from farms/nodes hosted pc 
+  - Ability to add or remove node/farmer ip(s) in config without restarting the script (currently works for console mode only with web ui disbaled in config)
+  - No need for log files as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Metrics information including:
-      - Node(s) running/sync state and peers connected
+      - Overall node/farm status, size, progress and eta on plotting
+      - Node(s) running/sync state and peers connected (console only)
       - Farmer(s) state and uptime
-      - plotting performance averages 
-      - Per Farmer disk level metrics:
+      - plotting performance averages
+      - rewards per farm
+      - And then detailed  metrics break-up by farmer:
           - space allocated
           - % completion 
-          - Estimated time remaining to complete plotting (ETA)
+          - eta
           - plotting performance
           - rewards and misses
   - Auto-refresh custom timer set-up with ability to change value in config without restarting the script
