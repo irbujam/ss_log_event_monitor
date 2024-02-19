@@ -1,10 +1,12 @@
 # subspace_advanced_CLI_monitor.ps1
 A simple to run and lightweight windows powershell script that captures information from subspace advanced CLI farmer and node metrics endpoint (farmer and node themselves can run on any OS).
-To launch save the ps1 and config file in same folder on a local computer, change config to your needs and run ps1 file. Ensure that you have read the pre-requisites below.
+To launch save the three .ps1 files and config file in same folder on a local computer, change config to your needs and run ps1 file. Ensure that you have read the pre-requisites below.
 ![](https://github.com/irbujam/images/blob/main/ss_console_sample.JPG)
 
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
-
+```diff
+- Imp updated (2/19):additional files introduced to bring some modularity but it is still powershell just separated out some functions , also slight changes to config file
+```
 **Pre-requisites:**
 - Must use subspace advanced CLI release for the node and farmer (version feb-05 or later)
 - Powershell version 5.1 is installed
@@ -22,7 +24,7 @@ To launch save the ps1 and config file in same folder on a local computer, chang
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   
-> [Experimental] choice of using web service to view stats using a web browser on phone/ pc, or could still use the console based monitor on pc
+> [Experimental] web service enabled to view stats using a web browser on phone/ pc,legacy monitor console display still exists
   
   - Ability to read metrics for farmer/node running on windows/linux systems
   - Ability to add or remove node/farmer ip(s) in config without restarting the script
