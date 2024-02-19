@@ -10,7 +10,7 @@ To launch save the three .ps1 files and config file in same folder on a local co
 - Important update (2/19):additional files introduced to bring some modularity, also slight changes to config file were made
 ```
 **Pre-requisites:**
-- Must use subspace advanced CLI release for the node and farmer (version feb-05 or later)
+- Must use subspace advanced CLI release for the node and farmer (version feb-05 or later, some features may be missing on older release due to inherent data dependencies from metrics endpoints)
 - Powershell version 5.1 is installed
 - Add --prometheus-listen-on <ip:port> to your node start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:1111)  
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
