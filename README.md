@@ -4,6 +4,7 @@ To launch save the three .ps1 files and config file in same folder on a local co
 
 ![console sample image: ](https://github.com/irbujam/images/blob/main/ss_console_sample.JPG)
 ![web sample image: ](https://github.com/irbujam/images/blob/main/ss_web_sample.JPG)
+<img src="https://github.com/irbujam/images/blob/main/ss_web_sample.JPG" width="100" hieght="125" />
 
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
 ```diff
