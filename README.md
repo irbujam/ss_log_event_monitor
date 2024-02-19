@@ -5,7 +5,7 @@ To launch save the three .ps1 files and config file in same folder on a local co
 
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
 ```diff
-- Imp updated (2/19):additional files introduced to bring some modularity but it is still powershell just separated out some functions , also slight changes to config file
+- Important update (2/19):additional files introduced to bring some modularity but it is still powershell just separated out some functions , also slight changes to config file
 ```
 **Pre-requisites:**
 - Must use subspace advanced CLI release for the node and farmer (version feb-05 or later)
