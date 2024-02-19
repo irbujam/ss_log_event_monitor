@@ -5,7 +5,6 @@
 
 #------------------------------------------------------------------------------------------------------------------
 # http endpoint set-up (use Y-Enabled, N-Disabled for enable-api setting). "N" is default
-# Please note that enabling API will disable console output
 #
 # You can use either localhost or an IP
 # If using an IP please ensure to create an inbound rule under windows defender firewall, on computer hosting the ps1 script, 
@@ -13,11 +12,11 @@
 # API endpoint to use on web browser http://ip:port/summary (example http://127.0.0.1:15004/summary)
 #------------------------------------------------------------------------------------------------------------------
 
-#Enable-API: N
-Enable-API: Y
+Enable-API: N
+#Enable-API: Y
 
-#API-host: 127.0.0.1:15004
-API-host: 192.168.2.251:15004
+#API-host: 127.0.0.1:5004
+API-host: 192.168.2.251:5004
 
 #------------------------------------------------------------------------------------------------------------------
 # discord webhook - change to use your own
