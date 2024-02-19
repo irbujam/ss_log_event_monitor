@@ -693,8 +693,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				$_resp_plots_completed_arr += $_plots_info
 			}
 		}
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		{
 			$_uptime_seconds = $_metrics_obj.Value
 			$_unique_farm_id = $_metrics_obj.Instance
