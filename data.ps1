@@ -57,6 +57,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					$_process_status = "Stopped"
 				}
 				
+				$_node_sync_state_disp = ""
+				$_node_peers_connected = ""
 				if ($_process_type.toLower() -eq "node") {				# get node metrics
 					$_node_metrics_raw = $_process_state_arr[0]
 					[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
