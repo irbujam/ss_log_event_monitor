@@ -110,6 +110,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_process_remaining_sectors_disp = "-"
 			$_process_total_disks = 0
 			$_process_total_disks_disp = "-"
+			$_process_total_disks_for_eta = 0
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				# get performance - must do first as ETA is calculated based on this information
@@ -152,6 +153,10 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 
 						$_process_total_disks += 1
 						$_process_total_disks_disp = $_process_total_disks
+
+						if ($_reminaing_sectors -eq 0) {
+							$_process_total_disks_for_eta = $_process_total_disks - 1
+						}
 						
 						$_process_remaining_sectors += $_reminaing_sectors
 						$_process_remaining_sectors_disp = $_process_remaining_sectors
@@ -238,6 +243,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 							CompletedSectors	= $_process_completed_sectors_disp
 							RemainingSectors	= $_process_remaining_sectors_disp
 							TotalDisks			= $_process_total_disks_disp
+							TotalDisksForETA	= $_process_total_disks_for_eta
 							TotalRewards		= $_disk_sector_performance_obj.TotalRewards.toString()
 						}
 						$_process_sub_header_arr += $_process_sub_header
