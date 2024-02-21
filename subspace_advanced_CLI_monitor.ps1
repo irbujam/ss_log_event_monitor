@@ -263,7 +263,13 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_progess_data += '"' + $_overall_progress + '"'
 			$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
 			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
-			$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			if ($_process_sector_time.TotalSeconds - gt 0)
+			{
+				$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			}
+			else {
+				$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
+			}
 			#$_chart_eta_data += '"' + $_process_eta + '"'
 			$_chart_eta_data += '"' + $_process_eta_disp + '"'
 			$_chart_size_data += '"' + $_process_size_disp + '"'
@@ -279,7 +285,13 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_progess_data += ',"' + $_overall_progress + '"'
 			$_chart_sector_time_data += ',"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
 			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
-			$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			if ($_process_sector_time.TotalSeconds - gt 0)
+			{
+				$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			}
+			else {
+				$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
+			}
 			#$_chart_eta_data += ',"' + $_process_eta + '"'
 			$_chart_eta_data += ',"' + $_process_eta_disp + '"'
 			$_chart_size_data += ',"' + $_process_size_disp + '"'
@@ -1165,13 +1177,16 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			### DELETE - start
 			#Write-Host "_actual_plotting_disk_count: " $_actual_plotting_disk_count
 			### DELETE - end
-			$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
-			$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count, 2)
-			$_farm_sector_times = 0.0
-			$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
-			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
+			$_farm_sector_times_disp = "-"
+			if ($_actual_plotting_disk_count -gt 0) {
+				$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
+				$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count, 2)
+				
+				$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
+				$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
 
-			$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m " + $_farm_sector_times_obj.seconds.ToString() + "s"
+				$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m " + $_farm_sector_times_obj.seconds.ToString() + "s"
+			}
 
 
 			Write-Host "Sector Time: " -nonewline 
