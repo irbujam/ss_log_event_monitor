@@ -283,6 +283,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_avg_sectors_per_hour = 0.0
 			$_avg_minutes_per_sector = 0.0
 			$_avg_seconds_per_sector = 0.0
+			$_farm_sector_times = 0.0
 			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 			{
 				# get process sub header information
@@ -375,9 +376,12 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			### DELETE - start
 			#Write-Host "_actual_plotting_disk_count: " $_actual_plotting_disk_count
 			### DELETE - end
-			$_avg_minutes_per_sector = $_avg_minutes_per_sector / $_actual_plotting_disk_count
-			$_avg_sectors_per_hour = $_avg_sectors_per_hour / $_actual_plotting_disk_count
-			$_farm_sector_times = $_avg_seconds_per_sector / $_actual_plotting_disk_count
+			if ($_actual_plotting_disk_count -gt 0)
+			{
+				$_avg_minutes_per_sector = $_avg_minutes_per_sector / $_actual_plotting_disk_count
+				$_avg_sectors_per_hour = $_avg_sectors_per_hour / $_actual_plotting_disk_count
+				$_farm_sector_times = $_avg_seconds_per_sector / $_actual_plotting_disk_count
+			}
 
 			# build process sub header
 			$_process_sub_header = [PSCustomObject]@{
