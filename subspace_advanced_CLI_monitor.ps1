@@ -223,6 +223,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 		$_process_size = 0.0
 		$_process_size_disp = "-"
 		$_process_sector_time = 0.0
+		$_b_i_was_here = $false
 
 
 		### DELETE - start
@@ -246,6 +247,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			#if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 				$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
+				$_b_i_was_here = $true
 				#$_process_eta = [math]::Round((([double]($_process_farm_sub_header.MinutesPerSectorAvg) * $_process_farm_sub_header.RemainingSectors)) / ($_process_farm_sub_header.TotalDisksForETA * 60 * 24), 2)
 				#$_process_eta_disp = $_process_eta.toString() + " days"
 				$_process_eta = [double](($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors) / $_process_farm_sub_header.TotalDisksForETA)
@@ -262,7 +264,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_labels += '"' + $_process_farm_sub_header.UUId + '"'
 			$_chart_alt_labels += '"' + $_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += '"' + $_overall_progress + '"'
-			$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+			if ($_b_i_was_here) {
+				$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+			}
+			else {
+				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
+			}
 			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
 			if ($_process_sector_time.TotalSeconds -gt 0)
 			{
@@ -284,7 +291,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_labels += ',"' +$_process_farm_sub_header.UUId + '"'
 			$_chart_alt_labels += ',"' +$_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += ',"' + $_overall_progress + '"'
-			$_chart_sector_time_data += ',"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+			if ($_b_i_was_here) {
+				$_chart_sector_time_data += ',"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+			}
+			else {
+				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
+			}
 			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
 			if ($_process_sector_time.TotalSeconds -gt 0)
 			{
