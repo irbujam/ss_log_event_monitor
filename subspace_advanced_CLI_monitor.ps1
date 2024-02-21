@@ -1583,7 +1583,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				
 				# write performance data
 				#$_spacer_length = $_label_eta.Length - $_eta_disp.Length
-				$_spacer_length = $_label_replot.Length - $_replot_sector_count.Length
+				$_spacer_length = $_label_replot.Length - $_replot_sector_count.ToString().Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 			
