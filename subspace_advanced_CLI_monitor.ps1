@@ -24,13 +24,17 @@ function main {
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_b_first_time = $true
 	####
+	try {
+		[System.Console]::CursorVisible = $false
+	}
+	catch {}
+	
 	Clear-Host
 	
 	try {
 		while ($true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) 
 			{
-				[System.Console]::CursorVisible = $false
 				$Stopwatch.Restart()
 				Clear-Host
 
@@ -1163,7 +1167,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			### DELETE - end
 			$_avg_minutes_per_sector = $_avg_minutes_per_sector / $_actual_plotting_disk_count
 			$_avg_sectors_per_hour = $_avg_sectors_per_hour / $_actual_plotting_disk_count
-			$_farm_sector_times = $_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count)	# average time/farm and then avg time/disk to get net sectors time per farm
+			$_farm_sector_times = 0.0
+			$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
 			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
 
 			$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m " + $_farm_sector_times_obj.seconds.ToString() + "s"
