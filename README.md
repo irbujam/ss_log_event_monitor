@@ -36,17 +36,17 @@ To launch save the three .ps1 files and config file in the same folder on a loca
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Metrics information including:
       - Overall node/farm status, size, progress and eta on plotting
-      - Node(s) running/sync state and peers connected (console only)
+      - Node(s) sync state and peers connected
       - Farmer(s) state and uptime
       - plotting performance averages
       - rewards per farm
-      - And then detailed  metrics break-up by farmer:
+      - Detailed  metrics break-up by farmer:
           - space allocated
           - % completion 
           - eta
           - plotting performance
           - rewards and misses
-  - Auto-refresh custom timer set-up with ability to change value in config without restarting the script
+  - Auto-refresh custom timer set-up with ability to change value in config without restarting the script (currently works in console mode only)
   - Local Time Zone display
   - Display subspace advanced CLI latest github version
   
@@ -56,7 +56,6 @@ To launch save the three .ps1 files and config file in the same folder on a loca
   - Add disk metrics information as below:
           - disk label
           - time of last reward received
-  - Warning/Error messages summary with duplicates removed
 
 >*** For questions and feedback please contact (rs_00) in subspace discord channel.
 
