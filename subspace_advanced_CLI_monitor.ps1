@@ -30,6 +30,7 @@ function main {
 		while ($true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) 
 			{
+				[System.Console]::CursorVisible = $false
 				$Stopwatch.Restart()
 				Clear-Host
 
@@ -165,7 +166,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					$_spinner = '|', '/', '-', '\'
 					$_spinnerPos = 0
 					$_end_dt = [datetime]::UtcNow.AddSeconds($refreshTimeScaleInSeconds)
-					[System.Console]::CursorVisible = $false
+					#[System.Console]::CursorVisible = $false
 					
 					while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
 						Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
@@ -200,6 +201,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_chart_labels = '['
 	$_chart_alt_labels = '['
 	$_chart_progess_data = '['
+	$_chart_sector_time_data = '['
+	$_chart_total_sector_time_data = '['
+	$_chart_total_sectors_per_hour_data = '['
 	$_chart_eta_data = '['
 	$_chart_size_data = '['
 	$_chart_uptime_data = '['
@@ -210,18 +214,38 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	{
 		$_overall_progress = "-"
 		$_overall_progress_disp = "-"
-		$_process_eta = 0
+		$_process_eta = 0.0
 		$_process_eta_disp = "-"
-		$_process_size = 0
+		$_process_size = 0.0
 		$_process_size_disp = "-"
+		$_process_sector_time = 0.0
+
+
+		### DELETE - start
+		#Write-Host
+		#Write-Host "_process_farm_sub_header: " $_process_farm_sub_header
+		#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
+		#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
+		#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
+		#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
+		#Write-Host
+		#Read-Host
+		### DELETE - end
+
+
+
 		if ($_process_farm_sub_header.TotalSectors -ne "-")
 		{
 			$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / [int]($_process_farm_sub_header.TotalSectors)) * 100, 1)
 			$_overall_progress_disp = $_overall_progress.toString() + "%"
 			#
 			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
-				$_process_eta = [math]::Round((([double]($_process_farm_sub_header.MinutesPerSectorAvg) * $_process_farm_sub_header.RemainingSectors)) / ($_process_farm_sub_header.TotalDisksForETA * 60 * 24), 2)
-				$_process_eta_disp = $_process_eta.toString() + " days"
+				$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
+				#$_process_eta = [math]::Round((([double]($_process_farm_sub_header.MinutesPerSectorAvg) * $_process_farm_sub_header.RemainingSectors)) / ($_process_farm_sub_header.TotalDisksForETA * 60 * 24), 2)
+				#$_process_eta_disp = $_process_eta.toString() + " days"
+				$_process_eta = [double](($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors) / $_process_farm_sub_header.TotalDisksForETA)
+				$_process_eta_obj = New-TimeSpan -seconds $_process_eta
+				$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
 			$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
@@ -233,7 +257,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_labels += '"' + $_process_farm_sub_header.UUId + '"'
 			$_chart_alt_labels += '"' + $_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += '"' + $_overall_progress + '"'
-			$_chart_eta_data += '"' + $_process_eta + '"'
+			$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
+			$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			#$_chart_eta_data += '"' + $_process_eta + '"'
+			$_chart_eta_data += '"' + $_process_eta_disp + '"'
 			$_chart_size_data += '"' + $_process_size_disp + '"'
 			$_chart_uptime_data += '"' + $_process_farm_sub_header.Uptime + '"'
 			$_chart_perf_sectorsPerHour_data += '"' + $_process_farm_sub_header.SectorsPerHourAvg + '"'
@@ -245,7 +273,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_labels += ',"' +$_process_farm_sub_header.UUId + '"'
 			$_chart_alt_labels += ',"' +$_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += ',"' + $_overall_progress + '"'
-			$_chart_eta_data += ',"' + $_process_eta + '"'
+			$_chart_sector_time_data += ',"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
+			$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			#$_chart_eta_data += ',"' + $_process_eta + '"'
+			$_chart_eta_data += ',"' + $_process_eta_disp + '"'
 			$_chart_size_data += ',"' + $_process_size_disp + '"'
 			$_chart_uptime_data += ',"' + $_process_farm_sub_header.Uptime + '"'
 			$_chart_perf_sectorsPerHour_data += ',"' + $_process_farm_sub_header.SectorsPerHourAvg + '"'
@@ -256,6 +288,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_chart_labels += ']'
 	$_chart_alt_labels += ']'
 	$_chart_progess_data += ']'
+	$_chart_sector_time_data += ']'
+	$_chart_total_sector_time_data += ']'
+	$_chart_total_sectors_per_hour_data += ']'
 	$_chart_eta_data += ']'
 	$_chart_size_data += ']'
 	$_chart_uptime_data += ']'
@@ -263,6 +298,15 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_chart_perf_minutesPerSector_data += ']'
 	
 	$_chart_rewards_data += ']'
+
+
+	### DELETE - start
+	#Write-Host
+	#Write-Host "_chart_sector_time_data: " $_chart_sector_time_data
+	#Write-Host
+	#Read-Host
+	### DELETE - end
+
 	#Write-Host
 	#Write-Host "_chart_progess_data: " $_chart_progess_data
 	#Write-Host "_chart_perf_minutesPerSector_data: " $_chart_perf_minutesPerSector_data
@@ -355,8 +399,13 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				}
 				</script>'
 
-	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
-	$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance'
+	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+	$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance (Avg)'
+	
+	
+	$_html_net_performance_chart = fBuildNetPerformanceChart $_chart_labels $_chart_alt_labels $_chart_total_sectors_per_hour_data $_chart_total_sector_time_data $_process_disk_data_js_arr 'Farm Performance (Net)'
+	
+	
 	$_html_pie_chart = fBuildPieChart $_chart_labels $_chart_alt_labels $_chart_rewards_data $_process_disk_data_js_arr 'Farm Rewards'
 
 	$_process_status = "<table><tr>"
@@ -412,6 +461,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	#$_html_full += "</td></tr>"
 	#$_html_full += "<tr><td>"
 	$_html_full += $_html_radar_chart
+	
+	
+	$_html_full += $_html_net_performance_chart
+	
+	
 	#$_html_full += "</td></tr>"
 	#$_html_full += "<tr><td>"
 	$_html_full += $_html_pie_chart
@@ -467,7 +521,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 	$_spinner = '|', '/', '-', '\'
 	$_spinnerPos = 0
 	$_end_dt = [datetime]::UtcNow.AddSeconds($_io_timer_duration)
-	[System.Console]::CursorVisible = $false
+	#[System.Console]::CursorVisible = $false
 	
 	while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
 		Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
@@ -735,16 +789,19 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						}
 					}
 					$_total_disk_per_farmer += 1
-					
-					$_farmer_disk_sector_plot_time = 0.00
-					$_farmer_disk_sector_plot_count = 0
 					#
 					$_disk_sector_perf = [PSCustomObject]@{
 						Id					= $_farmer_disk_id
 						SectorsPerHour		= $_sectors_per_hour
 						MinutesPerSector	= $_minutes_per_sector
+						DiskSectorPlotTime 	= $_farmer_disk_sector_plot_time
+						PlotTimeUnit		= $_unit_type
+						DiskSectorPlotCount	= $_farmer_disk_sector_plot_count
 					}
 					$_resp_sector_perf_arr += $_disk_sector_perf
+					#
+					$_farmer_disk_sector_plot_time = 0.00
+					$_farmer_disk_sector_plot_count = 0
 				}
 			}
 		}
@@ -908,7 +965,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				
 				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
-					$_total_spacer_length = ("--------------------------------------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------------").Length
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -979,14 +1036,15 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			$_label_diskid = "Disk Id"
 			$_label_size = "Size     "
 			$_label_percent_complete = "% Complete"
-			$_label_eta = "ETA       "
+			$_label_eta = "ETA         "
+			$_label_replot = "Replots"
 			$_label_sectors_per_hour = "Sectors/Hour"
-			$_label_minutes_per_sectors = "Minutes/Sector"
+			$_label_minutes_per_sectors = "Time/Sector"
 			$_label_rewards = "Rewards"
 			$_label_misses = "Misses"
 			$_spacer = " "
-			$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
-			$_total_header_labels = 8
+			$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
+			$_total_header_labels = 9
 			
 			#
 			
@@ -1002,6 +1060,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			# Write uptime information to console
 			$_avg_sectors_per_hour = 0.0
 			$_avg_minutes_per_sector = 0.0
+			$_avg_seconds_per_sector = 0.0
 			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 			{
 				
@@ -1009,16 +1068,20 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					if ($_disk_sector_performance_obj.Id -eq "overall") {
 						#$_avg_sectors_per_hour = 0.0
 						#$_avg_minutes_per_sector = 0.0
-						if ($_disk_sector_performance_obj.TotalSeconds -gt 0) {
-						#if ($_disk_sector_performance_obj.TotalSeconds -and $_disk_sector_performance_obj.TotalSeconds -gt 0) {
-							$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
-						}
-						if ($_disk_sector_performance_obj.TotalSectors) {
-							$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
-						}
+						#if ($_disk_sector_performance_obj.TotalSeconds -gt 0) {
+						##if ($_disk_sector_performance_obj.TotalSeconds -and $_disk_sector_performance_obj.TotalSeconds -gt 0) {
+						#	$_avg_sectors_per_hour = [math]::Round(($_disk_sector_performance_obj.TotalSectors * 3600)/ $_disk_sector_performance_obj.TotalSeconds, 1)
+						#}
+						#if ($_disk_sector_performance_obj.TotalSectors) {
+						#	$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
+						#}
 						
 						$_uptime = fGetElapsedTime $_disk_sector_performance_obj
 						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
+						#
+						$_rewards_per_hour = [math]::Round($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours, 1)
+						$_rewards_per_day_estimated = [math]::Round((($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 1)
+						#
 
 						Write-Host ", " -nonewline
 						Write-Host "Uptime: " -nonewline -ForegroundColor $_farmer_header_color
@@ -1026,13 +1089,16 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 						##Write-Host ", " -nonewline
 						Write-Host $_uptime_disp -nonewline -ForegroundColor $_farmer_header_data_color
 						Write-Host ", " -nonewline
-						Write-Host "Rewards: " -nonewline -ForegroundColor $_farmer_header_color
-						Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
-						Write-Host "Sectors/Hour (avg): " -nonewline 
-						Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
-						Write-Host ", " -nonewline
-						Write-Host "Minutes/Sector (avg): " -nonewline
-						Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+						#Write-Host "Rewards: " -nonewline -ForegroundColor $_farmer_header_color
+						#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
+						Write-Host "Rewards (total, per hour): " -nonewline -ForegroundColor $_farmer_header_color
+						Write-Host  ($_disk_sector_performance_obj.TotalRewards.toString() + ", " + $_rewards_per_hour)  -ForegroundColor $_farmer_header_data_color
+
+						#Write-Host "Sectors/Hour (avg): " -nonewline 
+						#Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+						#Write-Host ", " -nonewline
+						#Write-Host "Minutes/Sector (avg): " -nonewline
+						#Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
 						#Write-Host ", " -nonewline
 						#Write-Host "Rewards: " -nonewline
 						#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
@@ -1041,7 +1107,85 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				}
 			}
 			#
-			#Write Farm level Size, % progress and ETA - NEW
+			## write farm level averages for sector times
+			$_actual_plotting_disk_count = 0
+			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
+			{
+				if ($_disk_sector_performance_obj) {
+					if ($_disk_sector_performance_obj.Id -eq "overall") { continue }
+				}
+				#
+				foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
+				{
+					if ($_disk_plots_remaining_obj) {
+						if ($_disk_sector_performance_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
+					}
+					else {break}
+					### DELETE - start
+					#Write-Host
+					#Write-Host "_disk_plots_remaining_obj: " $_disk_plots_remaining_obj
+					#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
+					#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
+					#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
+					#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
+					#Write-Host
+					### DELETE - end
+					$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
+					if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
+						#$_avg_minutes_per_sector += $_disk_sector_performance_obj.MinutesPerSector
+						#$_avg_sectors_per_hour += $_disk_sector_performance_obj.SectorsPerHour
+						$_actual_plotting_disk_count += 1
+						switch ($_disk_sector_performance_obj.PlotTimeUnit) {
+							"seconds" 	{
+								$_avg_sectors_per_hour += [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotCount * 3600) / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
+								$_avg_minutes_per_sector += [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / ($_disk_sector_performance_obj.DiskSectorPlotCount * 60), 1)
+								$_avg_seconds_per_sector += [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+							}
+							"minutes" 	{
+								$_avg_sectors_per_hour += [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
+								$_avg_minutes_per_sector += [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+								$_avg_seconds_per_sector += [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+							}
+							"hours" 	{
+								$_avg_sectors_per_hour += [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / ($_disk_sector_performance_obj.DiskSectorPlotTime * 60), 1)
+								$_avg_minutes_per_sector += [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+								$_avg_seconds_per_sector += [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 3600) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+							}
+						}
+					}
+					else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
+						# Not needing info for replotting at farm level yet
+					}
+				}
+			}
+			### DELETE - start
+			#Write-Host "_actual_plotting_disk_count: " $_actual_plotting_disk_count
+			### DELETE - end
+			$_avg_minutes_per_sector = $_avg_minutes_per_sector / $_actual_plotting_disk_count
+			$_avg_sectors_per_hour = $_avg_sectors_per_hour / $_actual_plotting_disk_count
+			$_farm_sector_times = $_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count)	# average time/farm and then avg time/disk to get net sectors time per farm
+			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
+
+			$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m " + $_farm_sector_times_obj.seconds.ToString() + "s"
+
+
+			Write-Host "Sector Time: " -nonewline 
+			Write-Host $_farm_sector_times_disp -nonewline -ForegroundColor $_farmer_header_data_color
+			Write-Host ", " -nonewline
+			Write-Host "Sectors/Hour (avg): " -nonewline 
+			Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+			Write-Host ", " -nonewline
+			Write-Host "Minutes/Sector (avg): " -nonewline
+			Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+			#Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_data_color
+
+			Write-Host ", " -nonewline
+			Write-Host "Est rewards (per day): " -nonewline
+			Write-Host  ($_rewards_per_day_estimated)  -ForegroundColor $_farmer_header_data_color
+
+			#
+			#
+			## Write farm level Size, % progress and ETA - NEW
 			$_process_completed_sectors = 0
 			$_process_completed_sectors_disp = "-"
 			$_process_remaining_sectors = 0
@@ -1050,7 +1194,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			$_process_total_sectors_disp = "-"
 			$_process_total_disks = 0
 			$_process_total_disks_disp = "-"
-			$_process_total_disks_for_eta = 0
+			#$_process_total_disks_for_eta = 0
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				# get size, % progresion and ETA at farm level
@@ -1077,7 +1221,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 						$_process_total_disks_disp = $_process_total_disks
 
 						if ($_reminaing_sectors -eq 0) {
-							$_process_total_disks_for_eta = $_process_total_disks - 1
+							$_process_total_disks = $_process_total_disks - 1
+							$_process_total_disks_disp = $_process_total_disks
 						}
 						
 						$_process_remaining_sectors += $_reminaing_sectors
@@ -1093,6 +1238,24 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			}
 			#
 			## build and display farm level progress and ETA
+
+
+
+
+
+			### DELETE - start
+			#Write-Host
+			#Write-Host "_process_total_disks_disp: " $_process_total_disks_disp
+			#Write-Host "_process_remaining_sectors: " $_process_remaining_sectors
+			#Write-Host "_avg_minutes_per_sector: " $_avg_minutes_per_sector
+			#Write-Host "_process_total_disks_disp: " $_process_total_disks_disp
+			#Write-Host			
+			### DELETE - end
+
+
+
+
+
 			#
 			$_farm_progress = 0
 			$_farm_progress_disp = "-"
@@ -1103,9 +1266,12 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			#
 			$_farm_eta = 0
 			$_farm_eta_disp = "-"
-			if ($_process_remaining_sectors -ne "-" -and $_process_total_disks_for_eta -ne 0) {
-				$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_for_eta * 60 * 24), 2)
-				$_farm_eta_disp = $_farm_eta.toString() + " days"
+			if ($_process_remaining_sectors -ne "-" -and $_process_total_disks_disp -ne 0) {
+				#$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_disp * 60 * 24), 2)
+				#$_farm_eta_disp = $_farm_eta.toString() + " days"
+				$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
+				$_farm_eta_obj = New-TimeSpan -seconds $_farm_eta
+				$_farm_eta_disp =  $_farm_eta_obj.days.ToString() + "d " + $_farm_eta_obj.hours.ToString() + "h " + $_farm_eta_obj.minutes.ToString() + "m " 	## + $_farm_eta_obj.seconds.ToString() + "s"
 			}
 			#
 			$_farm_size = 0
@@ -1113,9 +1279,9 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			if ($_process_total_sectors_disp -ne "-") {
 				$_farm_size = [int]($_process_total_sectors)
 				$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
-				$_farm_size_disp = $_farm_size_TiB.ToString()
+				$_farm_size_disp = $_farm_size_TiB.ToString() + " TiB"
 			}
-			Write-Host ", " -nonewline
+			#Write-Host ", " -nonewline
 			Write-Host "Size: " -nonewline
 			#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
 			Write-Host  $_farm_size_disp -nonewline -ForegroundColor $_farmer_header_data_color
@@ -1131,7 +1297,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			#
 			## display break-up (disk level) information for a given farm
 			#
-			$_total_spacer_length = ("--------------------------------------------------------------------------------------------------------").Length
+			$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------------").Length
 			$_spacer_length = $_total_spacer_length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 			
@@ -1147,7 +1313,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					if ($_disk_UUId_obj -ne $null) {
 						$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 					}
-					else {$_total_spacer_length = ("------------------------------------------------------------------------").Length}
+					else {$_total_spacer_length = ("-------------------------------------------------------------------------------").Length}
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					 
@@ -1162,7 +1328,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					if ($_disk_UUId_obj -ne $null) {
 						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
 					}
-					else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+					else {$_spacer_length = ("-------------------------------------------------------------------------------").Length}
 
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
@@ -1180,6 +1346,12 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer -nonewline 
 					Write-Host $_label_eta -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_replot -nonewline -ForegroundColor $_disk_header_color
 
 					$_spacer_length = 0
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1214,7 +1386,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					if ($_disk_UUId_obj -ne $null) {
 						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 					}
-					else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+					else {$_spacer_length = ("-------------------------------------------------------------------------------").Length}
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 					#
@@ -1229,17 +1401,75 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				Write-Host $_label_spacer -nonewline
 				Write-Host $_disk_UUId_obj.Id -nonewline
 
-				# get performance data - write after eta is calculated
+				# get disk performance data - write after eta is calculated
 				$_minutes_per_sector_data_disp = "-"
 				$_sectors_per_hour_data_disp = "-"
+				$_time_per_sector_data_obj = New-TimeSpan -seconds 0
+				$_replot_sector_count = "-"
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
 					if ($_disk_sector_performance_obj) {
 						if ($_disk_sector_performance_obj.Id -eq "overall" -or $_disk_UUId_obj.Id -ne $_disk_sector_performance_obj.Id) { continue }
 					}
 					#
-					$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
-					$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
+					foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
+					{
+						if ($_disk_plots_remaining_obj) {
+							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
+						}
+						else {break}
+						### DELETE - start
+						#Write-Host
+						#Write-Host "_disk_plots_remaining_obj: " $_disk_plots_remaining_obj
+						#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
+						#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
+						#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
+						#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
+						#Write-Host
+						### DELETE - end
+						$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
+						if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
+							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
+							$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
+
+							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
+								"seconds" 	{
+									$_time_per_sector_data_obj = New-TimeSpan -seconds ($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount)
+								}
+								"minutes" 	{
+									$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount)
+								}
+								"hours" 	{
+									$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 3600) / $_disk_sector_performance_obj.DiskSectorPlotCount)
+								}
+							}
+							### DELETE - start
+							#Write-Host
+							#Write-Host "_time_per_sector_data_obj: " $_time_per_sector_data_obj
+							#Write-Host
+							#Read-Host
+							### DELETE - end
+						}
+						else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
+							$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# that is all we know as of feb 19 subspace release
+							<#
+							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
+								"seconds" 	{
+									$_sectors_per_hour_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotCount * 3600) / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
+									$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / ($_disk_sector_performance_obj.DiskSectorPlotCount * 60), 1)
+								}
+								"minutes" 	{
+									$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
+									$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+								}
+								"hours" 	{
+									$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / ($_disk_sector_performance_obj.DiskSectorPlotTime * 60), 1)
+									$_minutes_per_sector_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
+								}
+							}
+							#>
+						}
+					}
 				}
 
 				# write size, % progresion and ETA
@@ -1275,8 +1505,11 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 						}
 						if ($_minutes_per_sector_data_disp -ne "-") {
-							$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
-							$_eta_disp = $_eta.toString() + " days"
+							#$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
+							#$_eta_disp = $_eta.toString() + " days"
+							$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
+							$_eta_obj = New-TimeSpan -seconds $_eta
+							$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
 						}
 						
 						$_spacer_length = 1
@@ -1321,8 +1554,16 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					Write-Host "-" -nonewline
 				}
 
-				# write performance data
+				# write replotting info
 				$_spacer_length = $_label_eta.Length - $_eta_disp.Length
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_label_spacer = $_label_spacer + "|"
+				Write-Host $_label_spacer -nonewline
+				Write-Host $_replot_sector_count -nonewline
+				
+				# write performance data
+				#$_spacer_length = $_label_eta.Length - $_eta_disp.Length
+				$_spacer_length = $_label_replot.Length - $_replot_sector_count.Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 			
@@ -1334,7 +1575,10 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				$_label_spacer = $_label_spacer + "|"
 				
 				Write-Host $_label_spacer -nonewline
-				Write-Host $_minutes_per_sector_data_disp -nonewline
+				#Write-Host $_minutes_per_sector_data_disp -nonewline
+				$_time_per_sector_disp = $_time_per_sector_data_obj.minutes.ToString() + "m " + $_time_per_sector_data_obj.seconds.ToString() + "s"
+				Write-Host $_time_per_sector_disp -nonewline
+				
 				
 				$_b_counted_missed_rewards = $False
 				$_b_data_printed = $False
@@ -1349,7 +1593,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					}
 					$_rewards_data_disp = $_disk_rewards_obj.Rewards.ToString()
 
-					$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+					#$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+					$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_time_per_sector_disp.Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 				
@@ -1360,7 +1605,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				}
 				if ($_b_reward_data_printed -eq $false) 				# rewards not published yet in endpoint
 				{
-					$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+					#$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_minutes_per_sector_data_disp.Length)
+					$_spacer_length = [int]($_label_minutes_per_sectors.Length - $_time_per_sector_disp.Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					
@@ -1422,7 +1668,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 	if ($_disk_UUId_obj) {
 		$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 	}
-	else {$_spacer_length = ("------------------------------------------------------------------------").Length}
+	else {$_spacer_length = ("--------------------------------------------------------------------------------------").Length}
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 
 	Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
