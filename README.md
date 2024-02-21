@@ -1,4 +1,4 @@
-# subspace_advanced_CLI_monitor.ps1
+# subspace monitoring powershell script
 A simple to run and lightweight windows powershell script that captures information from subspace advanced CLI farmer and node metrics endpoint (farmer and node themselves can run on any OS).
 To launch save the three .ps1 files and config file in same folder on a local computer, change config to your needs and run ps1 file. Ensure that you have read the pre-requisites below.
 
