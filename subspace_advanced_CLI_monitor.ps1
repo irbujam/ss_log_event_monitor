@@ -1165,8 +1165,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			### DELETE - start
 			#Write-Host "_actual_plotting_disk_count: " $_actual_plotting_disk_count
 			### DELETE - end
-			$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count)
-			$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count)
+			$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
+			$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count, 2)
 			$_farm_sector_times = 0.0
 			$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
 			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
