@@ -6,9 +6,7 @@ To launch save the three .ps1 files and config file in the same folder on a loca
 <img src="https://github.com/irbujam/images/blob/main/ss_web_sample.JPG" width="200" hieght="250" /></p>
 
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
-```diff
-- Important update (2/19):additional files introduced to bring some modularity, also slight changes to config file were made
-```
+
 **Pre-requisites:**
 - Must use subspace advanced CLI release for the node and farmer (version feb-05 or later, some features may be missing on older release due to inherent data dependencies from metrics endpoints)
 - Powershell version 5.1 is installed
@@ -16,7 +14,7 @@ To launch save the three .ps1 files and config file in the same folder on a loca
 - Add --metrics-endpoints <ip:port> to your farmer start-up file, use an available port (example --metrics-endpoints 192.168.2.251:2222)
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 
-> [Experimental] To enable web access, do the following:
+> To enable web access, do the following:
 > - Ensure to create an inbound roule under windows defender firewall for http listening port as specified in the config file. This must be done on the computer that hosts ps1 script
 > - Must run the ps1 file as admin in powershell console
 > - The endpoint to use is http://ip:port/summary
@@ -26,7 +24,7 @@ To launch save the three .ps1 files and config file in the same folder on a loca
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   
-> [Experimental] web service enabled to view stats using a web browser on phone/ pc,legacy monitor console display still exists
+> Web service enabled to view stats using a web browser on phone/ pc,legacy monitor console display still exists
   
   - metrics for farmer/node running on windows/linux systems
   - Script can run on a pc separate from farms/nodes hosted pc 
