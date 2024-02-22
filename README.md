@@ -24,7 +24,7 @@ To launch save the three .ps1 files and config file in the same folder on a loca
 **Key features:**
   - Multi Farmer (remote or local) and Node (remote or local) status monitor
   
-> Web service enabled to view stats using a web browser on phone/ pc,legacy monitor console display still exists
+> Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
   
   - metrics for farmer/node running on windows/linux systems
   - Script can run on a pc separate from farms/nodes hosted pc 
