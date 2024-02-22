@@ -33,11 +33,11 @@ To launch save the three .ps1 files and config file in the same folder on a loca
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Metrics information including:
-      - Overall node/farm status, size, progress and eta on plotting
+      - Overall node/farm status, size, plotting progress and eta
       - Node(s) sync state and peers connected
       - Farmer(s) state and uptime
       - plotting performance averages
-      - rewards per farm
+      - Farm rewards actuals and estimated
       - Detailed  metrics break-up by farmer:
           - space allocated
           - % completion 
@@ -48,8 +48,11 @@ To launch save the three .ps1 files and config file in the same folder on a loca
   - Local Time Zone display
   - Display subspace advanced CLI latest github version
   
-**Upcoming features (not yet available):**
+**To dos:**
   - Known issue, the config file is not read dynamically without restart of the script when web view is enabled. Fix TBD
+  - Build rolled-up dashboard view for entire farm
+  
+**Wish List (awaiting metrics endpoint data availability) :**
   - Show variance bewteen subspace advanced CLI latest github version v/s running node and farmer version(s)
   - Add disk metrics information as below:
           - disk label
