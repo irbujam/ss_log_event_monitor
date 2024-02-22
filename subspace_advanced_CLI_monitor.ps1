@@ -1299,7 +1299,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			#
 			$_farm_eta = 0
 			$_farm_eta_disp = "-"
-			if ($_process_remaining_sectors -ne "-" -and $_process_total_disks_disp -ne 0) {
+			if ($_process_remaining_sectors -ne 0 -and $_process_total_disks_disp -ne 0) {
 				#$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_disp * 60 * 24), 2)
 				#$_farm_eta_disp = $_farm_eta.toString() + " days"
 				$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
