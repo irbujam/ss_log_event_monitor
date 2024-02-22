@@ -45,6 +45,7 @@ To launch save the three .ps1 files and config file in the same folder on a loca
           - plotting performance
           - rewards and misses
   - Auto-refresh custom timer set-up with ability to change value in config without restarting the script (currently works in console mode only)
+  - New: Separate alert notification timer set-up with ability to change value in config without restarting the script (currently works in console mode only)
   - Local Time Zone display
   - Display subspace advanced CLI latest github version
   
