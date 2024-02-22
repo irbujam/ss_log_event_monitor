@@ -50,7 +50,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				#
 				# get process header information
 				$_process_status = "Running"
-				if ($_b_process_running_ok -eq $True) {
+				if ($_b_process_running_ok -eq $true) {
 					$_process_status = "Running"
 				}
 				else {
@@ -183,7 +183,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					#$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
 				}
 				# get size, % progresion and ETA
-				$_b_printed_size_metrics = $False
+				$_b_printed_size_metrics = $false
 				$_total_disk_sectors_disp = "-"
 				$_plotting_percent_complete = "-"
 				$_plotting_percent_complete_disp = "-"

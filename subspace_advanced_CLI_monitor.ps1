@@ -10,6 +10,7 @@ function main {
 	$gitVersion = fCheckGitNewVersion
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
+	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
 	#
 	$_b_console_disabled = $false
 	####
@@ -65,9 +66,22 @@ function main {
 							$refreshTimeScaleInSeconds = [int]$_config[1].toString()
 							if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = $_refresh_duration_default}
 						}
+						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
+							$_alert_frequency_seconds = [int]$_config[1].toString()
+							#### Delete - start
+							#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
+							#### Delete - end
+						}
 					}
 				}
-				###Check if API mode enabled and we have a host
+				# check if alert frequency was provided in config and if not default to aut-refresh frequency 
+				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
+				#### Delete - start
+				#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
+				#### Delete - end
+				#
+				### Check if API mode enabled and we have a host
+				#
 				if ($_api_enabled.toLower() -eq "y" -and $_api_host -ne $null -and $_api_host -ne "")
 				{
 					$_b_console_disabled = $true
@@ -102,11 +116,17 @@ function main {
 				#Write-Host "_b_console_disabled: " $_b_console_disabled
 				#Write data to appropriate destination
 				if ($_b_console_disabled) {
-					$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task $_alert_stopwatch
+					$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task
 					#$_http_listener.Close()	
 				}
 				else{
-					fWriteDataToConsole $_farmers_ip_arr $_alert_stopwatch
+					fWriteDataToConsole $_farmers_ip_arr
+					# check previous alerts and reset for the next event
+					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					{
+						$_alert_stopwatch.Restart()
+					}
+					$_b_first_time = $false
 					fStartCountdownTimer $refreshTimeScaleInSeconds
 				}
 				
@@ -137,18 +157,13 @@ function main {
 . "$PSScriptRoot\charts.ps1"
 . "$PSScriptRoot\data.ps1"
 
-function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task, [object]$_io_alert_stopwatch) {
+function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task) {
 	$_html_full = $null
 	$_font_size = 5
 	
 	
 	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { 
-
-			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			#Write-Host "Stopwatch.Elapsed.TotalSeconds: " $Stopwatch.Elapsed.TotalSeconds
-			#Write-Host "refreshTimeScaleInSeconds: " $refreshTimeScaleInSeconds
-			#Write-Host "alert overdue?: " ($_seconds_elapsed -ge $refreshTimeScaleInSeconds)
-			#Read-Host
+			
 			# wait for request - async
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
@@ -156,16 +171,24 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			Write-Host
 			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) { 
-
-					if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds)
-					{					
-						$_alert_stopwatch.Restart()
-					}
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds)
 					{					
 						$Stopwatch.Restart()
 					}
-					fWriteDataToConsole $_io_farmers_ip_arr $_io_alert_stopwatch
+					fWriteDataToConsole $_io_farmers_ip_arr
+					#### Delete - start
+					#Write-Host "_alert_stopwatch.Elapsed.TotalSeconds: " $_alert_stopwatch.Elapsed.TotalSeconds
+					#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
+					#Write-Host "alert overdue?: " ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					#Read-Host
+					#### Delete - end
+					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					{
+						$_alert_stopwatch.Restart()
+					}
+
+
+
 					$_sleep_interval_milliseconds = 1000
 					$_spinner = '|', '/', '-', '\'
 					$_spinnerPos = 0
@@ -910,20 +933,29 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url) {
 	$_resp_process_state_arr = [System.Collections.ArrayList]@()
 
-	$_b_process_running_state = $False
+	$_b_process_running_state = $false
 	#
 	# get process state, send notification if process is stopped/not running
 	$_resp = fPingMetricsUrl $_io_host_ip		# needs to be outside of elapsed time check as response is used downstream to eliminiate dup call
 	if ($_resp -eq "") {
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
-			fSendDiscordNotification $_io_alert_url $_alert_text
+			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
+			#### Delete - start
+			#Write-Host "fGetProcessState:::: _b_first_time: " $_b_first_time
+			#Write-Host "_seconds_elapsed: " $_seconds_elapsed
+			#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
+			#Write-Host "(_seconds_elapsed -ge _alert_frequency_seconds): " ($_seconds_elapsed -ge $_alert_frequency_seconds)
+			#### Delete - end
+			if ($_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+				fSendDiscordNotification $_io_alert_url $_alert_text
+			}
 		}
 		catch {}
 		#
-		$_b_process_running_state = $False
+		$_b_process_running_state = $false
 	}
-	else { $_b_process_running_state = $True }
+	else { $_b_process_running_state = $true }
 
 	[void]$_resp_process_state_arr.add($_resp)
 	[void]$_resp_process_state_arr.add($_b_process_running_state)
@@ -944,11 +976,8 @@ function fCheckGitNewVersion {
 	return $gitVersionArr
 }
 
-function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch) {
+function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_url_discord = ""
-	if ($_b_first_time -eq $true) {
-		$_b_first_time = $false
-	}
 
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_ip_arr.Count; $arrPos++)
 	{
@@ -1014,7 +1043,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
 				$_console_msg = ""
 				$_console_msg_color = ""
-				if ($_b_process_running_ok -eq $True) {
+				if ($_b_process_running_ok -eq $true) {
 					$_console_msg = "Running"
 					$_console_msg_color = $_html_green
 				}
@@ -1059,7 +1088,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			
 			# header lables
-			$_b_write_header = $True
+			$_b_write_header = $true
 			#
 			$_label_hostname = "Hostname"
 			$_label_diskid = "Disk Id"
@@ -1090,6 +1119,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			$_avg_sectors_per_hour = 0.0
 			$_avg_minutes_per_sector = 0.0
 			$_avg_seconds_per_sector = 0.0
+			$_rewards_per_hour = 0
+			$_rewards_per_day_estimated = 0
 			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 			{
 				
@@ -1108,8 +1139,10 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 						$_uptime = fGetElapsedTime $_disk_sector_performance_obj
 						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
 						#
-						$_rewards_per_hour = [math]::Round($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours, 1)
-						$_rewards_per_day_estimated = [math]::Round((($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 1)
+						if ($_uptime.TotalHours) {
+							$_rewards_per_hour = [math]::Round([double]($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours), 1)
+							$_rewards_per_day_estimated = [math]::Round([double](($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 1)
+						}
 						#
 
 						Write-Host ", " -nonewline
@@ -1340,7 +1373,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				# write header if not already done
-				if ($_b_write_header -eq $True) {
+				if ($_b_write_header -eq $true) {
 					# Host name header info
 					# draw line
 					if ($_disk_UUId_obj -ne $null) {
@@ -1423,7 +1456,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 					#
-					$_b_write_header = $False
+					$_b_write_header = $false
 				}
 
 				# write data table
@@ -1506,7 +1539,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				}
 
 				# write size, % progresion and ETA
-				$_b_printed_size_metrics = $False
+				$_b_printed_size_metrics = $false
 				$_size_data_disp = "-"
 				$_plotting_percent_complete = "-"
 				$_plotting_percent_complete_disp = "-"
@@ -1564,9 +1597,9 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 						Write-Host $_eta_disp -nonewline
 					}
 
-					$_b_printed_size_metrics = $True
+					$_b_printed_size_metrics = $true
 				}
-				if ($_b_printed_size_metrics -eq $False)
+				if ($_b_printed_size_metrics -eq $false)
 				{
 					$_spacer_length = 1
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1613,8 +1646,8 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				Write-Host $_time_per_sector_disp -nonewline
 				
 				
-				$_b_counted_missed_rewards = $False
-				$_b_data_printed = $False
+				$_b_counted_missed_rewards = $false
+				$_b_data_printed = $false
 				$_missed_rewards_count = 0
 				$_missed_rewards_color = "white"
 				$_b_reward_data_printed = $false
@@ -1677,7 +1710,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr, [object]$_io_stopwatch
 				if ($_b_misses_data_printed -eq $false) 				# misses not published yet in endpoint
 				{
 					# write data - combine missed and rewards into single line of display
-					$_b_data_printed = $True
+					$_b_data_printed = $true
 
 					$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer

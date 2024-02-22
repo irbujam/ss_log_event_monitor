@@ -107,7 +107,7 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 					_div_html += "<td>% Complete</td>";
 					_div_html += "<td>ETA</td>";
 					_div_html += "<td>Sectors/Hour</td>";
-					_div_html += "<td>Minutes/Sector</td>";
+					_div_html += "<td>Time/Sector</td>";
 					_div_html += "<td>Rewards</td>";
 					_div_html += "<td>Misses</td>";
 					_div_html += "</tr>";
