@@ -443,7 +443,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				}
 				</script>
 				
-				<body>
+				<body onload=fToggleDisplayMode()>
 				<script>
 				function fGenerateColorRandom() {
 				  var _l = "0123456789ABCDEF";
