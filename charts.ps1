@@ -23,8 +23,6 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 	var ce_minutesPerSectorAvg = ' + $_io_chart_minutesPerSector_data + ';
 	var _ce_disk_data_arr = ' + $_io_chart_disk_data_arr + ';
 	
-	//alert(ce_sector_time);
-	
 	bkgrd.addColorStop(0, "yellow");
 	bkgrd.addColorStop(0.25, "orange");
 	//bkgrd.addColorStop(0.75, "lightgreen");

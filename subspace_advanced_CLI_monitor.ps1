@@ -294,9 +294,14 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
 			}
 			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
-			if ($_process_sector_time.TotalSeconds -gt 0)
-			{
-				$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			if ($_b_i_was_here) {
+				if ($_process_sector_time.TotalSeconds -gt 0)
+				{
+					$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+				}
+				else {
+					$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
+				}
 			}
 			else {
 				$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
@@ -318,15 +323,20 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_chart_sector_time_data += ',"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
 			}
 			else {
-				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
+				$_chart_sector_time_data += ',"' + 0 + "m " + 0 + "s" + '"' 
 			}
 			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
-			if ($_process_sector_time.TotalSeconds -gt 0)
-			{
-				$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+			if ($_b_i_was_here) {
+				if ($_process_sector_time.TotalSeconds -gt 0)
+				{
+					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+				}
+				else {
+					$_chart_total_sectors_per_hour_data += ',"' + 0 + '"'
+				}
 			}
 			else {
-				$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
+				$_chart_total_sectors_per_hour_data += ',"' + 0 + '"'
 			}
 			#$_chart_eta_data += ',"' + $_process_eta + '"'
 			$_chart_eta_data += ',"' + $_process_eta_disp + '"'
