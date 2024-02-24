@@ -377,28 +377,33 @@ function main {
 			$avgSectorPerMinute = 0.0
 			$avgSectorPerMinuteDiskCount = 0
 			$avgMinutesPerSector = 0.0
+			$avgTimeInSecondsPerSector = 0.0
 			$avgMinutesPerSectorDiskCount = 0
 			$plotRateForProgressBar = 0
 			$_eta_ByDisk = @(0) * $plotSpeedByDiskArr.Count
 			for ($arrPos = 0; $arrPos -lt $plotSpeedByDiskArr.Count; $arrPos++) {
 				$sectorPlotRate = "-"
 				$minutesPerSector = "-"
+				$TimeInSecondsPerSector = 0
 				$plottingRate = "-"
 				$_eta_ByDisk[$arrPos] = "-"
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
 					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 3600) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
+					$TimeInSecondsPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / $sectorCountByDiskArr[$arrPos], 1)
 					$plottingRate = [math]::Round(($sectorPlotRate * $singleSectorSize) / 60, 1)
 					#
 					#calculation for ETA
 					$_sectorsInDisk = $gibSizeByDiskArr[$arrPos] 																							# 1 sector = 1024 GiB and disk size is in GiB
 					if ($LastSectorPlottedByDiskArr[$arrPos] -lt $_sectorsInDisk) {
-						$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 24),2)		# convert ETA to days
+						#$_eta_ByDisk[$arrPos] = [math]::Round(($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) / ($sectorPlotRate * 24),2)		# convert ETA to days
+						$_eta_ByDisk[$arrPos] = [math]::Round((($_sectorsInDisk - $LastSectorPlottedByDiskArr[$arrPos]) * 3600) / ($sectorPlotRate),2)		# convert ETA to days
 					}
 					#calculation for average progression
 					$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
 					$avgSectorPerMinuteDiskCount = $avgSectorPerMinuteDiskCount + 1
 					$avgMinutesPerSector = $avgMinutesPerSector + $minutesPerSector
+					$avgTimeInSecondsPerSector = $avgTimeInSecondsPerSector + $TimeInSecondsPerSector
 					$avgMinutesPerSectorDiskCount = $avgMinutesPerSectorDiskCount + 1
 					#
 				}
@@ -422,8 +427,10 @@ function main {
 			}
 			#
 			$_avgMinutesPerSectorDisp = "-"
+			$_avgTimeInSecondsPerSectorDisp = "-"
 			if ($avgMinutesPerSectorDiskCount -gt 0) {
 				$_avgMinutesPerSectorDisp = ([math]::Round($avgMinutesPerSector / $avgMinutesPerSectorDiskCount, 1)).ToString()
+				$_avgTimeInSecondsPerSectorDisp = ([math]::Round($avgTimeInSecondsPerSector / $avgMinutesPerSectorDiskCount, 1))
 			}
 			#
 			##
@@ -457,8 +464,9 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host "                | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Total rewards        : " -nonewline
-			Write-Host $rewardCount -ForegroundColor green
+			Write-Host "Total rewards   : " -nonewline
+			#Write-Host $rewardCount -ForegroundColor green
+			Write-Host $rewardCount
 			#
 			# Sync and uptime header info
 			Write-host "Node synced: " -NoNewline
@@ -485,13 +493,16 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host "          | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Total space allocated: " -nonewline
-			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor green
+			#Write-Host "Total space allocated: " -nonewline
+			Write-Host "Total size      : " -nonewline
+			#write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor green
+			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)"
 			#
 			# display running version info
 			Write-Host "----------------------------------------------------------------------------" -nonewline -ForegroundColor gray
 			Write-Host "| " -nonewline -ForegroundColor gray
-			Write-Host "Overall plotting progress: $overallProgress% complete" -nonewline -BackgroundColor yellow -ForegroundColor black
+			#Write-Host "Overall plotting progress: $overallProgress% complete" -nonewline -BackgroundColor yellow -ForegroundColor black
+			Write-Host "% Complete      : $overallProgress%" -nonewline
 			Write-Host " "  -ForegroundColor white
 			if ($null -ne $gitVersion) {
 				Write-Host "Node running on latest version? " -nonewline
@@ -545,9 +556,10 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host " | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Sectors/h (avg)      : " -nonewline
+			Write-Host "Sectors/h (avg) : " -nonewline
 			$avgSectorsPerMinuteCursorPosition = $host.UI.RawUI.CursorPosition
-			Write-Host $_avgSectorPerMinuteDisp -ForegroundColor green
+			#Write-Host $_avgSectorPerMinuteDisp -ForegroundColor green
+			Write-Host $_avgSectorPerMinuteDisp
 			#
 			# github version info
 			$_gitVersionDisp = " - "
@@ -567,22 +579,34 @@ function main {
 			$_third_block_top_data_spacer_label = $_third_block_top_data_spacer_label + "| "
 			#Write-Host "                 | " -nonewline -ForegroundColor gray
 			Write-Host $_third_block_top_data_spacer_label -nonewline -ForegroundColor gray
-			Write-Host "Min/sector (avg)     : " -nonewline
+			Write-Host "Min/sector (avg): " -nonewline
 			$avgMinutesPerSectorCursorPosition = $host.UI.RawUI.CursorPosition
-			Write-Host $_avgMinutesPerSectorDisp -ForegroundColor green
+			#Write-Host $_avgMinutesPerSectorDisp -ForegroundColor green
+			if ($_avgTimeInSecondsPerSectorDisp -ne "-" -and $_avgTimeInSecondsPerSectorDisp -gt 0)
+			{
+				$_avgTimeInSecondsPerSectorObj = New-TimeSpan -seconds $_avgTimeInSecondsPerSectorDisp
+				$__avgTimeInSecondsPerSectorDisp = $_avgTimeInSecondsPerSectorObj.minutes.ToString() + "m " + $_avgTimeInSecondsPerSectorObj.seconds.ToString() + "s"
+			}
+			else
+			{
+				$__avgTimeInSecondsPerSectorDisp = "0" + "m " + "0" + "s"
+			}
+			Write-Host $__avgTimeInSecondsPerSectorDisp
 
 
 
 
 			#
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			##
 			#Write summary header and data table
 			echo `n
 			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                  Summary by disk:                                                 " -ForegroundColor cyan
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			#Sub-header label definition
 			$diskLabel 				= "Disk"
@@ -591,9 +615,9 @@ function main {
 			$rewardLabel 			= "Rewards"
 			$missesLabel 			= "Misses"
 			$sectorPlotSpeedLabel 	= "Sectors/h"
-			$minutesPerSectorLabel 	= "Min/  "
-			$plottingSpeedLabel 	= "Plot   "
-			$_eta_Label 			= "ETA   "
+			$minutesPerSectorLabel 	= "Time/  "
+			#$plottingSpeedLabel 	= "Plot   "
+			$_eta_Label 			= "ETA        "
 			$plotStatusLabel 		= "Plot  "
 			$replotStatusLabel 		= "Replot"
 			$lastRewardLabel 		= "Last reward on      "
@@ -606,9 +630,9 @@ function main {
 			$rewardLabel2 			= "       "
 			$missesLabel2			= "      "
 			$sectorPlotSpeedLabel2 	= "         "
-			$minutesPerSectorLabel2	= "sector"
-			$plottingSpeedLabel2	= "speed  "
-			$_eta_Label2 			= "(d)   "
+			$minutesPerSectorLabel2	= "sector "
+			#$plottingSpeedLabel2	= "speed  "
+			$_eta_Label2 			= "           "
 			$plotStatusLabel2 		= "status"
 			$replotStatusLabel2 	= "status"
 			$lastRewardLabel2 		= "                    "
@@ -619,21 +643,25 @@ function main {
 			$rewardLabel3 			= "       "
 			$missesLabel3			= "      "
 			$sectorPlotSpeedLabel3 	= "         "
-			$minutesPerSectorLabel3	= "      "
-			$plottingSpeedLabel3	= "(MiB/m)"
-			$_eta_Label3 			= "      "
+			$minutesPerSectorLabel3	= "       "
+			#$plottingSpeedLabel3	= "(MiB/m)"
+			$_eta_Label3 			= "           "
 			$plotStatusLabel3 		= "      "
 			$replotStatusLabel3 	= "      "
 			$lastRewardLabel3 		= "                    "
 			##
 			#Write sub-headers
-			$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $sectorPlotSpeedLabel + $spacerLabel + $minutesPerSectorLabel + $spacerLabel + $plottingSpeedLabel + $spacerLabel + $_eta_Label + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel + $spacerLabel
+			#$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $sectorPlotSpeedLabel + $spacerLabel + $minutesPerSectorLabel + $spacerLabel + $plottingSpeedLabel + $spacerLabel + $_eta_Label + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel + $spacerLabel
+			$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $sectorPlotSpeedLabel + $spacerLabel + $minutesPerSectorLabel + $spacerLabel + $_eta_Label + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel + $spacerLabel
 			Write-Host $header -ForegroundColor cyan
-			$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $sectorPlotSpeedLabel2 + $spacerLabel + $minutesPerSectorLabel2 + $spacerLabel + $plottingSpeedLabel2 + $spacerLabel + $_eta_Label2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2 + $spacerLabel
+			#$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $sectorPlotSpeedLabel2 + $spacerLabel + $minutesPerSectorLabel2 + $spacerLabel + $plottingSpeedLabel2 + $spacerLabel + $_eta_Label2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2 + $spacerLabel
+			$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $sectorPlotSpeedLabel2 + $spacerLabel + $minutesPerSectorLabel2 + $spacerLabel + $_eta_Label2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2 + $spacerLabel
 			Write-Host $header -ForegroundColor cyan
-			$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $plottingSpeedLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
+			#$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $plottingSpeedLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
+			$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
 			Write-Host $header -ForegroundColor cyan
-			$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
+			#$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
+			$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
 			Write-Host $header -ForegroundColor gray
 			#
 			#write summary data
@@ -665,10 +693,12 @@ function main {
 				#$plotSpeedByDiskArr[0]*$singleSectorSize
 				$sectorPlotRate = "-"
 				$minutesPerSector = "-"
+				$secondsPerSector = 0
 				$plottingRate = "-"
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
 					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 3600) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
+					$secondsPerSector = $plotSpeedByDiskArr[$arrPos] / $sectorCountByDiskArr[$arrPos]
 					$plottingRate = [math]::Round(($sectorPlotRate * $singleSectorSize) / 60 , 1)
 					#
 					#$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
@@ -680,15 +710,30 @@ function main {
 				$spacerLength = [int]($spacerLabel.Length+$sectorPlotSpeedLabel.Length-$sectorPlotSpeedByDiskText.Length-1)
 				$sectorPlotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				$minutesPerSectorText = $minutesPerSector.ToString()
+				#$minutesPerSectorText = $minutesPerSector.ToString()
+				$TimePerSectorText = New-TimeSpan -seconds $secondsPerSector
+				if ($secondsPerSector -gt 0) {
+					$minutesPerSectorText = $TimePerSectorText.minutes.ToString() + "m " + $TimePerSectorText.seconds.ToString() + "s"
+				}
+				else {
+					$minutesPerSectorText = "0" + "m " + "0" + "s"
+				}
 				$spacerLength = [int]($spacerLabel.Length+$minutesPerSectorLabel.Length-$minutesPerSectorText.Length-1)
 				$minutesPerSectorSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				$plottingSpeedByDiskText = $plottingRate.ToString()
-				$spacerLength = [int]($spacerLabel.Length+$plottingSpeedLabel.Length-$plottingSpeedByDiskText.Length-1)
-				$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
+				#$plottingSpeedByDiskText = $plottingRate.ToString()
+				#$spacerLength = [int]($spacerLabel.Length+$plottingSpeedLabel.Length-$plottingSpeedByDiskText.Length-1)
+				#$plotSpacerLabel = fBuildDynamicSpacer $spacerLength " "
 
-				$_eta_Text = $_eta_ByDisk[$arrPos].ToString()
+				#$_eta_Text = $_eta_ByDisk[$arrPos].ToString()
+				if ($_eta_ByDisk[$arrPos] -ne "-" -and $_eta_ByDisk[$arrPos] -ne 0)
+				{
+					$_eta_obj = New-TimeSpan -seconds $_eta_ByDisk[$arrPos]
+					$_eta_Text = $_eta_obj.days.ToString() + "d " + $_eta_obj.hours.ToString() + "h " + $_eta_obj.minutes.ToString() + "m"
+				}
+				else{
+					$_eta_Text = "0" + "d " + "0" + "h " + "0" + "m"
+				}
 				$spacerLength = [int]($spacerLabel.Length+$_eta_Label.Length-$_eta_Text.Length-1)
 				$_eta_SpacerLabel = fBuildDynamicSpacer $spacerLength " "
 				
@@ -715,11 +760,13 @@ function main {
 				else {
 					Write-Host $missesByDiskText -NoNewline -ForegroundColor red
 				}
-				$summaryData = $plottingSpeedByDiskSpacerLabel + $spacerLabel + $sectorPlotSpeedByDiskText + $sectorPlotSpacerLabel + $spacerLabel + $minutesPerSectorText + $minutesPerSectorSpacerLabel + $spacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $spacerLabel + $_eta_Text + $_eta_SpacerLabel + $spacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $spacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $spacerLabel + $_lastRewardDispText + $_endSpacerLabel + $spacerLabel
+				#$summaryData = $plottingSpeedByDiskSpacerLabel + $spacerLabel + $sectorPlotSpeedByDiskText + $sectorPlotSpacerLabel + $spacerLabel + $minutesPerSectorText + $minutesPerSectorSpacerLabel + $spacerLabel + $plottingSpeedByDiskText + $plotSpacerLabel + $spacerLabel + $_eta_Text + $_eta_SpacerLabel + $spacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $spacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $spacerLabel + $_lastRewardDispText + $_endSpacerLabel + $spacerLabel
+				$summaryData = $plottingSpeedByDiskSpacerLabel + $spacerLabel + $sectorPlotSpeedByDiskText + $sectorPlotSpacerLabel + $spacerLabel + $minutesPerSectorText + $minutesPerSectorSpacerLabel + $spacerLabel + $_eta_Text + $_eta_SpacerLabel + $spacerLabel + $plotSizeByDiskText + $replotSpacerLabel + $spacerLabel + $replotSizeByDiskText + $lastRewardSpacerLabel + $spacerLabel + $_lastRewardDispText + $_endSpacerLabel + $spacerLabel
 				Write-Host $summaryData
 				#
 			}
-			Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#remember the last written summary data for later repositioning after writing averages in sub-header at a high-level
 			$mostRecentSummaryDataCursorPosition = $host.UI.RawUI.CursorPosition
 			#
@@ -819,11 +866,17 @@ function main {
 							}
 						}
 						elseif ($subHeaderText -eq "Warnings and Errors:") {
+							$errMsgInfoHold = ""
 							if ($dispText.IndexOf("error") -ge 0) {
 								$errMsgLable = "{"
 								$errMsgStartPos = $dispText.IndexOf($errMsgLable)
 								$errMsgEndPos = $dispText.IndexOf("}")
-								$errMsgInfoHold = $dispText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
+								try {
+									$errMsgInfoHold = $dispText.SubString($errMsgStartPos+$errMsgLable.Length,$errMsgEndPos-$errMsgLable.Length-$errMsgStartPos)
+								}
+								catch {
+									$errMsgInfoHold = fParseStr $dispText " " "first"
+								}
 							}
 							else {
 								$errMsgLable = " WARN "
@@ -860,7 +913,7 @@ function main {
 			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			#
 			#$currentDate = Get-Date -Format HH:mm:ss
-			$currentDate = (Get-Date).ToLocalTime()
+			$currentDate = (Get-Date).ToLocalTime().ToString()
 			# Refresh
 			echo `n
 			Write-Host "Last refresh on: " -ForegroundColor Yellow -nonewline; Write-Host "$currentDate" -ForegroundColor Green;
@@ -868,6 +921,7 @@ function main {
 			####
 			## Auto refresh wait cycle
 			if ($bAutoRefresh) {
+				<#
 				Write-Host "Auto-refresh scheduled for every " -nonewline 
 				Write-Host $refreshTimeScaleInSeconds -nonewline -ForegroundColor yellow
 				Write-Host " seconds"
@@ -877,6 +931,9 @@ function main {
 					Write-Host -NoNewline "." -ForegroundColor Cyan
 					Start-Sleep 5
 				}
+				#>
+				fStartCountdownTimer $refreshTimeScaleInSeconds
+
 				###### Auto refresh
 				$HoursElapsed = $Stopwatch.Elapsed.TotalHours
 				if ($HoursElapsed -ge 1) {
@@ -922,6 +979,23 @@ function main {
 function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg){
 	$JSON = @{ "content" = $ioMsg; } | convertto-json
 	Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
+}
+Function fStartCountdownTimer ([int]$_io_timer_duration) {
+	$_sleep_interval_milliseconds = 1000
+	$_spinner = '|', '/', '-', '\'
+	$_spinnerPos = 0
+	$_end_dt = [datetime]::UtcNow.AddSeconds($_io_timer_duration)
+	[System.Console]::CursorVisible = $false
+	
+	while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
+		Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
+		#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
+		Write-Host "Refreshing in " -NoNewline 
+		Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
+		Write-Host " seconds..." -NoNewline 
+		Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
+	}
+	Write-Host
 }
 function Get-gitNewVersion {
 	.{
