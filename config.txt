@@ -3,26 +3,27 @@
 #### please don't change format
 #
 #-------------------------------------------------------------------------------------------------------------------------
-# http endpoint set-up (use Y-Enabled, N-Disabled for enable-api setting). "N" is default
+# http endpoint set-up (use Y-enabled, N-disabled for enable-api setting). "N" is default
 #
 # You can use either localhost or an IP
 # If using an IP please ensure to create an inbound rule under windows defender firewall, on computer hosting the ps1 script, 
-# for the specified listening port and that the port is not in use
-# API endpoint to use on web browser http://ip:port/summary (example http://127.0.0.1:15004/summary)
+#        for the specified listening port and that the port is not in use
+#
+# API endpoint to use on web browser http://ip:port/summary (example http://127.0.0.1:5004/summary)
 #-------------------------------------------------------------------------------------------------------------------------
 
-#Enable-API: N
-Enable-API: Y
+Enable-API: N
+#Enable-API: Y
 
-#API-host: 127.0.0.1:15004
-API-host: 192.168.2.251:15004
+API-host: 127.0.0.1:5004
+#API-host: 192.168.2.251:5004
 
 #-------------------------------------------------------------------------------------------------------------------------
 # discord webhook - change to use your own
-# NEW: Set alert repeat frequency, the value will default to auto-refresh time if not set or a lower value is provided
+# Set alert repeat frequency, the value will default to auto-refresh time if not set or a lower value is provided
 #-------------------------------------------------------------------------------------------------------------------------
 
-Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertEPetP7YsTH298..............
+Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertE................
 Alert-frequency(seconds) : 3600
 
 #-------------------------------------------------------------------------------------------------------------------------
@@ -35,8 +36,8 @@ Auto-refresh(seconds) : 300
 ## insert a new line for each node like shown in sample below
 ## change IP and port to match your node set-up
 ##
-## New: Since the script is 100% endpoint based and does not require special permission to get hostname,
-##    you can set up a one time friendly name to show instead of IP should you perfer
+## Since the script is 100% endpoint based and does not require special permission to get hostname,
+##    you can set up a one time friendly name to show instead of IP should you prefer
 #
 # Tip: you can just add another line for a new farmer while the script is running and the farmer will show in next refresh
 #-------------------------------------------------------------------------------------------------------------------------
@@ -47,8 +48,8 @@ Node: 192.168.2.203:19595 :ryz-3600
 ## insert a new line for each farmer like shown in sample below
 ## change IP and port to match your farmer set-up
 ##
-## New: Since the script is 100% endpoint based and does not require special permission to get hostname,
-##    you can set up a one time friendly name to show instead of IP should you perfer
+## Since the script is 100% endpoint based and does not require special permission to get hostname,
+##    you can set up a one time friendly name to show instead of IP should you prefer
 #
 # Tip: you can just add another line for a new farmer while the script is running and the farmer will show in next refresh
 #-------------------------------------------------------------------------------------------------------------------------
