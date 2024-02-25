@@ -26,36 +26,33 @@ To launch save all files with extension *.ps1  and config.txt file in the same f
   
 > Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
   
-  - metrics for farmer/node running on windows/linux systems
+  - Metrics for farmer/node running on windows/linux systems
   - Script can run on a pc separate from farms/nodes hosted pc 
-  - Ability to add or remove node/farmer ip(s) in config without restarting the script, just add a new line for node or farmer below existing entries (currently works for console mode only with web ui disbaled in config)
+  - Ability to add or remove node/farmer ip(s) in config without restarting the script, just add a new line for node or farmer below existing entries (currently works for console mode only with web ui disabled in config)
   - No need for log files as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Summary view providing overall node/farms stats
-      - node/farm status, size, plotting progress and eta at a high level
-  - User selectable detailed view including:
-      - Node(s) sync state and peers connected
-      - Farmer(s) state and uptime
-      - plotting performance averages
-      - Farm rewards actuals and estimated
-      - Detailed  metrics break-up by farmer:
+      - node(s)/farm(s) status, size, plotting progress, sector times, eta, rewards
+  - Detail view including:
+      - node(s) sync state and peers connected
+      - farmer(s) state and uptime, rewards, sector times etc
+      - Disk(s) metrics break-up by farmer:
           - space allocated
           - % completion 
           - eta
           - plotting performance
           - rewards and misses
   - Auto-refresh custom timer set-up with ability to change value in config without restarting the script (currently works in console mode only)
-  - New: Separate alert notification timer set-up with ability to change value in config without restarting the script (currently works in console mode only)
+  - Alert notification timer set-up with ability to change value in config without restarting the script (currently works in console mode only)
   - Local Time Zone display
   - Display subspace advanced CLI latest github version
   
-**To dos:**
-  - Known issue, the config file is not read dynamically without restart of the script when web view is enabled. Fix TBD
-  - Build rolled-up dashboard view for entire farm
-  
+**Known issue:**
+  - config file is not reloaded dynamically when web view is enabled, currently only works in console display only mode with web ui disabled. Fix coming...
+    
 **Wish List (awaiting metrics endpoint data availability) :**
-  - Show variance bewteen subspace advanced CLI latest github version v/s running node and farmer version(s)
+  - Display version variance for subspace advanced CLI latest github version v/s running node and farmer version
   - Add disk metrics information as below:
           - disk label
           - time of last reward received
