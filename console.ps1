@@ -341,7 +341,9 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 			}
 			$_process_rewards_per_hour = "-"
 			$_process_rewards_per_day_estimated = "-"
-			if ($_process_uptime_seconds -gt 0 -and $_process_uptime_seconds -ne "-")
+			#Write-Host "_process_rewards: " $_process_rewards
+			#Write-Host "_process_uptime_seconds :" $_process_uptime_seconds
+			if ($_process_uptime_seconds -gt 0 -and $_process_uptime_seconds -ne "-" -and $_process_rewards -ne "-")
 			{
 				$_process_rewards_per_hour = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600, 1)
 				$_process_rewards_per_day_estimated = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600 * 24, 1)
