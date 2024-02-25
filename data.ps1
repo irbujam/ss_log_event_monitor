@@ -270,6 +270,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					Size					= $_total_disk_sectors_disp
 					PercentComplete			= $_plotting_percent_complete_disp
 					ETA						= $_eta_disp
+					ReplotStatus			= $_replot_sector_count
 					SectorsPerHour			= $_sectors_per_hour_data_disp
 					#MinutesPerSector		= $_minutes_per_sector_data_disp
 					MinutesPerSector		= $_time_per_sector_data_obj.TotalSeconds
@@ -284,6 +285,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_avg_minutes_per_sector = 0.0
 			$_avg_seconds_per_sector = 0.0
 			$_farm_sector_times = 0.0
+			$_uptime = $null
+			$_uptime_disp = "0d 0h 0m 0a"
 			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 			{
 				# get process sub header information
@@ -388,6 +391,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				UUId				= $_host_url
 				Hostname			= $_hostname
 				ProcessType			= $_process_type
+				UptimeTSObj			= $_uptime
 				Uptime				= $_uptime_disp
 				SectorsPerHourAvg	= $_avg_sectors_per_hour.toString()
 				MinutesPerSectorAvg	= $_avg_minutes_per_sector.toString()
@@ -400,10 +404,6 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				TotalRewards		= $_disk_sector_performance_obj.TotalRewards.toString()
 			}
 			$_process_sub_header_arr += $_process_sub_header
-
-
-
-
 			#
 		}
 	}
@@ -445,6 +445,7 @@ function fConverPSArrToJScriptArr ([array]$_io_arr) {
 			$_resp_js += ',Size:' + ' "' + $_io_arr[$j].Size + '"'
 			$_resp_js += ',PercentComplete:' + ' "' + $_io_arr[$j].PercentComplete + '"'
 			$_resp_js += ',ETA:' + ' "' + $_io_arr[$j].ETA + '"'
+			$_resp_js += ',ReplotStatus:' + ' "' + $_io_arr[$j].ReplotStatus + '"'
 			$_resp_js += ',SectorsPerHour:' + ' "' + $_io_arr[$j].SectorsPerHour + '"'
 			#$_resp_js += ',MinutesPerSector:' + ' "' + $_io_arr[$j].MinutesPerSector + '"'
 			if ($_io_arr[$j].MinutesPerSector -eq "-") {
@@ -468,6 +469,7 @@ function fConverPSArrToJScriptArr ([array]$_io_arr) {
 			$_resp_js += ',Size:' + ' "' + $_io_arr[$j].Size + '"'
 			$_resp_js += ',PercentComplete:' + ' "' + $_io_arr[$j].PercentComplete + '"'
 			$_resp_js += ',ETA:' + ' "' + $_io_arr[$j].ETA + '"'
+			$_resp_js += ',ReplotStatus:' + ' "' + $_io_arr[$j].ReplotStatus + '"'
 			$_resp_js += ',SectorsPerHour:' + ' "' + $_io_arr[$j].SectorsPerHour + '"'
 			#$_resp_js += ',MinutesPerSector:' + ' "' + $_io_arr[$j].MinutesPerSector + '"'
 			if ($_io_arr[$j].MinutesPerSector -eq "-") {

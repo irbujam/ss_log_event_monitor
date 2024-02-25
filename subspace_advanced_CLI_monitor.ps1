@@ -5,6 +5,7 @@
 ##header
 $host.UI.RawUI.WindowTitle = "Subspace Advanced CLI Process Monitor"
 function main {
+	$_b_allow_refresh = $false
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_for_git_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$gitVersion = fCheckGitNewVersion
@@ -24,6 +25,10 @@ function main {
 	#
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_b_first_time = $true
+	#
+	$_b_write_process_details_to_console = $false
+	$_b_write_process_summary_to_console = $true
+	#
 	####
 	try {
 		[System.Console]::CursorVisible = $false
@@ -34,7 +39,12 @@ function main {
 	
 	try {
 		while ($true) {
+			#
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) 
+			{
+				$_b_allow_refresh = $true
+			}
+			if ($_b_allow_refresh) 
 			{
 				$Stopwatch.Restart()
 				Clear-Host
@@ -55,6 +65,7 @@ function main {
 				$_configFile = "./config.txt"
 				$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
 
+				$_process_alt_name_max_length = 0
 				for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
 				{
 					if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
@@ -68,17 +79,25 @@ function main {
 						}
 						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
 							$_alert_frequency_seconds = [int]$_config[1].toString()
-							#### Delete - start
-							#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
-							#### Delete - end
+						}
+						# get max lenght for host alt name
+						elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+							$_process_ip = $_config[1].toString()
+							$_process_hostname_alt = ""
+							if ($_config.Count -gt 3) {
+								$_process_hostname_alt = $_config[3].toString()
+							}
+							$_process_hostname = $_process_ip
+							if ($_process_hostname_alt -and $_process_hostname_alt.length -gt 0)
+							{
+								$_process_hostname = $_process_hostname_alt
+							}
+							if ($_process_hostname.Length -gt $_process_alt_name_max_length) { $_process_alt_name_max_length = $_process_hostname.Length }
 						}
 					}
 				}
 				# check if alert frequency was provided in config and if not default to aut-refresh frequency 
 				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
-				#### Delete - start
-				#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
-				#### Delete - end
 				#
 				### Check if API mode enabled and we have a host
 				#
@@ -113,21 +132,33 @@ function main {
 					#$_context_task = $_http_listener.GetContext()
 				}
 
-				#Write-Host "_b_console_disabled: " $_b_console_disabled
 				#Write data to appropriate destination
 				if ($_b_console_disabled) {
 					$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task
 					#$_http_listener.Close()	
 				}
 				else{
-					fWriteDataToConsole $_farmers_ip_arr
+					##fWriteDataToConsole $_farmers_ip_arr
+					#fGetDataForConsole $_farmers_ip_arr
+					Write-Host "Press (F12) for detail view, (F10) for summary view"
+					Write-Host
+					if ($_b_write_process_details_to_console)
+					{
+						fWriteDataToConsole $_farmers_ip_arr
+					}
+					elseif ($_b_write_process_summary_to_console)
+					{
+						fGetDataForConsole $_farmers_ip_arr
+					}
 					# check previous alerts and reset for the next event
 					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
 					{
 						$_alert_stopwatch.Restart()
 					}
 					$_b_first_time = $false
-					fStartCountdownTimer $refreshTimeScaleInSeconds
+					$_last_display_type_request = fStartCountdownTimer $refreshTimeScaleInSeconds
+					if ($_last_display_type_request.toLower() -eq "summary") { $_b_write_process_summary_to_console = $true; $_b_write_process_details_to_console = $false }
+					elseif ($_last_display_type_request.toLower() -eq "detail") { $_b_write_process_summary_to_console = $false; $_b_write_process_details_to_console = $true }
 				}
 				
 				###### Auto refresh
@@ -140,6 +171,7 @@ function main {
 					$_for_git_stopwatch.Restart()
 				}
 				######
+				$_b_allow_refresh = $false
 			}
 		}
 	}
@@ -156,6 +188,7 @@ function main {
 
 . "$PSScriptRoot\charts.ps1"
 . "$PSScriptRoot\data.ps1"
+. "$PSScriptRoot\console.ps1"
 
 function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task) {
 	$_html_full = $null
@@ -169,25 +202,28 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 			Write-Host
 			Write-Host
+			Write-Host "Press (F12) for detail view, (F10) for summary view"
+			Write-Host
 			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) { 
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds)
 					{					
 						$Stopwatch.Restart()
 					}
-					fWriteDataToConsole $_io_farmers_ip_arr
-					#### Delete - start
-					#Write-Host "_alert_stopwatch.Elapsed.TotalSeconds: " $_alert_stopwatch.Elapsed.TotalSeconds
-					#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
-					#Write-Host "alert overdue?: " ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
-					#Read-Host
-					#### Delete - end
+					#fWriteDataToConsole $_io_farmers_ip_arr
+					if ($_b_write_process_details_to_console)
+					{
+						fWriteDataToConsole $_farmers_ip_arr
+					}
+					elseif ($_b_write_process_summary_to_console)
+					{
+						fGetDataForConsole $_farmers_ip_arr
+					}
+
 					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
 					{
 						$_alert_stopwatch.Restart()
 					}
-
-
 
 					$_sleep_interval_milliseconds = 1000
 					$_spinner = '|', '/', '-', '\'
@@ -196,6 +232,42 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					#[System.Console]::CursorVisible = $false
 					
 					while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
+						#
+						## check for user toggle on data display type while waiting for refresh
+						####
+						if ([console]::KeyAvailable)
+						{
+							$_x = [System.Console]::ReadKey() 
+
+							switch ( $_x.key)
+							{
+								F12 {
+									Clear-Host
+									$_b_write_process_details_to_console = $true
+									$_b_write_process_summary_to_console = $false
+									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
+									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
+									Write-Host
+									Write-Host
+									Write-Host "Press (F12) for detail view, (F10) for summary view"
+									Write-Host
+									fWriteDataToConsole $_farmers_ip_arr
+								}
+								F10 {
+									Clear-Host
+									$_b_write_process_details_to_console = $false
+									$_b_write_process_summary_to_console = $true
+									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
+									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
+									Write-Host
+									Write-Host
+									Write-Host "Press (F12) for detail view, (F10) for summary view"
+									Write-Host
+									fGetDataForConsole $_farmers_ip_arr
+								}
+							}
+						} 
+						####
 						Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
 						#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
 						Write-Host "Refreshing in " -NoNewline 
@@ -247,20 +319,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 		$_process_size_disp = "-"
 		$_process_sector_time = 0.0
 		$_b_i_was_here = $false
-
-
-		### DELETE - start
-		#Write-Host
-		#Write-Host "_process_farm_sub_header: " $_process_farm_sub_header
-		#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
-		#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
-		#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
-		#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
-		#Write-Host
-		#Read-Host
-		### DELETE - end
-
-
 
 		if ($_process_farm_sub_header.TotalSectors -ne "-")
 		{
@@ -360,19 +418,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_chart_perf_minutesPerSector_data += ']'
 	
 	$_chart_rewards_data += ']'
-
-
-	### DELETE - start
-	#Write-Host
-	#Write-Host "_chart_sector_time_data: " $_chart_sector_time_data
-	#Write-Host
-	#Read-Host
-	### DELETE - end
-
-	#Write-Host
-	#Write-Host "_chart_progess_data: " $_chart_progess_data
-	#Write-Host "_chart_perf_minutesPerSector_data: " $_chart_perf_minutesPerSector_data
-	#Read-Host
 	
 #				<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 #				<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
@@ -579,13 +624,46 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 }
 
 Function fStartCountdownTimer ([int]$_io_timer_duration) {
+	$_resp_last_display_type_request = ""
+	
 	$_sleep_interval_milliseconds = 1000
 	$_spinner = '|', '/', '-', '\'
 	$_spinnerPos = 0
 	$_end_dt = [datetime]::UtcNow.AddSeconds($_io_timer_duration)
-	#[System.Console]::CursorVisible = $false
+	[System.Console]::CursorVisible = $false
 	
 	while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
+		#
+		## check for user toggle on data display type while waiting for refresh
+		####
+		if ([console]::KeyAvailable)
+		{
+			$_x = [System.Console]::ReadKey() 
+
+			switch ( $_x.key)
+			{
+				F12 {
+					Clear-Host
+					$_b_write_process_details_to_console = $true
+					$_b_write_process_summary_to_console = $false
+					Write-Host "Press (F12) for detail view, (F10) for summary view"
+					Write-Host
+					fWriteDataToConsole $_farmers_ip_arr
+					$_resp_last_display_type_request = "detail"
+				}
+				F10 {
+					Clear-Host
+					$_b_write_process_details_to_console = $false
+					$_b_write_process_summary_to_console = $true
+					Write-Host "Press (F12) for detail view, (F10) for summary view"
+					Write-Host
+					fGetDataForConsole $_farmers_ip_arr
+					$_resp_last_display_type_request = "summary"
+				}
+			}
+		} 
+		####
+		#
 		Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
 		#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
 		Write-Host "Refreshing in " -NoNewline 
@@ -594,6 +672,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 		#Start-Sleep -Milliseconds ([Math]::Min($_sleep_interval_milliseconds, $_remaining_time * 1000))
 	}
 	Write-Host
+	return $_resp_last_display_type_request
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
@@ -951,12 +1030,6 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			#### Delete - start
-			#Write-Host "fGetProcessState:::: _b_first_time: " $_b_first_time
-			#Write-Host "_seconds_elapsed: " $_seconds_elapsed
-			#Write-Host "_alert_frequency_seconds: " $_alert_frequency_seconds
-			#Write-Host "(_seconds_elapsed -ge _alert_frequency_seconds): " ($_seconds_elapsed -ge $_alert_frequency_seconds)
-			#### Delete - end
 			if ($_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
 				fSendDiscordNotification $_io_alert_url $_alert_text
 			}
@@ -1193,15 +1266,6 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 						if ($_disk_sector_performance_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 					}
 					else {break}
-					### DELETE - start
-					#Write-Host
-					#Write-Host "_disk_plots_remaining_obj: " $_disk_plots_remaining_obj
-					#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
-					#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
-					#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
-					#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
-					#Write-Host
-					### DELETE - end
 					$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
 					if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 						#$_avg_minutes_per_sector += $_disk_sector_performance_obj.MinutesPerSector
@@ -1230,9 +1294,6 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					}
 				}
 			}
-			### DELETE - start
-			#Write-Host "_actual_plotting_disk_count: " $_actual_plotting_disk_count
-			### DELETE - end
 			$_farm_sector_times_disp = "-"
 			if ($_actual_plotting_disk_count -gt 0) {
 				$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
@@ -1314,24 +1375,6 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 			}
 			#
 			## build and display farm level progress and ETA
-
-
-
-
-
-			### DELETE - start
-			#Write-Host
-			#Write-Host "_process_total_disks_disp: " $_process_total_disks_disp
-			#Write-Host "_process_remaining_sectors: " $_process_remaining_sectors
-			#Write-Host "_avg_minutes_per_sector: " $_avg_minutes_per_sector
-			#Write-Host "_process_total_disks_disp: " $_process_total_disks_disp
-			#Write-Host			
-			### DELETE - end
-
-
-
-
-
 			#
 			$_farm_progress = 0
 			$_farm_progress_disp = "-"
@@ -1494,15 +1537,6 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 						}
 						else {break}
-						### DELETE - start
-						#Write-Host
-						#Write-Host "_disk_plots_remaining_obj: " $_disk_plots_remaining_obj
-						#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
-						#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
-						#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
-						#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
-						#Write-Host
-						### DELETE - end
 						$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
 						if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
@@ -1519,12 +1553,6 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 									$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 3600) / $_disk_sector_performance_obj.DiskSectorPlotCount)
 								}
 							}
-							### DELETE - start
-							#Write-Host
-							#Write-Host "_time_per_sector_data_obj: " $_time_per_sector_data_obj
-							#Write-Host
-							#Read-Host
-							### DELETE - end
 						}
 						else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
 							$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# that is all we know as of feb 19 subspace release

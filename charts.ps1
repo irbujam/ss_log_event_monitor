@@ -104,6 +104,7 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 					_div_html += "<td>Size</td>";
 					_div_html += "<td>% Complete</td>";
 					_div_html += "<td>ETA</td>";
+					_div_html += "<td>Replots</td>";
 					_div_html += "<td>Sectors/Hour</td>";
 					_div_html += "<td>Time/Sector</td>";
 					_div_html += "<td>Rewards</td>";
@@ -118,6 +119,7 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 							_div_html += "<td>" + _ce_disk_data_arr[j].Size + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].PercentComplete + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].ETA + "</td>";
+							_div_html += "<td>" + _ce_disk_data_arr[j].ReplotStatus + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].SectorsPerHour + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].MinutesPerSector + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].Rewards + "</td>";
