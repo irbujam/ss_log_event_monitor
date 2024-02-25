@@ -32,8 +32,9 @@ To launch save the three .ps1 files and config file in the same folder on a loca
   - No need for log files as monitoring is now using metrics endpoints
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
-  - Metrics information including:
-      - Overall node/farm status, size, plotting progress and eta
+  - Summary view providing overall node/farms stats
+      - node/farm status, size, plotting progress and eta at a high level
+  - User selectable detailed view including:
       - Node(s) sync state and peers connected
       - Farmer(s) state and uptime
       - plotting performance averages
