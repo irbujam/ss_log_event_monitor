@@ -190,7 +190,10 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 					#
 					$_process_total_disks = $_sub_header.TotalDisks
 					$_process_remaining_disks = $_sub_header.TotalDisksForETA
-					$_process_plotted_disks = $_process_total_disks - $_process_remaining_disks
+					if ($_process_remaining_disks -ne "-" -and $_process_total_disks -ne "-")
+					{
+						$_process_plotted_disks = $_process_total_disks - $_process_remaining_disks
+					}
 					$_process_disks_disp = $_process_total_disks.ToString() + "/" + $_process_plotted_disks.ToString() + "/" + $_process_remaining_disks.ToString()
 					break
 				}
