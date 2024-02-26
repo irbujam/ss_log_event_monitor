@@ -97,7 +97,7 @@ function main {
 					}
 				}
 				# check if alert frequency was provided in config and if not default to aut-refresh frequency 
-				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
+				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null -or $_alert_frequency_seconds -lt $refreshTimeScaleInSeconds) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
 				#
 				### Check if API mode enabled and we have a host
 				#

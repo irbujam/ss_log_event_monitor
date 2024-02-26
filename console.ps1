@@ -23,6 +23,9 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 	$_label_process_replot_disks = "Replots"
 	$_label_process_rewards = "Rewards      "
 	$_label_process_misses = "Miss"
+	# node extra columns
+	$_label_process_sync_status = "Synced"
+	$_label_process_peers = "Peers"
 	## define process header labels - set 2 of 3
 	$_label_process_type_row2 = "Type   "
 	$_label_process_alt_name_row2 = "  "
@@ -36,6 +39,9 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 	$_label_process_replot_disks_row2 = "       "
 	$_label_process_rewards_row2 = "total,per hr,"
 	$_label_process_misses_row2 = "    "
+	# node extra columns
+	$_label_process_sync_status_row2 = "      "
+	$_label_process_peers_row2 = "     "
 	## define process header labels - set 3 of 3
 	$_label_process_type_row3 = "       "
 	$_label_process_alt_name_row3 = "  "
@@ -49,15 +55,23 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 	$_label_process_replot_disks_row3 = "       "
 	$_label_process_rewards_row3 = "est per day  "
 	$_label_process_misses_row3 = "    "
+	# node extra columns
+	$_label_process_sync_status_row3 = "      "
+	$_label_process_peers_row3 = "     "
 	#
+	## node label sizing assessment
+	$_label_count_node = 5
+	$_label_total_length_node = $_label_process_type.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_sync_status.Length + $_label_process_peers.Length
+	$_label_separator_count_node = 6
+	$_label_line_separator_length_node = $_label_total_length_node + $_label_separator_count_node - 2
+	#
+	## farmer label sizing assessment
 	$_label_count = 12
-	#$_label_total_length = $_label_process_type.Length + $_label_process_alt_name.Length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
-	#						$_label_process_eta.Length + $_label_process_sector_time.Length + $_label_process_disks.Length + 
-	#						$_label_process_replot_disks.Length + $_label_process_rewards.Length + $_label_process_misses.Length
 	$_label_total_length = $_label_process_type.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
 							$_label_process_eta.Length + $_label_process_sector_time.Length + $_label_process_disks.Length + 
 							$_label_process_replot_disks.Length + $_label_process_rewards.Length + $_label_process_misses.Length
 	$_label_separator_count = 13
+	#
 	#
 	#$_label_line_separator = "-"
 	#$_label_line_separator_upper = "-"
@@ -68,12 +82,12 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 	$_data_line_separator = "-"
 	#
 	$_spacer = " "
+	#
+	## read and display node table
 	$_console_header_log = ""
 	$_console_header_row2_log = ""
 	$_console_header_row3_log = ""
 	$_console_header_log_finish_line = ""
-	#
-	## read and display individual process level data
 	$_b_process_header_printed = $false
 	foreach ($_header in $_process_header_arr)
 	{
@@ -87,6 +101,196 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 			$_process_state = $_header.State
 			$_process_sync_state = $_header.SyncStatus
 			$_process_peers = $_header.Peers
+			#
+			if ($_process_isOftype.toLower() -ne "node") { continue }
+			#
+			## build header and data for console display
+			$_spacer_length = 0
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			#
+			$_console_data_log += $_label_spacer + $_process_isOftype
+			$_console_header_log += $_label_spacer + $_label_process_type
+			$_console_header_row2_log += $_label_spacer + $_label_process_type_row2
+			$_console_header_row3_log += $_label_spacer + $_label_process_type_row3
+			####
+			$_spacer_length = [int]($_label_process_type.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			$_spacer_length = [int]($_label_process_type.Length - $_process_isOftype.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_data_log += $_label_spacer + $_process_alt_name
+			#
+			$_spacer_length = [int]($_label_process_type.Length - $_label_process_type.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_header_log += $_label_spacer + $_label_process_alt_name
+			$_console_header_row2_log += $_label_spacer + $_label_process_alt_name_row2
+			$_console_header_row3_log += $_label_spacer + $_label_process_alt_name_row3
+			####
+			#$_spacer_length = [int]($_label_process_alt_name.Length + 6)
+			$_spacer_length = [int]($_process_alt_name_max_length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			if ($_process_state.toLower() -eq "running") {
+				# TBD - coloring
+			}
+			else{
+				# TBD - coloring
+			}
+			#
+			#
+			#$_spacer_length = [int]($_process_alt_name.Length - $_process_alt_name.Length)
+			$_spacer_length = [int]($_process_alt_name_max_length - $_process_alt_name.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_data_log += $_label_spacer + $_process_state
+			#
+			#$_spacer_length = [int]($_process_alt_name.Length - $_label_process_alt_name.Length)
+			$_spacer_length = [int]($_process_alt_name_max_length - $_label_process_alt_name.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_header_log += $_label_spacer + $_label_process_state
+			$_console_header_row2_log += $_label_spacer + $_label_process_state_row2
+			$_console_header_row3_log += $_label_spacer + $_label_process_state_row3
+			####
+			$_spacer_length = [int]($_label_process_state.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			$_spacer_length = [int]($_label_process_state.Length - $_process_state.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_data_log += $_label_spacer + $_process_sync_state
+			#
+			$_spacer_length = [int]($_label_process_state.Length - $_label_process_state.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_header_log += $_label_spacer + $_label_process_sync_status
+			$_console_header_row2_log += $_label_spacer + $_label_process_sync_status_row2
+			$_console_header_row3_log += $_label_spacer + $_label_process_sync_status_row3
+			####
+			$_spacer_length = [int]($_label_process_sync_status.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			$_spacer_length = [int]($_label_process_sync_status.Length - $_process_sync_state.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_data_log += $_label_spacer + $_process_peers
+			#
+			$_spacer_length = [int]($_label_process_sync_status.Length - $_label_process_sync_status.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_header_log += $_label_spacer + $_label_process_peers
+			$_console_header_row2_log += $_label_spacer + $_label_process_peers_row2
+			$_console_header_row3_log += $_label_spacer + $_label_process_peers_row3
+			####
+			$_spacer_length = [int]($_label_process_peers.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			# last column delimiter only
+			$_spacer_length = [int]($_label_process_peers.Length - $_process_peers.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_data_log += $_label_spacer
+			#
+			$_spacer_length = [int]($_label_process_peers.Length - $_label_process_peers.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			$_console_header_log += $_label_spacer
+			$_console_header_row2_log += $_label_spacer
+			$_console_header_row3_log += $_label_spacer
+			####
+			$_spacer_length = [int]($_label_process_peers.Length - $_label_process_peers.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			## write to console
+			if (!($_b_process_header_printed))
+			{
+				$_spacer_length = $_label_line_separator_length_node
+				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
+				Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
+				#
+				Write-Host $_console_header_log -Foregroundcolor $_header_color
+				Write-Host $_console_header_row2_log -Foregroundcolor $_header_color
+				Write-Host $_console_header_row3_log -Foregroundcolor $_header_color
+				#
+				$_spacer_length = $_label_line_separator_length_node
+				$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+				#Write-Host $_line_separator_upper -Foregroundcolor $_header_color
+				Write-Host $_console_header_log_finish_line -Foregroundcolor $_header_color
+				#
+				Write-Host $_console_data_log
+				$_b_process_header_printed = $true
+			}
+			else 
+			{
+				#$_spacer_length = $_label_line_separator_length_node - 2		#accounted for starting and ending "|" padding
+				#$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
+				#Write-Host $_line_separator
+				#
+				Write-Host $_console_data_log
+			}
+	}
+	#
+	# write finish line for node table
+	$_spacer_length = $_label_line_separator_length_node
+	$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+	Write-Host ($_spacer + $_line_separator_upper) -Foregroundcolor $_header_color
+	#
+	#
+	##
+	## read and display farmer table
+	$_console_header_log = ""
+	$_console_header_row2_log = ""
+	$_console_header_row3_log = ""
+	$_console_header_log_finish_line = ""
+	$_b_process_header_printed = $false
+	#
+	##
+	$_all_process_size_TiB = 0
+	$_all_process_size_TiB_disp = "-"
+	$_all_process_completed_sectors = 0
+	$_all_process_total_sectors = 0
+	#$_all_process_progress = 0
+	$_all_process_progress_disp = "-"
+	$_all_process_rewards = 0
+	$_all_process_rewards_per_hour = 0
+	$_all_process_misses = 0
+	##
+	#
+	foreach ($_header in $_process_header_arr)
+	{
+			#
+			$_console_data_log = ""
+			#
+			## get process identifiers
+			$_process_name = $_header.UUId
+			$_process_alt_name = $_header.Hostname
+			$_process_isOftype = $_header.ProcessType
+			$_process_state = $_header.State
+			$_process_sync_state = $_header.SyncStatus
+			$_process_peers = $_header.Peers
+			#
+			if ($_process_isOftype.toLower() -ne "farmer") { continue }
 			#
 			## build header and data for console display
 			$_spacer_length = 0
@@ -178,7 +382,12 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 					{
 						#$_process_size_TiB = ([math]::Ceiling(([int]($_sub_header.TotalSectors) / 1000) * 10) / 10).ToString() + "TiB"
 						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString() + "TiB"
+						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
+						#
 						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 1)).toString() + "%"
+						$_all_process_completed_sectors += [int]($_sub_header.CompletedSectors)
+						$_all_process_total_sectors += [int]($_sub_header.TotalSectors)
+						#
 						if ($_sub_header.RemainingSectors -ne "-" -and $_sub_header.SectorTime -ne $null -and $_sub_header.TotalDisksForETA -ne 0) {
 							$_process_eta = [double](($_sub_header.SectorTime * $_sub_header.RemainingSectors) / $_sub_header.TotalDisksForETA)
 							$_process_eta_obj = New-TimeSpan -seconds $_process_eta
@@ -332,11 +541,13 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 				{
 					$_rewards_ += [int]($_data.Rewards)
 					$_process_rewards = $_rewards_.ToString()
+					$_all_process_rewards += [int]($_data.Rewards)
 				}
 				if ($_data.Misses -ne "-")
 				{
 					$_misses_ += [int]($_data.Misses)
 					$_process_misses = $_misses_.ToString()
+					$_all_process_misses += [int]($_data.Misses)
 				}
 			}
 			$_process_rewards_per_hour = "-"
@@ -346,6 +557,7 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 			if ($_process_uptime_seconds -gt 0 -and $_process_uptime_seconds -ne "-" -and $_process_rewards -ne "-")
 			{
 				$_process_rewards_per_hour = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600, 1)
+				$_all_process_rewards_per_hour += $_process_rewards_per_hour
 				$_process_rewards_per_day_estimated = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600 * 24, 1)
 			}
 			$_process_rewards_disp = "-"
@@ -435,6 +647,11 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 			## write to console
 			if (!($_b_process_header_printed))
 			{
+				# reserve spot for overall farm process summary line
+				Write-Host
+				$_all_process_summary_CursorPosition = $host.UI.RawUI.CursorPosition
+				Write-Host
+				#
 				$_spacer_length = $_label_line_separator_length
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
@@ -459,21 +676,32 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 				#
 				Write-Host $_console_data_log
 			}
-			<#
-			if ($_process_isOftype.toLower() -eq "node") {
-				$_process_status += "<p class=chart_font>" + "Synced: " + $_process_sync_state + ", Peers: " + $_process_peers + "</p>"
-			}
-			else {
-				$_process_status += "<p class=chart_font>" + "Uptime: " + $_process_uptime + "</p>"
-			}
-			$_process_status += "</div>"
-			#>
 	}
 	$_spacer_length = $_label_line_separator_length
 	$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 	Write-Host ($_spacer + $_line_separator_upper) -Foregroundcolor $_header_color
-
-	# display latest github version info
+	$_most_recent_CursorPosition = $host.UI.RawUI.CursorPosition
+	#
+	#
+	### write overall farm process summary line at previously reserved spot
+	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / 1000, 1))
+	if ($_all_process_total_sectors -gt 0)
+	{
+		$_all_process_progress_disp = ([math]::Round(($_all_process_completed_sectors / $_all_process_total_sectors) * 100, 1)).toString() + "%"
+	}
+	$_all_process_rewards_per_day_estimated = [math]::Round($_all_process_rewards_per_hour * 24, 1)
+	# reposition cursor for writing overall farm process summary line
+	[Console]::SetCursorPosition($_all_process_summary_CursorPosition.X, $_all_process_summary_CursorPosition.Y)
+	[System.Console]::Write("Total farm size: " + $_all_process_size_TiB_disp.toString() + "TiB, % Complete: " + $_all_process_progress_disp.toString() + 
+							", Rewards (total, per hour, est per day): " + $_all_process_rewards.toString() + "," + $_all_process_rewards_per_hour.toString() + "," + $_all_process_rewards_per_day_estimated.toString() + 
+							", Miss: " + $_all_process_misses.toString()) 
+	#
+	#revert back cursor position to last written summary data
+	[Console]::SetCursorPosition($_most_recent_CursorPosition.X, $_most_recent_CursorPosition.Y)
+	###
+	#
+	#
+	## display latest github version info
 	$_gitVersionDisp = " - "
 	$_gitVersionDispColor = $_html_red
 	if ($null -ne $gitVersion) {
