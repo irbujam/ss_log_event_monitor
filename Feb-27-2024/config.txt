@@ -39,7 +39,7 @@ Auto-refresh(seconds) : 300
 ## Since the script is 100% endpoint based and does not require special permission to get hostname,
 ##    you can set up a one time friendly name to show instead of IP should you prefer
 #
-# Tip: you can just add or remove a line for node while the script is running and the updates will show in next refresh
+# Tip: you can add or remove a line for node while the script is running and the updates will show in next refresh
 #-------------------------------------------------------------------------------------------------------------------------
 
 Node: 192.168.2.203:19595 :ryz-3600 
