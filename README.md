@@ -2,9 +2,7 @@
 A simple to run and lightweight windows powershell script that captures information from subspace advanced CLI farmer and node metrics endpoint (farmer and node themselves can run on any OS).
 To launch save all files with extension *.ps1  and config.txt file in the same folder on a local computer, change config to your needs and run subspace_advanced_CLI_monitor.ps1 file. Ensure that you have read the pre-requisites below.
 
-<img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="580" hieght="340" />&nbsp;<img src="https://github.com/irbujam/images/blob/main/detail.PNG" width="580" hieght="340" />
-<img src="https://github.com/irbujam/images/blob/main/web.JPG" width="300" hieght="350" />
-
+<img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="580" hieght="340" /><img src="https://github.com/irbujam/images/blob/main/detail.PNG" width="580" hieght="340" />
     
 
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
@@ -20,7 +18,7 @@ To launch save all files with extension *.ps1  and config.txt file in the same f
 > - Ensure to create an inbound rule under windows defender firewall for http listening port as specified in the config file. This must be done on the computer that hosts ps1 script
 > - Must run the ps1 file as admin in powershell console
 > - The endpoint to use is http://ip:port/summary
-
+<img src="https://github.com/irbujam/images/blob/main/web.JPG" width="300" hieght="350" />
 
 
 **Key features:**
