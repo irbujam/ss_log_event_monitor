@@ -550,7 +550,7 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 			$_misses_ = 0
 			$_process_replot_disks = "-"
 			$_process_replot_disks_hold = "-"
-			$_process_expiring_sectors_count = 0
+			$_process_expiring_sectors_count = "-"
 			$_process_rewards = "-"
 			$_process_misses = "-"
 			foreach ($_data in $_process_disk_data_arr)

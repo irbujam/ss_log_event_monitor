@@ -901,12 +901,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						ExpiredSectors	= $_sectors
 					}
 					$script:_replot_sector_count_hold_arr += $_expired_plots_info
-					#### Delete - start
-					#Write-Host ""
-					#Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr
-					#Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr.Count
-					#Write-Host ""
-					#### Delete - end
 				}
 			}
 		}
@@ -1035,6 +1029,13 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	}
 	[void]$_resp_disk_metrics_arr.add($_disk_metrics)
 
+	#### Delete - start
+	Write-Host ""
+	Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr
+	Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr.Count
+	Write-Host ""
+	#### Delete - end
+	#
 	#return $_resp_sector_perf_arr
 	#return $_resp_rewards_arr
 	return $_resp_disk_metrics_arr
