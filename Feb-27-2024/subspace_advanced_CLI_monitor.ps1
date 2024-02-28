@@ -1030,10 +1030,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	[void]$_resp_disk_metrics_arr.add($_disk_metrics)
 
 	#### Delete - start
-	Write-Host ""
-	Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr
-	Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr.Count
-	Write-Host ""
+	#Write-Host ""
+	#Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr
+	#Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr.Count
+	#Write-Host ""
 	#### Delete - end
 	#
 	#return $_resp_sector_perf_arr
@@ -1133,7 +1133,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
-					$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------").Length
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1203,19 +1203,29 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_hostname = "Hostname"
 			$_label_diskid = "Disk Id"
 			$_label_size = "Size     "
-			$_label_percent_complete = "% Complete"
+			$_label_percent_complete = "%    "
 			$_label_eta = "ETA         "
-			$_label_replot = "Replots"
-			$_label_sectors_per_hour = "Sectors/Hour"
-			$_label_minutes_per_sectors = "Time/Sector"
+			$_label_replot = "    Replots     "
+			$_label_sectors_per_hour = "Sectors/"
+			$_label_minutes_per_sectors = "Time/  "
 			$_label_rewards = "Rewards"
-			$_label_misses = "Misses"
+			$_label_misses = "Miss"
+			#
+			$_label_hostname_row2 = "        "
+			$_label_diskid_row2 = "       "
+			$_label_size_row2 = "         "
+			$_label_percent_complete_row2 = "Cmpl "
+			$_label_eta_row2 = "            "
+			$_label_replot_row2 = "expng/expd/%cmpl"
+			$_label_sectors_per_hour_row2 = "Hour    "
+			$_label_minutes_per_sectors_row2 = "Sector "
+			$_label_rewards_row2 = "       "
+			$_label_misses_row2 = "    "
+			#
 			$_spacer = " "
 			$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
 			$_total_header_labels = 9
-			
 			#
-			
 			##
 			$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
 			$_disk_UUId_arr = $_disk_metrics_arr[0].Id
@@ -1445,7 +1455,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			## display break-up (disk level) information for a given farm
 			#
-			$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------------").Length
+			$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------").Length
 			$_spacer_length = $_total_spacer_length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 			
@@ -1469,7 +1479,9 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_spacer_length = 0
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
-
+					#
+					#
+					## header line #2
 					Write-Host $_label_spacer -nonewline
 
 					Write-Host $_label_diskid -nonewline -ForegroundColor $_disk_header_color
@@ -1530,6 +1542,68 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer
 					#
+					#
+					## header line #2
+					Write-Host $_label_spacer -nonewline
+
+					Write-Host $_label_diskid_row2 -nonewline -ForegroundColor $_disk_header_color
+					if ($_disk_UUId_obj -ne $null) {
+						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
+					}
+					else {$_spacer_length = ("-------------------------------------------------------------------------------").Length}
+
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_size_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_percent_complete_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_eta_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_replot_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_sectors_per_hour_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline
+					Write-Host $_label_minutes_per_sectors_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline
+					Write-Host $_label_rewards_row2 -nonewline -ForegroundColor $_disk_header_color
+					
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline
+					Write-Host $_label_misses_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer
+
 					# draw line
 					if ($_disk_UUId_obj -ne $null) {
 						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
