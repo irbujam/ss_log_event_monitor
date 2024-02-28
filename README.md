@@ -4,7 +4,7 @@ To launch save all files with extension *.ps1  and config.txt file in the same f
 
 <table border=0><tr>
     <td>
-      <table border=0><tr><td border=0><img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="640" hieght="380" /></td></tr>
+      <table border=0><tr><td><img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="640" hieght="380" /></td></tr>
             <tr><td><img src="https://github.com/irbujam/images/blob/main/detail.PNG" width="640" hieght="380" /></td></tr>
       </table>
     </td>
