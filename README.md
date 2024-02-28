@@ -8,7 +8,7 @@ To launch save all files with extension *.ps1  and config.txt file in the same f
             <tr><td><img src="https://github.com/irbujam/images/blob/main/detail.PNG" width="640" hieght="380" /></td></tr>
       </table>
     </td>
-    <td><img src="https://github.com/irbujam/images/blob/main/web.JPG" width="250" hieght="300" /></td>
+    <td><img src="https://github.com/irbujam/images/blob/main/web.JPG" width="300" hieght="350" /></td>
 </tr></table>
 
 > Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
