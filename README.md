@@ -18,7 +18,7 @@ To launch save all files with extension *.ps1  and config.txt file in the same f
 > - Ensure to create an inbound rule under windows defender firewall for http listening port as specified in the config file. This must be done on the computer that hosts ps1 script
 > - Must run the ps1 file as admin in powershell console
 > - The endpoint to use is http://ip:port/summary
-<img src="https://github.com/irbujam/images/blob/main/web.JPG" width="160" height="320" />
+> - <img src="https://github.com/irbujam/images/blob/main/web.JPG" width="160" height="320" />
 
 
 **Key features:**
