@@ -1804,7 +1804,7 @@ function fWriteDataToConsole ([array]$_io_farmers_ip_arr) {
 				{
 					if ([int]($_replot_sector_count) -gt 0 -and [int]($_replot_sector_count_hold) -gt 0)
 					{
-						$_replot_progress = ([math]::Round([int]($_replot_sector_count) / [int]($_replot_sector_count_hold), 1)).ToString() + "%"
+						$_replot_progress = ([math]::Round(([int]($_replot_sector_count) / [int]($_replot_sector_count_hold)) * 100, 1)).ToString() + "%"
 					}
 				}
 				## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + $_replot_sector_count_hold.ToString() + "/" + $_replot_sector_count.ToString()

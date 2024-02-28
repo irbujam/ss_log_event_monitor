@@ -615,7 +615,7 @@ function fGetDataForConsole ([array]$_io_process_arr) {
 			{
 				if ([int]($_process_replot_disks) -gt 0 -and [int]($_process_replot_disks_hold) -gt 0)
 				{
-					$_replot_progress = ([math]::Round($_process_replot_disks / $_process_replot_disks_hold, 1)).ToString() + "%"
+					$_replot_progress = ([math]::Round(([int]($_process_replot_disks) / [int]($_process_replot_disks_hold)) * 100, 1)).ToString() + "%"
 				}
 			}
 			## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_process_replot_sector_count_disp = $_process_expiring_sectors_count + "/" + $_process_replot_disks_hold + "/" + $_process_replot_disks
