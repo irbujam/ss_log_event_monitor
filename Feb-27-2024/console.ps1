@@ -615,7 +615,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			{
 				if ([int]($_process_replot_disks) -gt 0 -and [int]($_process_replot_disks_hold) -gt 0)
 				{
-					$_replot_progress = ([math]::Round(([int]($_process_replot_disks) / [int]($_process_replot_disks_hold)) * 100, 1)).ToString() + "%"
+					$_replot_progress = ([math]::Round((($_process_replot_disks_hold - [int]($_process_replot_disks)) / [int]($_process_replot_disks_hold)) * 100, 1)).ToString() + "%"
 				}
 			}
 			## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_process_replot_sector_count_disp = $_process_expiring_sectors_count + "/" + $_process_replot_disks_hold + "/" + $_process_replot_disks
@@ -1642,7 +1642,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				{
 					if ([int]($_replot_sector_count) -gt 0 -and [int]($_replot_sector_count_hold) -gt 0)
 					{
-						$_replot_progress = ([math]::Round(([int]($_replot_sector_count) / [int]($_replot_sector_count_hold)) * 100, 1)).ToString() + "%"
+						$_replot_progress = ([math]::Round((($_replot_sector_count_hold - [int]($_replot_sector_count)) / [int]($_replot_sector_count_hold)) * 100, 1)).ToString() + "%"
 					}
 				}
 				## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + $_replot_sector_count_hold.ToString() + "/" + $_replot_sector_count.ToString()
