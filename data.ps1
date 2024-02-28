@@ -96,12 +96,17 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			#
 			$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+			#Write-Host
+			#Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr
+			#Write-Host
 			$_disk_UUId_arr = $_disk_metrics_arr[0].Id
 			$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 			$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
 			$_disk_misses_arr = $_disk_metrics_arr[0].Misses
 			$_disk_plots_completed_arr = $_disk_metrics_arr[0].PlotsCompleted
 			$_disk_plots_remaining_arr = $_disk_metrics_arr[0].PlotsRemaining
+			$_disk_plots_expired_arr = $_disk_metrics_arr[0].PlotsExpired
+			$_disk_plots_expiring_arr = $_disk_metrics_arr[0].PlotsAboutToExpire
 
 			# get process data information
 			$_process_completed_sectors = 0
@@ -121,6 +126,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				$_sectors_per_hour_data_disp = "-"
 				$_time_per_sector_data_obj = New-TimeSpan -seconds 0
 				$_replot_sector_count = "-"
+				$_replot_sector_count_hold = "-"
+				$_expiring_sector_count = "-"
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
 					if ($_disk_sector_performance_obj) {
@@ -133,15 +140,6 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 						}
 						else {break}
-						### DELETE - start
-						#Write-Host
-						#Write-Host "_disk_plots_remaining_obj: " $_disk_plots_remaining_obj
-						#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
-						#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
-						#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
-						#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
-						#Write-Host
-						### DELETE - end
 						$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
 						if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
@@ -160,7 +158,36 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 
 						}
 						else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
-							$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# that is all we know as of feb 19 subspace release
+							# expired sectors info
+							#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
+							foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
+							{
+								if ($_disk_plots_expired_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
+								}
+								$_replot_sector_count = $_disk_plots_expired_obj.Sectors
+								for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
+								{
+									if ($_replot_sector_count_hold_arr[$_h]) {
+										if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
+									}
+									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt $_replot_sector_count) 
+									{
+										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count
+									}
+									$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
+									break
+								}
+								break
+							}
+							# expiring sectors info
+							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+							{
+								if ($_disk_plots_expiring_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+								}
+								$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
+							}
 							<#
 							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
 								"seconds" 	{
@@ -271,6 +298,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					PercentComplete			= $_plotting_percent_complete_disp
 					ETA						= $_eta_disp
 					ReplotStatus			= $_replot_sector_count
+					ReplotStatusHold		= $_replot_sector_count_hold
+					ExpiringSectors			= $_expiring_sector_count
 					SectorsPerHour			= $_sectors_per_hour_data_disp
 					#MinutesPerSector		= $_minutes_per_sector_data_disp
 					MinutesPerSector		= $_time_per_sector_data_obj.TotalSeconds
@@ -339,15 +368,6 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						if ($_disk_sector_performance_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 					}
 					else {break}
-					### DELETE - start
-					#Write-Host
-					#Write-Host "_disk_plots_remaining_obj: " $_disk_plots_remaining_obj
-					#Write-Host "_disk_plots_remaining_obj.PlotsRemaining: " $_disk_plots_remaining_obj.Sectors
-					#Write-Host "_disk_sector_performance_obj.DiskSectorPlotCount: " $_disk_sector_performance_obj.DiskSectorPlotCount
-					#Write-Host "_disk_sector_performance_obj.DiskSectorPlotTime: " $_disk_sector_performance_obj.DiskSectorPlotTime
-					#Write-Host "_disk_sector_performance_obj.PlotTimeUnit: " $_disk_sector_performance_obj.PlotTimeUnit
-					#Write-Host
-					### DELETE - end
 					$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
 					if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 						#$_avg_minutes_per_sector += $_disk_sector_performance_obj.MinutesPerSector
@@ -376,9 +396,6 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					}
 				}
 			}
-			### DELETE - start
-			#Write-Host "_actual_plotting_disk_count: " $_actual_plotting_disk_count
-			### DELETE - end
 			if ($_actual_plotting_disk_count -gt 0)
 			{
 				$_avg_minutes_per_sector = $_avg_minutes_per_sector / $_actual_plotting_disk_count
