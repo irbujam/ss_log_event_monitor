@@ -23,7 +23,7 @@ API-host: 127.0.0.1:5004
 # Set alert repeat frequency, the value will default to auto-refresh time if not set or a lower value is provided
 #-------------------------------------------------------------------------------------------------------------------------
 
-Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertE................
+Discord-url : https://discord.com/api/webhooks/0000000000000000000/1AAAA................
 Alert-frequency(seconds) : 3600
 
 #-------------------------------------------------------------------------------------------------------------------------
