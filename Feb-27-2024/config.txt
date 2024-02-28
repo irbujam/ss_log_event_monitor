@@ -23,7 +23,7 @@ API-host: 127.0.0.1:5004
 # Set alert repeat frequency, the value will default to auto-refresh time if not set or a lower value is provided
 #-------------------------------------------------------------------------------------------------------------------------
 
-Discord-url : https://discord.com/api/webhooks/0000000000000000000/1RyMXertE................
+Discord-url : https://discord.com/api/webhooks/0000000000000000000/1AAAA................
 Alert-frequency(seconds) : 3600
 
 #-------------------------------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ Auto-refresh(seconds) : 300
 ## Since the script is 100% endpoint based and does not require special permission to get hostname,
 ##    you can set up a one time friendly name to show instead of IP should you prefer
 #
-# Tip: you can just add another line for a new farmer while the script is running and the farmer will show in next refresh
+# Tip: you can just add another line for a new farmer while the script is running and the node will show in next refresh
 #-------------------------------------------------------------------------------------------------------------------------
 
 Node: 192.168.2.203:19595 :ryz-3600 
