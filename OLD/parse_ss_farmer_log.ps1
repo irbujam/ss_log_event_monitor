@@ -371,6 +371,11 @@ function main {
 				}
 				$LastSectorPlottedByDiskArr[$diskNum] = $currSectorNum
 			}
+			#
+			##
+			$_label_line_separator = "_"
+			$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
+			#
 			##
 			#Build overall progress and average sectors processed data 
 			$overallProgress = 0
@@ -496,7 +501,7 @@ function main {
 			#Write-Host "Total space allocated: " -nonewline
 			Write-Host "Total size      : " -nonewline
 			#write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)" -ForegroundColor green
-			write-Host $totalSizeAllocatedTiB "TiB ($totalSizeAllocatedTB TB)"
+			write-Host ($totalSizeAllocatedTiB.ToString() +"TiB (" + $totalSizeAllocatedTB + "TB)")
 			#
 			# display running version info
 			Write-Host "----------------------------------------------------------------------------" -nonewline -ForegroundColor gray
@@ -597,16 +602,22 @@ function main {
 
 
 			#
-			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			##Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			$_seperator_line_length = ("-----------------------------------------------------------------------------------------------------------------").Length
+			$_seperator_line = fBuildDynamicSpacer $_seperator_line_length $_label_line_separator_upper
+			Write-Host $_seperator_line -ForegroundColor gray
 			#
 			##
 			#Write summary header and data table
 			echo `n
 			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
 			Write-Host "                                                  Summary by disk:                                                 " -ForegroundColor cyan
-			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			##Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			$_start_line_length = ("-----------------------------------------------------------------------------------------------------------------").Length
+			$_start_line_label = fBuildDynamicSpacer $_start_line_length $_label_line_separator
+			Write-Host $_start_line_label -ForegroundColor gray
 			#
 			#Sub-header label definition
 			$diskLabel 				= "Disk"
@@ -614,13 +625,13 @@ function main {
 			$diskSizeLabel 			= "Space allocated      "
 			$rewardLabel 			= "Rewards"
 			$missesLabel 			= "Misses"
-			$sectorPlotSpeedLabel 	= "Sectors/h"
+			$sectorPlotSpeedLabel 	= "Sectors/"
 			$minutesPerSectorLabel 	= "Time/  "
 			#$plottingSpeedLabel 	= "Plot   "
 			$_eta_Label 			= "ETA        "
 			$plotStatusLabel 		= "Plot  "
 			$replotStatusLabel 		= "Replot"
-			$lastRewardLabel 		= "Last reward on      "
+			$lastRewardLabel 		= "Last reward on        "
 			
 			$spacerLabel = "|"
 
@@ -629,26 +640,26 @@ function main {
 			$diskSizeLabel2 		= "                     "
 			$rewardLabel2 			= "       "
 			$missesLabel2			= "      "
-			$sectorPlotSpeedLabel2 	= "         "
+			$sectorPlotSpeedLabel2 	= "hour    "
 			$minutesPerSectorLabel2	= "sector "
 			#$plottingSpeedLabel2	= "speed  "
 			$_eta_Label2 			= "           "
 			$plotStatusLabel2 		= "status"
 			$replotStatusLabel2 	= "status"
-			$lastRewardLabel2 		= "                    "
+			$lastRewardLabel2 		= "                      "
 			
-			$diskLabel3 			= "    "
-			$driveLabel3 			= "     "
-			$diskSizeLabel3 		= "                     "
-			$rewardLabel3 			= "       "
-			$missesLabel3			= "      "
-			$sectorPlotSpeedLabel3 	= "         "
-			$minutesPerSectorLabel3	= "       "
-			#$plottingSpeedLabel3	= "(MiB/m)"
-			$_eta_Label3 			= "           "
-			$plotStatusLabel3 		= "      "
-			$replotStatusLabel3 	= "      "
-			$lastRewardLabel3 		= "                    "
+			#$diskLabel3 			= "    "
+			#$driveLabel3 			= "     "
+			#$diskSizeLabel3 		= "                     "
+			#$rewardLabel3 			= "       "
+			#$missesLabel3			= "      "
+			#$sectorPlotSpeedLabel3 	= "         "
+			#$minutesPerSectorLabel3	= "       "
+			##$plottingSpeedLabel3	= "(MiB/m)"
+			#$_eta_Label3 			= "           "
+			#$plotStatusLabel3 		= "      "
+			#$replotStatusLabel3 	= "      "
+			#$lastRewardLabel3 		= "                      "
 			##
 			#Write sub-headers
 			#$header = $diskLabel + $spacerLabel + $driveLabel + $spacerLabel + $diskSizeLabel + $spacerLabel + $rewardLabel + $spacerLabel + $missesLabel + $spacerLabel + $sectorPlotSpeedLabel + $spacerLabel + $minutesPerSectorLabel + $spacerLabel + $plottingSpeedLabel + $spacerLabel + $_eta_Label + $spacerLabel + $plotStatusLabel + $spacerLabel + $replotStatusLabel + $spacerLabel + $lastRewardLabel + $spacerLabel
@@ -657,11 +668,19 @@ function main {
 			#$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $sectorPlotSpeedLabel2 + $spacerLabel + $minutesPerSectorLabel2 + $spacerLabel + $plottingSpeedLabel2 + $spacerLabel + $_eta_Label2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2 + $spacerLabel
 			$header = $diskLabel2 + $spacerLabel + $driveLabel2 + $spacerLabel + $diskSizeLabel2 + $spacerLabel + $rewardLabel2 + $spacerLabel + $missesLabel2 + $spacerLabel + $sectorPlotSpeedLabel2 + $spacerLabel + $minutesPerSectorLabel2 + $spacerLabel + $_eta_Label2 + $spacerLabel + $plotStatusLabel2 + $spacerLabel + $replotStatusLabel2 + $spacerLabel + $lastRewardLabel2 + $spacerLabel
 			Write-Host $header -ForegroundColor cyan
-			#$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $plottingSpeedLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
-			$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
-			Write-Host $header -ForegroundColor cyan
-			#$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
-			$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
+			##$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $plottingSpeedLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
+			#$header = $diskLabel3 + $spacerLabel + $driveLabel3 + $spacerLabel + $diskSizeLabel3 + $spacerLabel + $rewardLabel3 + $spacerLabel + $missesLabel3 + $spacerLabel + $sectorPlotSpeedLabel3 + $spacerLabel + $minutesPerSectorLabel3 + $spacerLabel + $_eta_Label3 + $spacerLabel + $plotStatusLabel3 + $spacerLabel + $replotStatusLabel3 + $spacerLabel + $lastRewardLabel3 + $spacerLabel
+			#Write-Host $header -ForegroundColor cyan
+			##$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plottingSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
+			#$header = (fBuildDynamicSpacer $diskLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $diskSizeLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $missesLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $minutesPerSectorLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length "-") + $spacerLabel + (fBuildDynamicSpacer $plotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length "-") + $spacerLabel + (fBuildDynamicSpacer $lastRewardLabel.Length "-") + $spacerLabel
+
+			$header = 	(fBuildDynamicSpacer $diskLabel.Length $_label_line_separator_upper) + $spacerLabel + (fBuildDynamicSpacer $driveLabel.Length $_label_line_separator_upper) + $spacerLabel + 
+						(fBuildDynamicSpacer $diskSizeLabel.Length $_label_line_separator_upper) + $spacerLabel + (fBuildDynamicSpacer $rewardLabel.Length $_label_line_separator_upper) + $spacerLabel + 
+						(fBuildDynamicSpacer $missesLabel.Length $_label_line_separator_upper) + $spacerLabel + (fBuildDynamicSpacer $sectorPlotSpeedLabel.Length $_label_line_separator_upper) + $spacerLabel + 
+						(fBuildDynamicSpacer $minutesPerSectorLabel.Length $_label_line_separator_upper) + $spacerLabel + (fBuildDynamicSpacer $_eta_Label.Length $_label_line_separator_upper) + $spacerLabel + 
+						(fBuildDynamicSpacer $plotStatusLabel.Length $_label_line_separator_upper) + $spacerLabel + (fBuildDynamicSpacer $replotStatusLabel.Length $_label_line_separator_upper) + $spacerLabel + 
+						(fBuildDynamicSpacer $lastRewardLabel.Length $_label_line_separator_upper) + $spacerLabel
+
 			Write-Host $header -ForegroundColor gray
 			#
 			#write summary data
@@ -765,8 +784,12 @@ function main {
 				Write-Host $summaryData
 				#
 			}
-			#Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
-			Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			##Write-Host "-------------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			#Write-Host "-----------------------------------------------------------------------------------------------------------------" -ForegroundColor gray
+			$_finish_line_length = ("-----------------------------------------------------------------------------------------------------------------").Length
+			$_finish_line_label = fBuildDynamicSpacer $_finish_line_length $_label_line_separator_upper
+			Write-Host $_finish_line_label -ForegroundColor gray
+			#
 			#remember the last written summary data for later repositioning after writing averages in sub-header at a high-level
 			$mostRecentSummaryDataCursorPosition = $host.UI.RawUI.CursorPosition
 			#
