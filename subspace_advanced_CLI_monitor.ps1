@@ -152,7 +152,13 @@ function main {
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+					if ($_b_write_process_summary_to_console)
+					{
+						Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+					}
+					else {
+						Write-Host
+					}
 					Write-Host
 					if ($_b_write_process_details_to_console)
 					{
@@ -214,7 +220,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 			Write-Host
 			Write-Host
-			Write-Host "Press (F12) for detail view, (F10) for summary view"
+			Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+			Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+			if ($_b_write_process_summary_to_console)
+			{
+				Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+			}
+			else {
+				Write-Host
+			}
 			Write-Host
 			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) { 
@@ -251,9 +268,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 						{
 							$_x = [System.Console]::ReadKey() 
 
+							$_key_value = $_x.key
 							switch ( $_x.key)
 							{
 								F12 {
+									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
 									$_b_write_process_details_to_console = $true
 									$_b_write_process_summary_to_console = $false
@@ -261,11 +280,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
 									Write-Host
-									Write-Host "Press (F12) for detail view, (F10) for summary view"
+									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+									#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+									Write-Host
 									Write-Host
 									fWriteDetailDataToConsole $_farmers_ip_arr
 								}
 								F10 {
+									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
 									$_b_write_process_details_to_console = $false
 									$_b_write_process_summary_to_console = $true
@@ -273,9 +299,107 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
 									Write-Host
-									Write-Host "Press (F12) for detail view, (F10) for summary view"
+									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+									Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 									Write-Host
 									fGetSummaryDataForConsole $_farmers_ip_arr
+								}
+								{ $script:_num_key_arr -contains $_ -or $script:_char_arr -contains $_ } {
+									$script:_individual_farmer_id_last_pos = -1
+									if ( $script:_char_arr -contains $_key_value )
+									{
+										for($_i=0; $_i -lt $script:_char_arr.Count; $_i++)
+										{
+											if ( $script:_char_arr[$_i] -eq $_key_value)
+											{
+												$script:_individual_farmer_id_last_pos = 10 + $_i
+												break
+											}
+										}
+									}
+									elseif ( $script:_num_key_arr -contains $_key_value ) 
+									{
+										for($_i=0; $_i -lt $script:_num_key_arr.Count; $_i++)
+										{
+											if ( $script:_num_key_arr[$_i] -eq $_key_value)
+											{
+												$script:_individual_farmer_id_last_pos = $_i
+												break
+											}
+										}
+									}
+									#
+									if ($script:_individual_farmer_id_last_pos -ge 0 -and $script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
+									{
+										Clear-Host
+										Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+										Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+										Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+										Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
+										Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
+										Write-Host "] will loop thru single farmer." -ForegroundColor $_html_gray
+										Write-Host
+										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+									}
+								}
+								LeftArrow {
+									Clear-Host
+									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+									Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "] will loop thru single farmer." -ForegroundColor $_html_gray
+									Write-Host
+									$script:_individual_farmer_id_last_pos -= 1
+									if ($script:_individual_farmer_id_last_pos -ge 0)
+									{
+										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+									}
+									else{
+										$script:_individual_farmer_id_last_pos = $script:_individual_farmer_id_arr.Count - 1
+										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+									}
+								}
+								RightArrow {
+									Clear-Host
+									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+									Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "] will loop thru single farmer" -ForegroundColor $_html_gray
+									Write-Host
+									$script:_individual_farmer_id_last_pos += 1
+									if ($script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
+									{
+										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+									}
+									else{
+										$script:_individual_farmer_id_last_pos = 0
+										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+									}
 								}
 							}
 						} 
@@ -650,11 +774,12 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 		if ([console]::KeyAvailable)
 		{
 			$_x = [System.Console]::ReadKey() 
-
+			
 			$_key_value = $_x.key
 			switch ( $_x.key)
 			{
 				F12 {
+					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
 					$_b_write_process_details_to_console = $true
 					$_b_write_process_summary_to_console = $false
@@ -663,12 +788,14 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+					#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+					Write-Host
 					Write-Host
 					fWriteDetailDataToConsole $_farmers_ip_arr
 					$_resp_last_display_type_request = "detail"
 				}
 				F10 {
+					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
 					$_b_write_process_details_to_console = $false
 					$_b_write_process_summary_to_console = $true
@@ -683,14 +810,14 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					$_resp_last_display_type_request = "summary"
 				}
 				{ $script:_num_key_arr -contains $_ -or $script:_char_arr -contains $_ } {
-					$_individual_farmer_id_last_pos = -1
+					$script:_individual_farmer_id_last_pos = -1
 					if ( $script:_char_arr -contains $_key_value )
 					{
 						for($_i=0; $_i -lt $script:_char_arr.Count; $_i++)
 						{
 							if ( $script:_char_arr[$_i] -eq $_key_value)
 							{
-								$_individual_farmer_id_last_pos = 10 + $_i
+								$script:_individual_farmer_id_last_pos = 10 + $_i
 								break
 							}
 						}
@@ -701,13 +828,13 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						{
 							if ( $script:_num_key_arr[$_i] -eq $_key_value)
 							{
-								$_individual_farmer_id_last_pos = $_i
+								$script:_individual_farmer_id_last_pos = $_i
 								break
 							}
 						}
 					}
 					#
-					if ($_individual_farmer_id_last_pos -ge 0 -and $_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
+					if ($script:_individual_farmer_id_last_pos -ge 0 -and $script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 					{
 						Clear-Host
 						Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
@@ -721,7 +848,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "] will loop thru single farmer." -ForegroundColor $_html_gray
 						Write-Host
-						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$_individual_farmer_id_last_pos]
+						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
 					}
 				}
@@ -738,15 +865,15 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "] will loop thru single farmer." -ForegroundColor $_html_gray
 					Write-Host
-					$_individual_farmer_id_last_pos -= 1
-					if ($_individual_farmer_id_last_pos -ge 0)
+					$script:_individual_farmer_id_last_pos -= 1
+					if ($script:_individual_farmer_id_last_pos -ge 0)
 					{
-						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$_individual_farmer_id_last_pos]
+						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
 					}
 					else{
-						$_individual_farmer_id_last_pos = $script:_individual_farmer_id_arr.Count - 1
-						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$_individual_farmer_id_last_pos]
+						$script:_individual_farmer_id_last_pos = $script:_individual_farmer_id_arr.Count - 1
+						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
 					}
 				}
@@ -763,15 +890,15 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "] will loop thru single farmer" -ForegroundColor $_html_gray
 					Write-Host
-					$_individual_farmer_id_last_pos += 1
-					if ($_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
+					$script:_individual_farmer_id_last_pos += 1
+					if ($script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 					{
-						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$_individual_farmer_id_last_pos]
+						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
 					}
 					else{
-						$_individual_farmer_id_last_pos = 0
-						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$_individual_farmer_id_last_pos]
+						$script:_individual_farmer_id_last_pos = 0
+						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
 					}
 				}

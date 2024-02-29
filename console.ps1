@@ -12,7 +12,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_header_inner_color = "cyan"
 	#
 	## define process header labels - set 1 of 3
-	$_label_process_type = "Process"
+	#$_label_process_type = "Process"
+	$_label_serial_num = " # "
 	$_label_process_alt_name = "Id"
 	$_label_process_state = "Status "
 	$_label_process_uptime = "Uptime     "
@@ -28,7 +29,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sync_status = "Synced"
 	$_label_process_peers = "Peers"
 	## define process header labels - set 2 of 3
-	$_label_process_type_row2 = "Type   "
+	#$_label_process_type_row2 = "Type   "
+	$_label_serial_num_row2 = "   "
 	$_label_process_alt_name_row2 = "  "
 	$_label_process_state_row2 = "       "
 	$_label_process_uptime_row2 = "           "
@@ -44,7 +46,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sync_status_row2 = "      "
 	$_label_process_peers_row2 = "     "
 	## define process header labels - set 3 of 3
-	$_label_process_type_row3 = "       "
+	#$_label_process_type_row3 = "       "
+	$_label_serial_num_row3 = "   "
 	$_label_process_alt_name_row3 = "  "
 	$_label_process_state_row3 = "       "
 	$_label_process_uptime_row3 = "           "
@@ -70,14 +73,17 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_line_separator_length_node = $_label_total_length_node + $_label_separator_count_node - 2
 	#
 	## farmer label sizing assessment
-	#$_label_count = 12
-	$_label_count = 11
-	#$_label_total_length = $_label_process_type.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
-	$_label_total_length =  $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
+	##$_label_count = 12
+	#$_label_count = 11
+	$_label_count = 12
+	##$_label_total_length = $_label_process_type.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
+	#$_label_total_length =  $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
+	$_label_total_length =  $_label_serial_num.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
 							$_label_process_eta.Length + $_label_process_sector_time.Length + $_label_process_disks.Length + 
 							$_label_process_replot_disks.Length + $_label_process_rewards.Length + $_label_process_misses.Length
-	#$_label_separator_count = 13
-	$_label_separator_count = 12
+	##$_label_separator_count = 13
+	#$_label_separator_count = 12
+	$_label_separator_count = 13
 	#
 	#
 	#$_label_line_separator = "-"
@@ -302,6 +308,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_individual_farmer_count = 0
 	$_individual_farmer_count_disp = "0"
 	#
+	$script:_individual_farmer_id_arr = $null
 	foreach ($_header in $_process_header_arr)
 	{
 			#
@@ -351,11 +358,29 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			#$_spacer_length = [int]($_label_process_type.Length - $_process_isOftype.Length)
 			#$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			#$_label_spacer = $_label_spacer + "|"
+			#
+			#
+			$_console_data_log += $_label_spacer + $_individual_farmer_count_disp
+			$_console_header_log += $_label_spacer + $_label_serial_num
+			$_console_header_row2_log += $_label_spacer + $_label_serial_num_row2
+			$_console_header_row3_log += $_label_spacer + $_label_serial_num_row3
+			####
+			$_spacer_length = [int]($_label_serial_num.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			$_console_header_log_finish_line += $_label_spacer
+			#
+			#
+			$_spacer_length = [int]($_label_serial_num.Length - $_individual_farmer_count_disp.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
+			#
+			#
 			$_console_data_log += $_label_spacer + $_process_alt_name
 			#
-			#$_spacer_length = [int]($_label_process_type.Length - $_label_process_type.Length)
-			#$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-			#$_label_spacer = $_label_spacer + "|"
+			$_spacer_length = [int]($_label_serial_num.Length - $_label_serial_num.Length)
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = $_label_spacer + "|"
 			$_console_header_log += $_label_spacer + $_label_process_alt_name
 			$_console_header_row2_log += $_label_spacer + $_label_process_alt_name_row2
 			$_console_header_row3_log += $_label_spacer + $_label_process_alt_name_row3
@@ -830,6 +855,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
 	###
 	$_individual_farmer_count = 0
+	$script:_individual_farmer_id_arr = $null
 	###
 	$_b_first_farm_process = $true
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_ip_arr.Count; $arrPos++)
