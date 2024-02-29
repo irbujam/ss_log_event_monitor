@@ -590,13 +590,13 @@ function main {
 			if ($_avgTimeInSecondsPerSectorDisp -ne "-" -and $_avgTimeInSecondsPerSectorDisp -gt 0)
 			{
 				$_avgTimeInSecondsPerSectorObj = New-TimeSpan -seconds $_avgTimeInSecondsPerSectorDisp
-				$__avgTimeInSecondsPerSectorDisp = $_avgTimeInSecondsPerSectorObj.minutes.ToString() + "m " + $_avgTimeInSecondsPerSectorObj.seconds.ToString() + "s"
+				$_avgTimeInSecondsPerSectorDisp = $_avgTimeInSecondsPerSectorObj.minutes.ToString() + "m " + $_avgTimeInSecondsPerSectorObj.seconds.ToString() + "s"
 			}
 			else
 			{
-				$__avgTimeInSecondsPerSectorDisp = "0" + "m " + "0" + "s"
+				$_avgTimeInSecondsPerSectorDisp = "0" + "m " + "0" + "s"
 			}
-			Write-Host $__avgTimeInSecondsPerSectorDisp
+			Write-Host $_avgTimeInSecondsPerSectorDisp
 
 
 
