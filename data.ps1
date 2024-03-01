@@ -125,9 +125,9 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				$_minutes_per_sector_data_disp = "-"
 				$_sectors_per_hour_data_disp = "-"
 				$_time_per_sector_data_obj = New-TimeSpan -seconds 0
-				$_replot_sector_count = "-"
-				$_replot_sector_count_hold = "-"
-				$_expiring_sector_count = "-"
+				$_replot_sector_count = 0
+				$_replot_sector_count_hold = 0
+				$_expiring_sector_count = 0
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
 					if ($_disk_sector_performance_obj) {
@@ -165,29 +165,44 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 								if ($_disk_plots_expired_obj) {
 									if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
 								}
-								$_replot_sector_count = $_disk_plots_expired_obj.Sectors
+								$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+								#
+								# expiring sectors info
+								foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+								{
+									if ($_disk_plots_expiring_obj) {
+										if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+									}
+									$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+									break
+								}
+								## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
 								for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
 								{
 									if ($_replot_sector_count_hold_arr[$_h]) {
 										if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
 									}
-									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt $_replot_sector_count) 
+									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count)) 
 									{
-										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count
+										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+									}
+									elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+									{
+										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
 									}
 									$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
 									break
 								}
 								break
 							}
-							# expiring sectors info
-							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-							{
-								if ($_disk_plots_expiring_obj) {
-									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-								}
-								$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
-							}
+							## expiring sectors info
+							#foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+							#{
+							#	if ($_disk_plots_expiring_obj) {
+							#		if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+							#	}
+							#	$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
+							#}
 							<#
 							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
 								"seconds" 	{

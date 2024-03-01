@@ -24,7 +24,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta = "ETA        "
 	$_label_process_sector_time = "Sector "
 	$_label_process_disks = "   Disks  "
-	$_label_process_replot_disks = " Replot Sectors "
+	$_label_process_replot_disks = "   Replots    "
 	$_label_process_rewards = "    Rewards    "
 	$_label_process_misses = "Miss"
 	# node extra columns
@@ -41,7 +41,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta_row2 = "           "
 	$_label_process_sector_time_row2 = "Time   "
 	$_label_process_disks_row2 = "----------"
-	$_label_process_replot_disks_row2 = "----------------"
+	$_label_process_replot_disks_row2 = "--------------"
 	$_label_process_rewards_row2 = "---------------"
 	$_label_process_misses_row2 = "    "
 	# node extra columns
@@ -58,7 +58,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta_row3 = "           "
 	$_label_process_sector_time_row3 = "       "
 	$_label_process_disks_row3 = "#/Pltd/Rem"
-	$_label_process_replot_disks_row3 = "expng/expd/%cmpl"
+	$_label_process_replot_disks_row3 = "expd/rem/%cmpl"
 	$_label_process_rewards_row3 = "Tot/PH/Est PD  "
 	$_label_process_misses_row3 = "    "
 	# node extra columns
@@ -593,9 +593,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_about_to_expire_sectors_count = 0
 			$_rewards_ = 0
 			$_misses_ = 0
-			$_process_replot_disks = "-"
-			$_process_replot_disks_hold = "-"
-			$_process_expiring_sectors_count = "-"
+			$_process_replot_disks = 0
+			$_process_replot_disks_hold = 0
+			$_process_expiring_sectors_count = 0
 			$_process_rewards = "-"
 			$_process_misses = "-"
 			foreach ($_data in $_process_disk_data_arr)
@@ -608,17 +608,17 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				{
 					#$_replot_count_ += 1
 					$_replot_count_ += [int]($_data.ReplotStatus)
-					$_process_replot_disks = $_replot_count_.ToString()
+					$_process_replot_disks = $_replot_count_
 				}
 				if ($_data.ReplotStatusHold -ne "-")
 				{
 					$_replot_count_hold += [int]($_data.ReplotStatusHold)
-					$_process_replot_disks_hold = $_replot_count_hold.ToString()
+					$_process_replot_disks_hold = $_replot_count_hold
 				}
 				if ($_data.ExpiringSectors -ne "-")
 				{
-					$_about_to_expire_sectors_count += $_data.ExpiringSectors
-					$_process_expiring_sectors_count = $_about_to_expire_sectors_count.ToString()
+					$_about_to_expire_sectors_count += [int]($_data.ExpiringSectors)
+					$_process_expiring_sectors_count = $_about_to_expire_sectors_count
 				}
 				if ($_data.Rewards -ne "-")
 				{
@@ -656,15 +656,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_label_spacer = $_label_spacer + "|"
 			#$_console_data_log += $_label_spacer + $_process_replot_disks
 			$_replot_progress = "-"
-			if ($_process_replot_disks -ne "-" -and $_process_replot_disks_hold -ne "-")
+			$_remaining_sectors_for_replot = $_process_replot_disks + $_process_expiring_sectors_count
+			if ($_process_replot_disks_hold -gt 0)
 			{
-				if ([int]($_process_replot_disks) -gt 0 -and [int]($_process_replot_disks_hold) -gt 0)
-				{
-					$_replot_progress = ([math]::Round((($_process_replot_disks_hold - [int]($_process_replot_disks)) / [int]($_process_replot_disks_hold)) * 100, 1)).ToString() + "%"
-				}
+				$_replot_progress = ([math]::Round((($_process_replot_disks_hold - $_remaining_sectors_for_replot) / $_process_replot_disks_hold) * 100, 1)).ToString() + "%"
 			}
 			## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_process_replot_sector_count_disp = $_process_expiring_sectors_count + "/" + $_process_replot_disks_hold + "/" + $_process_replot_disks
-			$_process_replot_sector_count_disp = $_process_expiring_sectors_count + "/" + $_process_replot_disks_hold + "/" + $_replot_progress
+			$_process_replot_sector_count_disp = $_process_replot_disks_hold.toString() + "/" + $_remaining_sectors_for_replot.toString() + "/" + $_replot_progress
 			if ($_process_replot_disks_hold -eq 0) {
 				if ($_process_expiring_sectors_count -gt 0)
 				{
@@ -912,7 +910,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
-					$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 					#$_spacer_length = $_total_spacer_length
 					#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1013,7 +1011,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_size = "Size     "
 			$_label_percent_complete = "%    "
 			$_label_eta = "ETA         "
-			$_label_replot = "    Replots     "
+			$_label_replot = "   Replots    "
 			$_label_sectors_per_hour = "Sectors/"
 			$_label_minutes_per_sectors = "Time/  "
 			$_label_rewards = "Rewards"
@@ -1024,7 +1022,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_size_row2 = "         "
 			$_label_percent_complete_row2 = "Cmpl "
 			$_label_eta_row2 = "            "
-			$_label_replot_row2 = "expng/expd/%cmpl"
+			$_label_replot_row2 = "expd/rem/%cmpl"
 			$_label_sectors_per_hour_row2 = "Hour    "
 			$_label_minutes_per_sectors_row2 = "Sector "
 			$_label_rewards_row2 = "       "
@@ -1267,7 +1265,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			## display break-up (disk level) information for a given farm
 			#
-			$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------").Length
+			$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 			#$_spacer_length = $_total_spacer_length
 			#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 			#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1499,9 +1497,9 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_minutes_per_sector_data_disp = "-"
 				$_sectors_per_hour_data_disp = "-"
 				$_time_per_sector_data_obj = New-TimeSpan -seconds 0
-				$_replot_sector_count = "-"
-				$_replot_sector_count_hold = "-"
-				$_expiring_sector_count = "-"
+				$_replot_sector_count = 0
+				$_replot_sector_count_hold = 0
+				$_expiring_sector_count = 0
 				foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 				{
 					if ($_disk_sector_performance_obj) {
@@ -1539,29 +1537,46 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 								if ($_disk_plots_expired_obj) {
 									if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
 								}
-								$_replot_sector_count = $_disk_plots_expired_obj.Sectors
+								$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+								#
+								## expiring sectors info
+								foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+								{
+									if ($_disk_plots_expiring_obj) {
+										if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+									}
+									$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+									break
+								}
+								## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
 								for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
 								{
 									if ($_replot_sector_count_hold_arr[$_h]) {
 										if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
 									}
-									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt $_replot_sector_count) 
+									#
+									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count))
 									{
-										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count
+										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+									}
+									elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+									{
+										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
 									}
 									$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
 									break
 								}
 								break
 							}
-							# expiring sectors info
-							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-							{
-								if ($_disk_plots_expiring_obj) {
-									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-								}
-								$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
-							}
+							##
+							## expiring sectors info
+							#foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+							#{
+							#	if ($_disk_plots_expiring_obj) {
+							#		if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+							#	}
+							#	$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
+							#}
 							<#
 							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
 								"seconds" 	{
@@ -1672,15 +1687,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				Write-Host $_label_spacer -nonewline
 				#Write-Host $_replot_sector_count -nonewline
 				$_replot_progress = "-"
-				if ($_replot_sector_count -ne "-" -and $_replot_sector_count_hold -ne "-")
+				$_remaining_sectors_for_replot = $_replot_sector_count + $_expiring_sector_count
+				if ($_replot_sector_count_hold -gt 0)
 				{
-					if ([int]($_replot_sector_count) -gt 0 -and [int]($_replot_sector_count_hold) -gt 0)
-					{
-						$_replot_progress = ([math]::Round((($_replot_sector_count_hold - [int]($_replot_sector_count)) / [int]($_replot_sector_count_hold)) * 100, 1)).ToString() + "%"
-					}
+					$_replot_progress = ([math]::Round((($_replot_sector_count_hold - $_remaining_sectors_for_replot) / $_replot_sector_count_hold) * 100, 1)).ToString() + "%"
 				}
-				## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + $_replot_sector_count_hold.ToString() + "/" + $_replot_sector_count.ToString()
-				$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + $_replot_sector_count_hold.ToString() + "/" + $_replot_progress
+				$_replot_sector_count_disp = $_replot_sector_count_hold.ToString() + "/" + $_remaining_sectors_for_replot.ToString() + "/" + $_replot_progress
 				if ($_replot_sector_count_hold -eq 0)
 				{
 					if ($_expiring_sector_count -gt 0)
@@ -1872,7 +1884,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
 		$_b_process_running_ok = $_individual_farmer_state_arr[1]
 		
-		$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 		$_spacer_length = $_total_spacer_length - 2
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		#
@@ -1916,7 +1928,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_label_size = "Size     "
 		$_label_percent_complete = "%    "
 		$_label_eta = "ETA         "
-		$_label_replot = "    Replots     "
+		$_label_replot = "   Replots    "
 		$_label_sectors_per_hour = "Sectors/"
 		$_label_minutes_per_sectors = "Time/  "
 		$_label_rewards = "Rewards"
@@ -1927,7 +1939,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_label_size_row2 = "         "
 		$_label_percent_complete_row2 = "Cmpl "
 		$_label_eta_row2 = "            "
-		$_label_replot_row2 = "expng/expd/%cmpl"
+		$_label_replot_row2 = "expd/rem/%cmpl"
 		$_label_sectors_per_hour_row2 = "Hour    "
 		$_label_minutes_per_sectors_row2 = "Sector "
 		$_label_rewards_row2 = "       "
@@ -2170,7 +2182,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		## display break-up (disk level) information for a given farm
 		#
-		$_total_spacer_length = ("---------------------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 		#$_spacer_length = $_total_spacer_length
 		#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 		#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -2402,9 +2414,9 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_minutes_per_sector_data_disp = "-"
 			$_sectors_per_hour_data_disp = "-"
 			$_time_per_sector_data_obj = New-TimeSpan -seconds 0
-			$_replot_sector_count = "-"
-			$_replot_sector_count_hold = "-"
-			$_expiring_sector_count = "-"
+			$_replot_sector_count = 0
+			$_replot_sector_count_hold = 0
+			$_expiring_sector_count = 0
 			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 			{
 				if ($_disk_sector_performance_obj) {
@@ -2442,29 +2454,44 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 							if ($_disk_plots_expired_obj) {
 								if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
 							}
-							$_replot_sector_count = $_disk_plots_expired_obj.Sectors
+							$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+							#
+							# expiring sectors info
+							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+							{
+								if ($_disk_plots_expiring_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+								}
+								$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+								break
+							}
+							## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
 							for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
 							{
 								if ($_replot_sector_count_hold_arr[$_h]) {
 									if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
 								}
-								if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt $_replot_sector_count) 
+								if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count))
 								{
-									$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count
+									$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+								}
+								elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+								{
+									$_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
 								}
 								$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
 								break
 							}
 							break
 						}
-						# expiring sectors info
-						foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-						{
-							if ($_disk_plots_expiring_obj) {
-								if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-							}
-							$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
-						}
+						## expiring sectors info
+						#foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+						#{
+						#	if ($_disk_plots_expiring_obj) {
+						#		if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+						#	}
+						#	$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
+						#}
 						<#
 						switch ($_disk_sector_performance_obj.PlotTimeUnit) {
 							"seconds" 	{
@@ -2575,15 +2602,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			Write-Host $_label_spacer -nonewline
 			#Write-Host $_replot_sector_count -nonewline
 			$_replot_progress = "-"
-			if ($_replot_sector_count -ne "-" -and $_replot_sector_count_hold -ne "-")
+			$_remaining_sectors_for_replot = $_replot_sector_count + $_expiring_sector_count
+			if ($_replot_sector_count_hold -gt 0)
 			{
-				if ([int]($_replot_sector_count) -gt 0 -and [int]($_replot_sector_count_hold) -gt 0)
-				{
-					$_replot_progress = ([math]::Round((($_replot_sector_count_hold - [int]($_replot_sector_count)) / [int]($_replot_sector_count_hold)) * 100, 1)).ToString() + "%"
-				}
+				$_replot_progress = ([math]::Round((($_replot_sector_count_hold - $_remaining_sectors_for_replot) / $_replot_sector_count_hold) * 100, 1)).ToString() + "%"
 			}
-			## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + $_replot_sector_count_hold.ToString() + "/" + $_replot_sector_count.ToString()
-			$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + $_replot_sector_count_hold.ToString() + "/" + $_replot_progress
+			$_replot_sector_count_disp = $_replot_sector_count_hold.ToString() + "/" + $_remaining_sectors_for_replot.ToString() + "/" + $_replot_progress
 			if ($_replot_sector_count_hold -eq 0)
 			{
 				if ($_expiring_sector_count -gt 0)

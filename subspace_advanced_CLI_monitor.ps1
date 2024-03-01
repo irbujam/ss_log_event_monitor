@@ -1139,7 +1139,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				{
 					$_expired_plots_info = [PSCustomObject]@{
 						Id				= $_plot_id
-						ExpiredSectors	= $_sectors
+						ExpiredSectors	= [int]($_sectors)
 					}
 					$script:_replot_sector_count_hold_arr += $_expired_plots_info
 				}
