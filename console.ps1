@@ -248,7 +248,15 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_line_separator = "|" + $_line_separator 
 				Write-Host $_line_separator -nonewline -Foregroundcolor $_header_color
 				Write-Host $_temp_label_ -nonewline -Foregroundcolor $_header_inner_color
-				$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length + 1)/ 2
+				#$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length + 1)/ 2
+				if (($_label_line_separator_length_node - $_temp_label_.Length) % 2 -gt 0)
+				{
+					$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length + 1)/ 2
+				}
+				else
+				{
+					$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length)/ 2
+				}
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = $_line_separator + "|"
 				Write-Host $_line_separator -Foregroundcolor $_header_color
@@ -759,7 +767,14 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_line_separator = "|" + $_line_separator 
 				Write-Host $_line_separator -nonewline -Foregroundcolor $_header_color
 				Write-Host $_temp_label_ -nonewline -Foregroundcolor $_header_inner_color
-				$_spacer_length = ($_label_line_separator_length - $_temp_label_.Length)/ 2
+				if (($_label_line_separator_length - $_temp_label_.Length) % 2 -gt 0)
+				{
+					$_spacer_length = ($_label_line_separator_length - $_temp_label_.Length + 1)/ 2
+				}
+				else
+				{
+					$_spacer_length = ($_label_line_separator_length - $_temp_label_.Length)/ 2
+				}
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = $_line_separator + "|"
 				Write-Host $_line_separator -Foregroundcolor $_header_color
