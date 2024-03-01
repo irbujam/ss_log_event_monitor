@@ -10,10 +10,12 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	# define color pallete
 	$_header_color = "white"
 	$_header_inner_color = "cyan"
+	$_info_label_color = "gray"
+	$_info_label_data_color = "yellow"
 	#
 	## define process header labels - set 1 of 3
 	#$_label_process_type = "Process"
-	$_label_serial_num = " # "
+	$_label_serial_num = "# "
 	$_label_process_alt_name = "Id"
 	$_label_process_state = "Status "
 	$_label_process_uptime = "Uptime     "
@@ -23,14 +25,14 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sector_time = "Sector "
 	$_label_process_disks = "   Disks  "
 	$_label_process_replot_disks = " Replot Sectors "
-	$_label_process_rewards = "   Rewards    "
+	$_label_process_rewards = "    Rewards    "
 	$_label_process_misses = "Miss"
 	# node extra columns
 	$_label_process_sync_status = "Synced"
 	$_label_process_peers = "Peers"
 	## define process header labels - set 2 of 3
 	#$_label_process_type_row2 = "Type   "
-	$_label_serial_num_row2 = "   "
+	$_label_serial_num_row2 = "  "
 	$_label_process_alt_name_row2 = "  "
 	$_label_process_state_row2 = "       "
 	$_label_process_uptime_row2 = "           "
@@ -40,14 +42,14 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sector_time_row2 = "Time   "
 	$_label_process_disks_row2 = "----------"
 	$_label_process_replot_disks_row2 = "----------------"
-	$_label_process_rewards_row2 = "--------------"
+	$_label_process_rewards_row2 = "---------------"
 	$_label_process_misses_row2 = "    "
 	# node extra columns
 	$_label_process_sync_status_row2 = "      "
 	$_label_process_peers_row2 = "     "
 	## define process header labels - set 3 of 3
 	#$_label_process_type_row3 = "       "
-	$_label_serial_num_row3 = "   "
+	$_label_serial_num_row3 = "  "
 	$_label_process_alt_name_row3 = "  "
 	$_label_process_state_row3 = "       "
 	$_label_process_uptime_row3 = "           "
@@ -57,7 +59,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sector_time_row3 = "       "
 	$_label_process_disks_row3 = "#/Pltd/Rem"
 	$_label_process_replot_disks_row3 = "expng/expd/%cmpl"
-	$_label_process_rewards_row3 = "Tot/PH/Est PD "
+	$_label_process_rewards_row3 = "Tot/PH/Est PD  "
 	$_label_process_misses_row3 = "    "
 	# node extra columns
 	$_label_process_sync_status_row3 = "      "
@@ -243,20 +245,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_spacer_length = $_label_line_separator_length_node
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
-				$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length)/ 2
+				$_spacer_length = [math]::Round(($_label_line_separator_length_node - $_temp_label_.Length)/ 2, 0)
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = "|" + $_line_separator 
 				Write-Host $_line_separator -nonewline -Foregroundcolor $_header_color
 				Write-Host $_temp_label_ -nonewline -Foregroundcolor $_header_inner_color
-				#$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length + 1)/ 2
-				if (($_label_line_separator_length_node - $_temp_label_.Length) % 2 -gt 0)
-				{
-					$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length + 1)/ 2
-				}
-				else
-				{
-					$_spacer_length = ($_label_line_separator_length_node - $_temp_label_.Length)/ 2
-				}
+				$_end_filler_length = $_label_line_separator_length_node - ($_spacer_length + $_temp_label_.Length)
+				$_spacer_length = $_end_filler_length
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = $_line_separator + "|"
 				Write-Host $_line_separator -Foregroundcolor $_header_color
@@ -762,19 +757,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_spacer_length = $_label_line_separator_length
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
-				$_spacer_length = ($_label_line_separator_length - $_temp_label_.Length)/ 2
+				$_spacer_length = [math]::Round(($_label_line_separator_length - $_temp_label_.Length)/ 2, 0)
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = "|" + $_line_separator 
 				Write-Host $_line_separator -nonewline -Foregroundcolor $_header_color
 				Write-Host $_temp_label_ -nonewline -Foregroundcolor $_header_inner_color
-				if (($_label_line_separator_length - $_temp_label_.Length) % 2 -gt 0)
-				{
-					$_spacer_length = ($_label_line_separator_length - $_temp_label_.Length + 1)/ 2
-				}
-				else
-				{
-					$_spacer_length = ($_label_line_separator_length - $_temp_label_.Length)/ 2
-				}
+				$_end_filler_length = $_label_line_separator_length - ($_spacer_length + $_temp_label_.Length)
+				$_spacer_length = $_end_filler_length
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = $_line_separator + "|"
 				Write-Host $_line_separator -Foregroundcolor $_header_color
@@ -851,20 +840,26 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	}
 
 	Write-Host
-	Write-Host "Latest github version : " -nonewline
+	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 
 	##
 	# display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	Write-Host "Last refresh on: " -ForegroundColor White -nonewline; Write-Host "$currentDate" -ForegroundColor Yellow;
+	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#echo `n
 	#
 }
 
 function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_url_discord = ""
+	#
+	# define color pallete
+	$_header_color = "white"
+	$_header_inner_color = "cyan"
+	$_info_label_color = "gray"
+	$_info_label_data_color = "yellow"
 	#
 	$_label_line_separator = "_"
 	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
@@ -1824,19 +1819,25 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	}
 
 	Write-Host
-	Write-Host "Latest github version : " -nonewline
+	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 
 	##
 	# display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	Write-Host "Last refresh on: " -ForegroundColor White -nonewline; Write-Host "$currentDate" -ForegroundColor Yellow;
+	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#echo `n
 	#
 }
 
 function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id) {
+	#
+	# define color pallete
+	$_header_color = "white"
+	$_header_inner_color = "cyan"
+	$_info_label_color = "gray"
+	$_info_label_data_color = "yellow"
 	#
 	$_label_line_separator = "_"
 	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
@@ -2720,14 +2721,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	}
 
 	Write-Host
-	Write-Host "Latest github version : " -nonewline
+	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 
 	##
 	# display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	Write-Host "Last refresh on: " -ForegroundColor White -nonewline; Write-Host "$currentDate" -ForegroundColor Yellow;
+	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#echo `n
 	#
 }
