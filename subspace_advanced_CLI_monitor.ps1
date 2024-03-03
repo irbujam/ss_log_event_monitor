@@ -956,7 +956,7 @@ function fConvertTimeSpanToString ([object]$_io_ts_obj) {
 		}
 		else
 		{
-			$_resp_ts_str = $_io_ts_obj.hours.toString() + "m " + $_io_ts_obj.seconds.toString() + "s"
+			$_resp_ts_str = $_io_ts_obj.minutes.toString() + "m " + $_io_ts_obj.seconds.toString() + "s"
 		}
 	}
 	
