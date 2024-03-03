@@ -15,7 +15,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	##
 	$_fg_color_black = "black"
-	$_fg_color_white = "white"
+	$_fg_color_white = "gray"
 	$_fg_color_green = "green"
 	$_fg_color_red = "red"
 	$_process_fg_color = $_fg_color_white
@@ -1002,12 +1002,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_url_discord = ""
 	#
 	# define color pallete
-	$_header_color = "white"
+	$_header_color = "gray"
 	$_header_inner_color = "cyan"
 	$_info_label_color = "gray"
 	$_info_label_data_color = "yellow"
 	#
-	$_fg_color_white = "white"
+	$_fg_color_white = "gray"
 	$_fg_color_black = "black"
 	#
 	$_label_line_separator = "_"
@@ -1061,7 +1061,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
-					$_total_spacer_length = ("-------------------------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("------------------------------------------------------------------------------------------").Length
 					#$_spacer_length = $_total_spacer_length
 					#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1171,7 +1171,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_percent_complete = "%    "
 			$_label_eta = "ETA    "
 			$_label_replot = "  Replots  "
-			$_label_sectors_per_hour = "Sectors/"
+			$_label_sectors_per_hour = "Sectors"
 			$_label_minutes_per_sectors = "Time/  "
 			$_label_rewards = "Rewards"
 			$_label_misses = "Miss"
@@ -1182,7 +1182,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_percent_complete_row2 = "Cmpl "
 			$_label_eta_row2 = "       "
 			$_label_replot_row2 = "EX/RM/%Cmpl"
-			$_label_sectors_per_hour_row2 = "Hour    "
+			$_label_sectors_per_hour_row2 = "PH     "
 			$_label_minutes_per_sectors_row2 = "Sector "
 			$_label_rewards_row2 = "       "
 			$_label_misses_row2 = "    "
@@ -1438,7 +1438,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			## display break-up (disk level) information for a given farm
 			#
-			$_total_spacer_length = ("-------------------------------------------------------------------------------------------").Length
+			$_total_spacer_length = ("------------------------------------------------------------------------------------------").Length
 			#$_spacer_length = $_total_spacer_length
 			#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 			#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1990,7 +1990,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 		#$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 		$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels 	# 1 for leading and 1 for trailing
 	}
-	else {$_spacer_length = ("--------------------------------------------------------------------------").Length}
+	else {$_spacer_length = ("-------------------------------------------------------------------------").Length}
 	#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 	#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
@@ -2062,7 +2062,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
 		$_b_process_running_ok = $_individual_farmer_state_arr[1]
 		
-		$_total_spacer_length = ("-------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("------------------------------------------------------------------------------------------").Length
 		$_spacer_length = $_total_spacer_length - 2
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		#
@@ -2128,7 +2128,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_label_percent_complete = "%    "
 		$_label_eta = "ETA    "
 		$_label_replot = "  Replots  "
-		$_label_sectors_per_hour = "Sectors/"
+		$_label_sectors_per_hour = "Sectors"
 		$_label_minutes_per_sectors = "Time/  "
 		$_label_rewards = "Rewards"
 		$_label_misses = "Miss"
@@ -2139,7 +2139,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_label_percent_complete_row2 = "Cmpl "
 		$_label_eta_row2 = "       "
 		$_label_replot_row2 = "EX/RM/%cmpl"
-		$_label_sectors_per_hour_row2 = "Hour    "
+		$_label_sectors_per_hour_row2 = "PH     "
 		$_label_minutes_per_sectors_row2 = "Sector "
 		$_label_rewards_row2 = "       "
 		$_label_misses_row2 = "    "
@@ -2408,7 +2408,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		## display break-up (disk level) information for a given farm
 		#
-		$_total_spacer_length = ("-------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("------------------------------------------------------------------------------------------").Length
 		#$_spacer_length = $_total_spacer_length
 		#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 		#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -2957,7 +2957,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 		$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels 	# 1 for leading and 1 for trailing
 	}
-	else {$_spacer_length = ("-------------------------------------------------------------------------------------------").Length}
+	else {$_spacer_length = ("------------------------------------------------------------------------------------------").Length}
 	#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 	#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper

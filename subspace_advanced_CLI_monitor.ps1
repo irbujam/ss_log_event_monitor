@@ -58,7 +58,7 @@ function main {
 				$_line_spacer_color = "gray"
 				$_farmer_header_color = "cyan"
 				$_farmer_header_data_color = "yellow"
-				$_disk_header_color = "white"
+				$_disk_header_color = "gray"
 				$_html_red = "red"
 				$_html_green = "green"
 				$_html_blue = "blue"
