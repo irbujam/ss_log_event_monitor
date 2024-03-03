@@ -87,6 +87,20 @@ function main {
 						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
 							$_alert_frequency_seconds = [int]$_config[1].toString()
 						}
+						elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $_b_first_time) {
+							
+							$_start_up_view = $_config[1].toString().toLower()
+							if ($_start_up_view.IndexOf("s") -eq 0)
+							{
+								$_b_write_process_summary_to_console = $true
+								$_b_write_process_details_to_console = $false
+							}
+							elseif ($_start_up_view.IndexOf("d") -eq 0)
+							{
+								$_b_write_process_summary_to_console = $false
+								$_b_write_process_details_to_console = $true
+							}
+						}
 						# get max lenght for host alt name
 						elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
 							$_process_ip = $_config[1].toString()
@@ -928,6 +942,27 @@ function fGetElapsedTime ([object]$_io_obj) {
 	return $_resp_total_uptime
 }
 
+function fConvertTimeSpanToString ([object]$_io_ts_obj) {
+	$_resp_ts_str = "-"
+	#$_resp_ts_str = $_io_ts_obj.days.toString() + "d " + $_io_ts_obj.hours.toString() + "h " + $_io_ts_obj.minutes.toString() + "m"
+	if ($_io_ts_obj) {
+		if ($_io_ts_obj.days -gt 0)
+		{
+			$_resp_ts_str = $_io_ts_obj.days.toString() + "d " + $_io_ts_obj.hours.toString() + "h"
+		}
+		elseif ($_io_ts_obj.hours -gt 0)
+		{
+			$_resp_ts_str = $_io_ts_obj.hours.toString() + "h " + $_io_ts_obj.minutes.toString() + "m"
+		}
+		else
+		{
+			$_resp_ts_str = $_io_ts_obj.hours.toString() + "m " + $_io_ts_obj.seconds.toString() + "s"
+		}
+	}
+	
+	return $_resp_ts_str
+}
+
 function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType) {
 	$dataSpacerLabel = ""
 	for ($k=1;$k -le $ioSpacerLength;$k++) {
@@ -941,7 +976,8 @@ function fPingMetricsUrl ([string]$ioUrl) {
 		$_response = ""
 		$_fullUrl = "http://" + $ioUrl + "/metrics"
 		try {
-			$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl -TimeoutSec 20
+			#$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl -TimeoutSec 20
+			$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl -TimeoutSec 5
 			if ($farmerObj) {
 				$_response = $farmerObj.toString()
 			}
