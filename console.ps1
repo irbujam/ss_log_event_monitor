@@ -1204,6 +1204,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 
 			# Write uptime information to console
 			$_avg_sectors_per_hour = 0.0
+			$_avg_sectors_per_hour_disp = "-"
 			$_avg_minutes_per_sector = 0.0
 			$_avg_minutes_per_sector_disp = "-"
 			$_avg_seconds_per_sector = 0.0
@@ -1292,6 +1293,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_avg_minutes_per_sector_disp = $_avg_minutes_per_sector_obj.minutes.ToString() + "m " + $_avg_minutes_per_sector_obj.seconds.ToString() + "s"
 				
 				$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count, 2)
+				$_avg_sectors_per_hour_disp = $_avg_sectors_per_hour.toString()
 				
 				$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
 				$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
@@ -1304,7 +1306,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			Write-Host $_farm_sector_times_disp -nonewline -ForegroundColor $_farmer_header_data_color
 			Write-Host ", " -nonewline
 			Write-Host "Av Sect PH:" -nonewline 
-			Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+			#Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+			Write-Host $_avg_sectors_per_hour_disp -nonewline -ForegroundColor $_farmer_header_data_color
 			Write-Host ", " -nonewline
 			Write-Host "Av Min/Sect:" -nonewline
 			#Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
@@ -2023,6 +2026,9 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_info_label_color = "gray"
 	$_info_label_data_color = "yellow"
 	#
+	$_fg_color_white = "white"
+	$_fg_color_black = "black"
+	#
 	$_label_line_separator = "_"
 	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
 	###
@@ -2056,7 +2062,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
 		$_b_process_running_ok = $_individual_farmer_state_arr[1]
 		
-		$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("-------------------------------------------------------------------------------------------").Length
 		$_spacer_length = $_total_spacer_length - 2
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		#
@@ -2071,21 +2077,42 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		}
 		Write-Host ("" + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
 		
-		$_console_msg = $_process_type + " status: "
+		#$_console_msg = $_process_type + " status: "
+		$_console_msg = $_process_type + " PWR:"
+		if ($_process_type.toLower() -eq "farmer")
+		{
+			$_console_msg = "Farm" + " PWR:"
+		}
 		Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
 		$_console_msg = ""
 		$_console_msg_color = ""
+		$_process_state_disp = $_label_line_separator_upper
+		$_console_msg = $_process_state_disp
 		if ($_b_process_running_ok -eq $true) {
-			$_console_msg = "Running"
+			#$_console_msg = "Running"
 			$_console_msg_color = $_html_green
 		}
 		else {
-			$_console_msg = "Stopped"
+			#$_console_msg = "Stopped"
 			$_console_msg_color = $_html_red
 		}
-		Write-Host $_console_msg -ForegroundColor $_console_msg_color -nonewline
+		#Write-Host $_console_msg -ForegroundColor $_console_msg_color -nonewline
+		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
+
+		#Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
+		#$_console_msg = ""
+		#$_console_msg_color = ""
+		#if ($_b_process_running_ok -eq $true) {
+		#	$_console_msg = "Running"
+		#	$_console_msg_color = $_html_green
+		#}
+		#else {
+		#	$_console_msg = "Stopped"
+		#	$_console_msg_color = $_html_red
+		#}
+		#Write-Host $_console_msg -ForegroundColor $_console_msg_color -nonewline
 		Write-Host ", " -nonewline
-		Write-Host "Hostname: " -nonewline -ForegroundColor $_farmer_header_color
+		Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
 		Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
 		#
 		#
@@ -2097,10 +2124,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		$_label_hostname = "Hostname"
 		$_label_diskid = "Disk Id"
-		$_label_size = "Size     "
+		$_label_size = "Size "
 		$_label_percent_complete = "%    "
-		$_label_eta = "ETA         "
-		$_label_replot = "   Replots    "
+		$_label_eta = "ETA    "
+		$_label_replot = "  Replots  "
 		$_label_sectors_per_hour = "Sectors/"
 		$_label_minutes_per_sectors = "Time/  "
 		$_label_rewards = "Rewards"
@@ -2108,10 +2135,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		$_label_hostname_row2 = "        "
 		$_label_diskid_row2 = "       "
-		$_label_size_row2 = "         "
+		$_label_size_row2 = "(TiB)"
 		$_label_percent_complete_row2 = "Cmpl "
-		$_label_eta_row2 = "            "
-		$_label_replot_row2 = "expd/rem/%cmpl"
+		$_label_eta_row2 = "       "
+		$_label_replot_row2 = "EX/RM/%cmpl"
 		$_label_sectors_per_hour_row2 = "Hour    "
 		$_label_minutes_per_sectors_row2 = "Sector "
 		$_label_rewards_row2 = "       "
@@ -2134,8 +2161,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 
 		# Write uptime information to console
 		$_avg_sectors_per_hour = 0.0
+		$_avg_sectors_per_hour_disp = "-"
 		$_avg_minutes_per_sector = 0.0
+		$_avg_minutes_per_sector_disp = "-"
 		$_avg_seconds_per_sector = 0.0
+		#
+		[object]$_farm_level_rewards_CursorPosition = $null
+		$_rewards_total = 0
 		$_rewards_per_hour = 0
 		$_rewards_per_day_estimated = 0
 		foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
@@ -2165,26 +2197,17 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					#
 
 					Write-Host ", " -nonewline
-					Write-Host "Uptime: " -nonewline -ForegroundColor $_farmer_header_color
-					#Write-Host $_uptime_disp -ForegroundColor $_farmer_header_data_color
-					##Write-Host ", " -nonewline
+					Write-Host "Uptime:" -nonewline -ForegroundColor $_farmer_header_color
+
 					Write-Host $_uptime_disp -nonewline -ForegroundColor $_farmer_header_data_color
 					Write-Host ", " -nonewline
-					##Write-Host "Rewards: " -nonewline -ForegroundColor $_farmer_header_color
-					##Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
-					#Write-Host "Rewards (total, per hour): " -nonewline -ForegroundColor $_farmer_header_color
-					#Write-Host  ($_disk_sector_performance_obj.TotalRewards.toString() + ", " + $_rewards_per_hour)  -ForegroundColor $_farmer_header_data_color
-					Write-Host "Rewards (Tot/PH/Est PD): " -nonewline -ForegroundColor $_farmer_header_color
-					Write-Host  ($_disk_sector_performance_obj.TotalRewards.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated)  -ForegroundColor $_farmer_header_data_color
 
-					#Write-Host "Sectors/Hour (avg): " -nonewline 
-					#Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
-					#Write-Host ", " -nonewline
-					#Write-Host "Minutes/Sector (avg): " -nonewline
-					#Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
-					#Write-Host ", " -nonewline
-					#Write-Host "Rewards: " -nonewline
-					#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
+					#Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
+					#Write-Host  ($_disk_sector_performance_obj.TotalRewards.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated)  -ForegroundColor $_farmer_header_data_color
+					$_rewards_total = [int]($_disk_sector_performance_obj.TotalRewards)
+					$_farm_level_rewards_CursorPosition = $host.UI.RawUI.CursorPosition
+					Write-Host ""
+
 					break
 				}
 			}
@@ -2234,8 +2257,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		}
 		$_farm_sector_times_disp = "-"
 		if ($_actual_plotting_disk_count -gt 0) {
-			$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
+			#$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
+			$_avg_seconds_per_sector_disp = [math]::Round($_avg_seconds_per_sector / $_actual_plotting_disk_count, 2)
+			$_avg_minutes_per_sector_obj = New-TimeSpan -seconds $_avg_seconds_per_sector_disp
+			$_avg_minutes_per_sector_disp = $_avg_minutes_per_sector_obj.minutes.ToString() + "m " + $_avg_minutes_per_sector_obj.seconds.ToString() + "s"
+			
 			$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count, 2)
+			$_avg_sectors_per_hour_disp = $_avg_sectors_per_hour.toString()
 			
 			$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
 			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
@@ -2244,15 +2272,16 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		}
 
 
-		Write-Host "Sector Time: " -nonewline 
+		Write-Host "Sect Time:" -nonewline 
 		Write-Host $_farm_sector_times_disp -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ", " -nonewline
-		Write-Host "Sect/Hr(avg): " -nonewline 
-		Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+		Write-Host "Av Sect PH:" -nonewline 
+		#Write-Host $_avg_sectors_per_hour.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+		Write-Host $_avg_sectors_per_hour_disp -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ", " -nonewline
-		Write-Host "Min/Sect(avg): " -nonewline
-		Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
-		#Write-Host  $_avg_minutes_per_sector.toString() -ForegroundColor $_farmer_header_data_color
+		Write-Host "Av Min/Sect:" -nonewline
+		#Write-Host  $_avg_minutes_per_sector.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+		Write-Host  $_avg_minutes_per_sector_disp -nonewline -ForegroundColor $_farmer_header_data_color
 
 		### Write-Host ", " -nonewline
 		### Write-Host "Est rewards (per day): " -nonewline
@@ -2341,23 +2370,45 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
 			$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 		}
+		#
+		#
+		### got the farm size here, rewards and rewards position previously - proceed writing to farm header
+		#
+		# get the current farm header size data cursor position for repositioning later
+		$_farm_level_header_data_current_CursorPosition = $host.UI.RawUI.CursorPosition
+		#
+		# set cursor position to farm header rewards data location
+		[Console]::SetCursorPosition($_farm_level_rewards_CursorPosition.X, $_farm_level_rewards_CursorPosition.Y)
+		$_rewards_per_TiB = 0
+		if ($_farm_size_TiB -gt 0)
+		{
+			$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_size_TiB, 1)
+		}
+		Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
+		Write-Host ($_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated) -ForegroundColor $_farmer_header_data_color
+		#
+		#revert back cursor position to last written farm header size data
+		[Console]::SetCursorPosition($_farm_level_header_data_current_CursorPosition.X, $_farm_level_header_data_current_CursorPosition.Y)
+		###
+		#
+		#
 		Write-Host ", " -nonewline
-		Write-Host "Size: " -nonewline
+		Write-Host "Size:" -nonewline
 		#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
 		Write-Host  $_farm_size_disp -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ", " -nonewline
-		Write-Host "% Cmpl: " -nonewline
+		Write-Host "%Cmpl:" -nonewline
 		#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
 		Write-Host  $_farm_progress_disp -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ", " -nonewline
-		Write-Host "ETA: " -nonewline
+		Write-Host "ETA:" -nonewline
 		#Write-Host  $_disk_sector_performance_obj.TotalRewards.toString() -ForegroundColor $_farmer_header_data_color
 		Write-Host  $_farm_eta_disp -ForegroundColor $_farmer_header_data_color
 		#
 		#
 		## display break-up (disk level) information for a given farm
 		#
-		$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("-------------------------------------------------------------------------------------------").Length
 		#$_spacer_length = $_total_spacer_length
 		#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 		#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -2715,7 +2766,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
-					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
+					#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
+					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 					if ($_total_sectors_GiB -ne 0) {
 						$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
 						$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
@@ -2725,7 +2777,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 						#$_eta_disp = $_eta.toString() + " days"
 						$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
 						$_eta_obj = New-TimeSpan -seconds $_eta
-						$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
+						#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
+						$_eta_disp = fConvertTimeSpanToString $_eta_obj
 					}
 					
 					$_spacer_length = 1
@@ -2904,7 +2957,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 		$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels 	# 1 for leading and 1 for trailing
 	}
-	else {$_spacer_length = ("--------------------------------------------------------------------------------------").Length}
+	else {$_spacer_length = ("-------------------------------------------------------------------------------------------").Length}
 	#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 	#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
