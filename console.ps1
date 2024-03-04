@@ -361,6 +361,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	##
 	$_all_process_size_TiB = 0
+	$_all_process_plotted_size_TiB = 0
 	$_all_process_size_TiB_disp = "-"
 	$_all_process_completed_sectors = 0
 	$_all_process_total_sectors = 0
@@ -498,6 +499,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_process_uptime_disp = "-"
 			$_process_uptime_seconds = 0
 			$_process_size_TiB = "-"
+			$_plotted_size_TiB = 0
 			$_overall_progress = "-"
 			$_process_eta_disp = "-"
 			$_process_sector_time_disp = "-"
@@ -524,7 +526,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 						#$_process_size_TiB = ([math]::Ceiling(([int]($_sub_header.TotalSectors) / 1000) * 10) / 10).ToString() + "TiB"
 						#$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString() + "TiB"
 						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString()
+						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) / 1000, 1)).ToString()
 						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
+						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
 						#
 						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 1)).toString() + "%"
 						$_all_process_completed_sectors += [int]($_sub_header.CompletedSectors)
@@ -739,8 +743,6 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_process_rewards_per_TiB = 0
 			$_process_rewards_per_hour = "-"
 			$_process_rewards_per_day_estimated = "-"
-			#Write-Host "_process_rewards: " $_process_rewards
-			#Write-Host "_process_uptime_seconds :" $_process_uptime_seconds
 			if ($_process_uptime_seconds -gt 0 -and $_process_uptime_seconds -ne "-" -and $_process_rewards -ne "-")
 			{
 				$_process_rewards_per_hour = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600, 1)
@@ -748,9 +750,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_process_rewards_per_day_estimated = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600 * 24, 1)
 			}
 			$_process_rewards_disp = "-"
-			if ($_process_rewards -ne "-")
+			if ($_process_rewards -ne "-" -and $_plotted_size_TiB -gt 0)
 			{
-				$_process_rewards_per_TiB = [math]::Round([int]($_process_rewards) / $_process_size_TiB, 1)
+				#$_process_rewards_per_TiB = [math]::Round([int]($_process_rewards) / $_process_size_TiB, 1)
+				$_process_rewards_per_TiB = [math]::Round([int]($_process_rewards) / $_plotted_size_TiB, 1)
 				$_process_rewards_disp = $_process_rewards + "/" + $_process_rewards_per_TiB.ToString() + "/" + $_process_rewards_per_hour.ToString() + "/" + $_process_rewards_per_day_estimated.ToString()
 			}
 			#
@@ -766,7 +769,6 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			{
 				$_replot_progress = ([math]::Round((($_process_replot_disks_hold - $_remaining_sectors_for_replot) / $_process_replot_disks_hold) * 100, 1)).ToString() + "%"
 			}
-			## DO NOT DELETE (TBD add sectors remaining) ## - 	#$_process_replot_sector_count_disp = $_process_expiring_sectors_count + "/" + $_process_replot_disks_hold + "/" + $_process_replot_disks
 			$_process_replot_sector_count_disp = $_process_replot_disks_hold.toString() + "/" + $_remaining_sectors_for_replot.toString() + "/" + $_replot_progress
 			if ($_process_replot_disks_hold -eq 0) {
 				if ($_process_expiring_sectors_count -gt 0)
@@ -939,6 +941,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	### write overall farm process summary line at previously reserved spot
 	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / 1000, 1))
+	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB / 1000, 1))
 	if ($_all_process_total_sectors -gt 0)
 	{
 		$_all_process_progress_disp = ([math]::Round(($_all_process_completed_sectors / $_all_process_total_sectors) * 100, 1)).toString() + "%"
@@ -958,9 +961,11 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		$_process_fg_color = $_fg_color_red
 	}
 	$_all_process_rewards_per_TiB = 0
-	if ($_all_process_size_TiB_disp -ne "-" -and [int]($_all_process_size_TiB_disp) -gt 0)
+	#if ($_all_process_size_TiB_disp -ne "-" -and [int]($_all_process_size_TiB_disp) -gt 0)
+	if ($_all_process_size_TiB_disp -ne "-" -and [int]($_all_process_plotted_size_TiB_disp) -gt 0)
 	{
-		$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_size_TiB_disp), 1)
+		#$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_size_TiB_disp), 1)
+		$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_plotted_size_TiB_disp), 1)
 	}
 	$_farm_grand_total_disp =  	"Size: " + $_all_process_size_TiB_disp.toString() + "TiB, % Complete: " + $_all_process_progress_disp.toString() + 
 								", Rewards (Tot/PTiB/PH/Est PD): " + $_all_process_rewards.toString() + "/" + $_all_process_rewards_per_TiB.toString() + "/" + $_all_process_rewards_per_hour.toString() + "/" + $_all_process_rewards_per_day_estimated.toString() + ", Miss: "
@@ -1391,10 +1396,15 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_farm_eta_disp =  fConvertTimeSpanToString $_farm_eta_obj
 			}
 			#
+			$_farm_plotted_size = 0
+			$_farm_plotted_size_TiB = 0.0
 			$_farm_size = 0
 			$_farm_size_TiB = 0.0
 			$_farm_size_disp = "-"
 			if ($_process_total_sectors_disp -ne "-") {
+				$_farm_plotted_size = [int]($_process_completed_sectors)
+				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
+				#
 				$_farm_size = [int]($_process_total_sectors)
 				#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
 				$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
@@ -1410,9 +1420,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			# set cursor position to farm header rewards data location
 			[Console]::SetCursorPosition($_farm_level_rewards_CursorPosition.X, $_farm_level_rewards_CursorPosition.Y)
 			$_rewards_per_TiB = 0
-			if ($_farm_size_TiB -gt 0)
+			#if ($_farm_size_TiB -gt 0)
+			if ($_farm_plotted_size_TiB -gt 0)
 			{
-				$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_size_TiB, 1)
+				#$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_size_TiB, 1)
+				$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_plotted_size_TiB, 1)
 			}
 			Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
 			Write-Host ($_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated) -ForegroundColor $_farmer_header_data_color
@@ -1685,7 +1697,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 						}
 						else {break}
-						$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
+						$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
 						if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
 							$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
@@ -1702,76 +1714,61 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 								}
 							}
 						}
-						else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
-							# expired sectors info
-							#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
-							foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
-							{
-								if ($_disk_plots_expired_obj) {
-									if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
-								}
-								$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
-								#
-								## expiring sectors info
-								foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-								{
-									if ($_disk_plots_expiring_obj) {
-										if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-									}
-									$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
-									break
-								}
-								## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
-								for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
-								{
-									if ($_replot_sector_count_hold_arr[$_h]) {
-										if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
-									}
-									#
-									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count))
-									{
-										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
-									}
-									elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
-									{
-										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
-									}
-									$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
-									break
-								}
-								break
-							}
-							##
-							## expiring sectors info
-							#foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-							#{
-							#	if ($_disk_plots_expiring_obj) {
-							#		if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-							#	}
-							#	$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
-							#}
-							<#
-							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
-								"seconds" 	{
-									$_sectors_per_hour_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotCount * 3600) / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
-									$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / ($_disk_sector_performance_obj.DiskSectorPlotCount * 60), 1)
-								}
-								"minutes" 	{
-									$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
-									$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
-								}
-								"hours" 	{
-									$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / ($_disk_sector_performance_obj.DiskSectorPlotTime * 60), 1)
-									$_minutes_per_sector_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
-								}
-							}
-							#>
-						}
 						break
 					}
 				}
-
-				# write size, % progresion and ETA
+				#
+				## replot info gathering
+				foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
+				{
+					if ($_disk_plots_remaining_obj) {
+						if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
+					}
+					else {break}
+					$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
+					if ($_disk_plots_remaining -eq 0) {									# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 						}
+						# expired sectors info
+						#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
+						foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
+						{
+							if ($_disk_plots_expired_obj) {
+								if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
+							}
+							$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+							break
+						}
+						#
+						## expiring sectors info
+						foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+						{
+							if ($_disk_plots_expiring_obj) {
+								if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+							}
+							$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+							break
+						}
+						## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
+						for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
+						{
+							if ($script:_replot_sector_count_hold_arr[$_h]) {
+								if ($_disk_UUId_obj.Id -ne $script:_replot_sector_count_hold_arr[$_h].Id) { continue }
+							}
+							#
+							if ($script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count))
+							{
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+							}
+							elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+							{
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
+							}
+							$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+							break
+						}
+					}
+				}
+				#
+				## write size, % progresion and ETA
 				$_b_printed_size_metrics = $false
 				$_size_data_disp = "-"
 				$_plotting_percent_complete = "-"
@@ -2361,10 +2358,15 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_farm_eta_disp =  fConvertTimeSpanToString $_farm_eta_obj
 		}
 		#
+		$_farm_plotted_size = 0
+		$_farm_plotted_size_TiB = 0.0
 		$_farm_size = 0
 		$_farm_size_TiB = 0.0
 		$_farm_size_disp = "-"
 		if ($_process_total_sectors_disp -ne "-") {
+			$_farm_plotted_size = [int]($_process_completed_sectors)
+			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
+			#
 			$_farm_size = [int]($_process_total_sectors)
 			#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
 			$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
@@ -2380,9 +2382,11 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		# set cursor position to farm header rewards data location
 		[Console]::SetCursorPosition($_farm_level_rewards_CursorPosition.X, $_farm_level_rewards_CursorPosition.Y)
 		$_rewards_per_TiB = 0
-		if ($_farm_size_TiB -gt 0)
+		#if ($_farm_size_TiB -gt 0)
+		if ($_farm_plotted_size_TiB -gt 0)
 		{
-			$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_size_TiB, 1)
+			#$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_size_TiB, 1)
+			$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_plotted_size_TiB, 1)
 		}
 		Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
 		Write-Host ($_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated) -ForegroundColor $_farmer_header_data_color
@@ -2655,7 +2659,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 						if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 					}
 					else {break}
-					$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
+					$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
 					if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 						$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
 						$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
@@ -2672,74 +2676,60 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 							}
 						}
 					}
-					else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
-						# expired sectors info
-						#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
-						foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
-						{
-							if ($_disk_plots_expired_obj) {
-								if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
-							}
-							$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
-							#
-							# expiring sectors info
-							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-							{
-								if ($_disk_plots_expiring_obj) {
-									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-								}
-								$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
-								break
-							}
-							## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
-							for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
-							{
-								if ($_replot_sector_count_hold_arr[$_h]) {
-									if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
-								}
-								if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count))
-								{
-									$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
-								}
-								elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
-								{
-									$_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
-								}
-								$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
-								break
-							}
-							break
-						}
-						## expiring sectors info
-						#foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-						#{
-						#	if ($_disk_plots_expiring_obj) {
-						#		if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-						#	}
-						#	$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
-						#}
-						<#
-						switch ($_disk_sector_performance_obj.PlotTimeUnit) {
-							"seconds" 	{
-								$_sectors_per_hour_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotCount * 3600) / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
-								$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / ($_disk_sector_performance_obj.DiskSectorPlotCount * 60), 1)
-							}
-							"minutes" 	{
-								$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
-								$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
-							}
-							"hours" 	{
-								$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / ($_disk_sector_performance_obj.DiskSectorPlotTime * 60), 1)
-								$_minutes_per_sector_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
-							}
-						}
-						#>
-					}
 					break
 				}
 			}
-
-			# write size, % progresion and ETA
+			#
+			## replot info gathering
+			foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
+			{
+				if ($_disk_plots_remaining_obj) {
+					if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
+				}
+				else {break}
+				$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
+				if ($_disk_plots_remaining -eq 0) {									# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0
+					# expired sectors info
+					#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
+					foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
+					{
+						if ($_disk_plots_expired_obj) {
+							if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
+						}
+						$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+						break
+					}
+					#
+					# expiring sectors info
+					foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+					{
+						if ($_disk_plots_expiring_obj) {
+							if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+						}
+						$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+						break
+					}
+					## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
+					for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
+					{
+						if ($script:_replot_sector_count_hold_arr[$_h]) {
+							if ($_disk_UUId_obj.Id -ne $script:_replot_sector_count_hold_arr[$_h].Id) { continue }
+						}
+						if ($script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count))
+						{
+							$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+						}
+						elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+						{
+							$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
+						}
+						$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+						break
+					}
+				}
+			}
+			#
+			## write size, % progresion and ETA
 			$_b_printed_size_metrics = $false
 			$_size_data_disp = "-"
 			$_plotting_percent_complete = "-"

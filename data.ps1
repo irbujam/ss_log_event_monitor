@@ -96,9 +96,6 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			#
 			$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
-			#Write-Host
-			#Write-Host "_replot_sector_count_hold_arr: " $_replot_sector_count_hold_arr
-			#Write-Host
 			$_disk_UUId_arr = $_disk_metrics_arr[0].Id
 			$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 			$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
@@ -140,7 +137,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 						}
 						else {break}
-						$_disk_plots_remaining = $_disk_plots_remaining_obj.Sectors
+						$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
 						if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
 							$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
@@ -157,6 +154,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 							}
 
 						}
+						<#
 						else {																# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0 - check TBD
 							# expired sectors info
 							#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
@@ -177,54 +175,87 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 									break
 								}
 								## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
-								for ($_h = 0; $_h -lt $_replot_sector_count_hold_arr.count; $_h++)
+								Write-Host "2nd :: script:_replot_sector_count_hold_arr, count: " $script:_replot_sector_count_hold_arr.count
+								Write-Host "2nd :: script:_replot_sector_count_hold_arr: " $script:_replot_sector_count_hold_arr
+								Read-Host
+								for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
 								{
-									if ($_replot_sector_count_hold_arr[$_h]) {
-										if ($_disk_UUId_obj.Id -ne $_replot_sector_count_hold_arr[$_h].Id) { continue }
+									if ($script:_replot_sector_count_hold_arr[$_h]) {
+										if ($_disk_UUId_obj.Id -ne $script:_replot_sector_count_hold_arr[$_h].Id) { continue }
 									}
-									if ($_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count)) 
+									if ($script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count)) 
 									{
-										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+										$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
 									}
 									elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
 									{
-										$_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
+										$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
 									}
-									$_replot_sector_count_hold = $_replot_sector_count_hold_arr[$_h].ExpiredSectors
+									$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+									Write-Host "2nd :: script:_replot_sector_count_hold_arr: " $script:_replot_sector_count_hold_arr
+									Read-Host
 									break
 								}
 								break
 							}
-							## expiring sectors info
-							#foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
-							#{
-							#	if ($_disk_plots_expiring_obj) {
-							#		if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
-							#	}
-							#	$_expiring_sector_count = $_disk_plots_expiring_obj.Sectors
-							#}
-							<#
-							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
-								"seconds" 	{
-									$_sectors_per_hour_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotCount * 3600) / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
-									$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / ($_disk_sector_performance_obj.DiskSectorPlotCount * 60), 1)
-								}
-								"minutes" 	{
-									$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / $_disk_sector_performance_obj.DiskSectorPlotTime, 1)
-									$_minutes_per_sector_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
-								}
-								"hours" 	{
-									$_sectors_per_hour_data_disp = [math]::Round($_disk_sector_performance_obj.DiskSectorPlotCount / ($_disk_sector_performance_obj.DiskSectorPlotTime * 60), 1)
-									$_minutes_per_sector_data_disp = [math]::Round(($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount, 1)
-								}
-							}
-							#>
 						}
+						#>
 					}
 					#$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
 					#$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
 				}
-				# get size, % progresion and ETA
+				#
+				## replot info gathering
+				foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
+				{
+					if ($_disk_plots_remaining_obj) {
+						if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
+					}
+					else {break}
+					$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
+					if ($_disk_plots_remaining -eq 0) {									# means plotting is at 100% and replotting may be ongoing depending on plotcount > 0
+						# expired sectors info
+						#$_replot_sector_count = $_disk_sector_performance_obj.DiskSectorPlotCount				# replots were counted in original plot counts so not reliable data point doe replot calc
+						foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
+						{
+							if ($_disk_plots_expired_obj) {
+								if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
+							}
+							$_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+							break
+							#
+						}
+						#
+						# expiring sectors info
+						foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+						{
+							if ($_disk_plots_expiring_obj) {
+								if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+							}
+							$_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+							break
+						}
+						## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
+						for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
+						{
+							if ($script:_replot_sector_count_hold_arr[$_h]) {
+								if ($_disk_UUId_obj.Id -ne $script:_replot_sector_count_hold_arr[$_h].Id) { continue }
+							}
+							if ($script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count)) 
+							{
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+							}
+							elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+							{
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
+							}
+							$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+							break
+						}
+					}
+				}
+				#
+				## get size, % progresion and ETA
 				$_b_printed_size_metrics = $false
 				$_total_disk_sectors_disp = "-"
 				$_plotting_percent_complete = "-"
@@ -304,6 +335,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				}
 				#
 				# build process data
+
 				$_process_data = [PSCustomObject]@{
 					UUId					= $_host_url
 					Hostname				= $_hostname

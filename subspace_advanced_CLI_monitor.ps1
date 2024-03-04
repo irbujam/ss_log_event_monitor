@@ -1168,6 +1168,29 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 			elseif ($_plot_state.toLower() -eq "abouttoexpire") {
 				$_resp_plots_expiring_arr += $_plots_info
+				if ($_b_first_time)				#no need to reset first time sqitch after the fact as the same is done in parent function
+				{
+					$_expiring_plots_info = [PSCustomObject]@{
+						Id				= $_plot_id
+						ExpiredSectors	= [int]($_sectors)
+					}
+					$_b_add_exp_arr_id = $true
+					for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
+					{
+						if ($script:_replot_sector_count_hold_arr[$_h]) {
+							if ($_plot_id -eq $script:_replot_sector_count_hold_arr[$_h].Id)
+							{
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors += [int]($_sectors)
+								$_b_add_exp_arr_id = $false
+								break
+							}
+						}
+					}
+					if ($_b_add_exp_arr_id)
+					{
+						$script:_replot_sector_count_hold_arr += $_expiring_plots_info
+					}
+				}
 			}
 			elseif ($_plot_state.toLower() -eq "expired") {
 				$_resp_plots_expired_arr += $_plots_info
@@ -1177,7 +1200,23 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						Id				= $_plot_id
 						ExpiredSectors	= [int]($_sectors)
 					}
-					$script:_replot_sector_count_hold_arr += $_expired_plots_info
+					#$script:_replot_sector_count_hold_arr += $_expired_plots_info
+					$_b_add_exp_arr_id = $true
+					for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
+					{
+						if ($script:_replot_sector_count_hold_arr[$_h]) {
+							if ($_plot_id -eq $script:_replot_sector_count_hold_arr[$_h].Id)
+							{
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors += [int]($_sectors)
+								$_b_add_exp_arr_id = $false
+								break
+							}
+						}
+					}
+					if ($_b_add_exp_arr_id)
+					{
+						$script:_replot_sector_count_hold_arr += $_expired_plots_info
+					}
 				}
 			}
 		}
