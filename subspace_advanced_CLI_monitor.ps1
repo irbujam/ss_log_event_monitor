@@ -1158,7 +1158,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			$_plots_info = [PSCustomObject]@{
 				Id			= $_plot_id
 				PlotState	= $_plot_state
-				Sectors		= $_sectors
+				Sectors		= [int]($_sectors)
 			}
 			if ($_plot_state.toLower() -eq "notplotted") {
 				$_resp_plots_remaining_arr += $_plots_info
