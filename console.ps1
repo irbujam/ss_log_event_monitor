@@ -1748,6 +1748,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 							break
 						}
 						## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
+				#### DELETE - start
+				#Write-Host
+				#Write-Host "_replot_sector_count_hold_arr: " $script:_replot_sector_count_hold_arr
+				#Write-Host
+				#### DELETE - end
+						$_b_add_exp_arr_id = $true
 						for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
 						{
 							if ($script:_replot_sector_count_hold_arr[$_h]) {
@@ -1763,7 +1769,17 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
 							}
 							$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+							$_b_add_exp_arr_id = $false
 							break
+						}
+						if ($_b_add_exp_arr_id)
+						{
+							$_expiring_plots_info = [PSCustomObject]@{
+								Id				= $_disk_UUId_obj.Id
+								ExpiredSectors	= ($_replot_sector_count + $_expiring_sector_count)
+							}
+							$script:_replot_sector_count_hold_arr += $_expiring_plots_info
+							$_replot_sector_count_hold = $_replot_sector_count + $_expiring_sector_count
 						}
 					}
 				}
@@ -1865,11 +1881,26 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_replot_progress = ([math]::Round((($_replot_sector_count_hold - $_remaining_sectors_for_replot) / $_replot_sector_count_hold) * 100, 1)).ToString() + "%"
 				}
 				$_replot_sector_count_disp = $_replot_sector_count_hold.ToString() + "/" + $_remaining_sectors_for_replot.ToString() + "/" + $_replot_progress
+				#### DELETE - start
+				#Write-Host
+				#Write-Host "_disk_UUId_obj.Id: " $_disk_UUId_obj.Id
+				#Write-Host "_replot_sector_count_disp: " $_replot_sector_count_disp
+				#Write-Host "_replot_sector_count_hold: " $_replot_sector_count_hold
+				#Write-Host "_remaining_sectors_for_replot: " $_remaining_sectors_for_replot
+				#Write-Host "_replot_progress: " $_replot_progress
+				#Write-Host "_replot_sector_count_disp: " $_replot_sector_count_disp
+				#Write-Host
+				#### DELETE - end
 				if ($_replot_sector_count_hold -eq 0)
 				{
 					if ($_expiring_sector_count -gt 0)
 					{
 						$_replot_sector_count_disp = $_expiring_sector_count.ToString() + "/" + "-" + "/" + "-"
+				#### DELETE - start
+				Write-Host
+				Write-Host "2nd:: _replot_sector_count_disp: " $_replot_sector_count_disp
+				Write-Host
+				#### DELETE - end
 					}
 					else
 					{
@@ -2710,6 +2741,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 						break
 					}
 					## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
+					$_b_add_exp_arr_id = $true
 					for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
 					{
 						if ($script:_replot_sector_count_hold_arr[$_h]) {
@@ -2724,7 +2756,17 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 							$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
 						}
 						$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+						$_b_add_exp_arr_id = $false
 						break
+					}
+					if ($_b_add_exp_arr_id)
+					{
+						$_expiring_plots_info = [PSCustomObject]@{
+							Id				= $_disk_UUId_obj.Id
+							ExpiredSectors	= ($_replot_sector_count + $_expiring_sector_count)
+						}
+						$script:_replot_sector_count_hold_arr += $_expiring_plots_info
+						$_replot_sector_count_hold = $_replot_sector_count + $_expiring_sector_count
 					}
 				}
 			}
