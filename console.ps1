@@ -38,7 +38,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sector_time = "SCT   "
 	$_label_process_total_sectors_per_hour = "SCT  "
 	$_label_process_total_TiB_per_day = "TiB  "
-	$_label_process_disks = "  Disks  "
+	$_label_process_disks = "  Disks   "
 	$_label_process_replot_disks = "   Replots  "
 	$_label_process_rewards = "          Rewards         "
 	$_label_process_misses = "Miss"
@@ -58,7 +58,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sector_time_row2 = "Time  "
 	$_label_process_total_sectors_per_hour_row2 = "PH   "
 	$_label_process_total_TiB_per_day_row2 = "PD   "
-	$_label_process_disks_row2 = "---------"
+	$_label_process_disks_row2 = "----------"
 	$_label_process_replot_disks_row2 = "------------"
 	$_label_process_rewards_row2 = "--------------------------"
 	$_label_process_misses_row2 = "    "
@@ -78,7 +78,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_sector_time_row3 = "      "
 	$_label_process_total_sectors_per_hour_row3 = "     "
 	$_label_process_total_TiB_per_day_row3 = "     "
-	$_label_process_disks_row3 = "#/PL/RM  "
+	$_label_process_disks_row3 = "#/PL/RM   "
 	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl"
 	$_label_process_rewards_row3 = "Tot/PTiB/PH/Est PD/PTiB PD"
 	$_label_process_misses_row3 = "    "
@@ -1835,7 +1835,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
-			Write-Host ($_farm_rewards_disp + $_label_spacer + "|") -ForegroundColor $_farmer_header_data_color
+			Write-Host $_farm_rewards_disp -nonewline -ForegroundColor $_farmer_header_data_color
+			Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
 			#$_process_header_filler_length += 	("Rewards(Tot/PTiB/PH/Est PD):").Length + $_rewards_total.toString().Length + ("/").Length + $_rewards_per_TiB.toString().Length + ("/").Length + $_rewards_per_hour.Length + 
 			#									("/").Length + $_rewards_per_day_estimated.Length
 			#
