@@ -362,7 +362,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										Write-Host "] will loop thru single farmer." -ForegroundColor $_html_gray
 										Write-Host
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 									}
 								}
 								LeftArrow {
@@ -382,12 +382,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									if ($script:_individual_farmer_id_last_pos -ge 0)
 									{
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 									}
 									else{
 										$script:_individual_farmer_id_last_pos = $script:_individual_farmer_id_arr.Count - 1
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 									}
 								}
 								RightArrow {
@@ -407,12 +407,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									if ($script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 									{
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 									}
 									else{
 										$script:_individual_farmer_id_last_pos = 0
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 									}
 								}
 							}
@@ -863,7 +863,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						Write-Host "] will loop thru single farmer." -ForegroundColor $_html_gray
 						Write-Host
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 					}
 				}
 				LeftArrow {
@@ -883,12 +883,12 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					if ($script:_individual_farmer_id_last_pos -ge 0)
 					{
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 					}
 					else{
 						$script:_individual_farmer_id_last_pos = $script:_individual_farmer_id_arr.Count - 1
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 					}
 				}
 				RightArrow {
@@ -908,12 +908,12 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					if ($script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 					{
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 					}
 					else{
 						$script:_individual_farmer_id_last_pos = 0
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
-						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested
+						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 					}
 				}
 			}
@@ -948,15 +948,15 @@ function fConvertTimeSpanToString ([object]$_io_ts_obj) {
 	if ($_io_ts_obj) {
 		if ($_io_ts_obj.days -gt 0)
 		{
-			$_resp_ts_str = $_io_ts_obj.days.toString() + "d " + $_io_ts_obj.hours.toString() + "h"
+			$_resp_ts_str = $_io_ts_obj.days.toString() + "d" + $_io_ts_obj.hours.toString() + "h"
 		}
 		elseif ($_io_ts_obj.hours -gt 0)
 		{
-			$_resp_ts_str = $_io_ts_obj.hours.toString() + "h " + $_io_ts_obj.minutes.toString() + "m"
+			$_resp_ts_str = $_io_ts_obj.hours.toString() + "h" + $_io_ts_obj.minutes.toString() + "m"
 		}
 		else
 		{
-			$_resp_ts_str = $_io_ts_obj.minutes.toString() + "m " + $_io_ts_obj.seconds.toString() + "s"
+			$_resp_ts_str = $_io_ts_obj.minutes.toString() + "m" + $_io_ts_obj.seconds.toString() + "s"
 		}
 	}
 	
