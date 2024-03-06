@@ -1422,12 +1422,15 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					{
 						#Write-Host " " -nonewline -ForegroundColor $_line_spacer_color
 						#
-						$_spacer_length = $_label_disk_id_length + 1
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-						Write-Host (" " + $_label_spacer + " ") -nonewline -ForegroundColor $_line_spacer_color
-						$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
-						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
-						Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+						if($_label_disk_id_length -gt 0)
+						{
+							$_spacer_length = $_label_disk_id_length + 1
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+							Write-Host (" " + $_label_spacer + " ") -nonewline -ForegroundColor $_line_spacer_color
+							$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
+							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+							Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+						}
 						#
 						# write a blank line
 						#Write-Host " " -ForegroundColor $_line_spacer_color
@@ -1767,6 +1770,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			## write process header line end character
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
+			if ($_label_disk_id_length -eq 0)
+			{
+				$_spacer_length = ("--------------------------------------------------------------------------------------").Length - $_process_header_filler_length
+			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			Write-Host $_label_spacer
@@ -1833,6 +1840,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_farm_rewards_disp_label = "Rewards(Tot/PTiB/PH/Est PD/PTiB PD):"
 			$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+			if ($_label_disk_id_length -eq 0)
+			{
+				$_spacer_length = ("--------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
 			Write-Host $_farm_rewards_disp -nonewline -ForegroundColor $_farmer_header_data_color
@@ -2568,7 +2579,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	}
 	#
 	# draw finish line
-	if ($_label_disk_id_length -gt 0)
+	if ($_label_disk_id_length -gt 0 -and $_b_process_running_ok -eq $true)
 	{
 		$_spacer_length = $_label_disk_id_length + 1
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -2656,6 +2667,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	#
 	$_individual_farmer_metrics_raw = ""
 	[array]$_individual_farmer_state_arr = $null
+	$_b_process_running_ok = $false
 	if ($_io_individual_farmer_id) {
 		#
 		$_process_type = "Farmer"
@@ -2695,12 +2707,16 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		{
 			#Write-Host " " -nonewline -ForegroundColor $_line_spacer_color
 			#
-			$_spacer_length = $_label_disk_id_length + 1
-			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-			Write-Host (" " + $_label_spacer + " ") -nonewline -ForegroundColor $_line_spacer_color
-			$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
-			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
-			Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+			#if($_label_disk_id_length -gt 0 -and $_b_process_running_ok -eq $true)
+			if($_label_disk_id_length -gt 0)
+			{
+				$_spacer_length = $_label_disk_id_length + 1
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+				Write-Host (" " + $_label_spacer + " ") -nonewline -ForegroundColor $_line_spacer_color
+				$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+				Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+			}
 			#
 			# write a blank line
 			Write-Host " " -ForegroundColor $_line_spacer_color
@@ -3011,6 +3027,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		## write process header line end character
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
+		if ($_label_disk_id_length -eq 0)
+		{
+			$_spacer_length = ("--------------------------------------------------------------------------------------").Length - $_process_header_filler_length
+		}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_label_spacer = $_label_spacer + "|"
 		Write-Host $_label_spacer
@@ -3077,6 +3097,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_farm_rewards_disp_label = "Rewards(Tot/PTiB/PH/Est PD/PTiB PD):"
 		$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+		if ($_label_disk_id_length -eq 0)
+		{
+			$_spacer_length = ("--------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+		}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
 		Write-Host ($_farm_rewards_disp) -nonewline -ForegroundColor $_farmer_header_data_color
@@ -3789,7 +3813,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	}
 	#
 	# draw finish line
-	if ($_label_disk_id_length -gt 0)
+	if ($_label_disk_id_length -gt 0 -and $_b_process_running_ok -eq $true)
 	{
 		$_spacer_length = $_label_disk_id_length + 1
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
