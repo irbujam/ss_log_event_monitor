@@ -571,10 +571,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							$_process_sector_time = New-TimeSpan -seconds $_temp_sector_time_per_farm
 							$_process_sector_time_disp =  $_process_sector_time.minutes.ToString() + "m" + $_process_sector_time.seconds.ToString() + "s"
 							#$_process_total_sectors_per_hour = [math]::Round(3600 / ($_sub_header.SectorTime / $_sub_header.TotalDisksForETA), 1)
-							$_process_total_sectors_per_hour = [math]::Round(3600 / $_temp_sector_time_per_farm, 1)
-							$_process_total_sectors_per_hour_disp = $_process_total_sectors_per_hour.toString()
-							$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / 1000) * 24, 1)
-							$_process_total_TiB_per_day_disp = $_process_total_TiB_per_day.toString()
+							if ($_temp_sector_time_per_farm -gt 0)
+							{
+								$_process_total_sectors_per_hour = [math]::Round(3600 / $_temp_sector_time_per_farm, 1)
+								$_process_total_sectors_per_hour_disp = $_process_total_sectors_per_hour.toString()
+								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / 1000) * 24, 1)
+								$_process_total_TiB_per_day_disp = $_process_total_TiB_per_day.toString()
+							}
 						}
 					}
 					#
