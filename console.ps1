@@ -1149,9 +1149,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#if ($_all_process_size_TiB_disp -ne "-" -and [int]($_all_process_size_TiB_disp) -gt 0)
 	if ($_all_process_size_TiB_disp -ne "-" -and [int]($_all_process_plotted_size_TiB_disp) -gt 0)
 	{
-		if ($all_process_rewards_per_day_estimated -ne "-")
+		if ($_all_process_rewards_per_day_estimated -ne "-")
 		{
-			$_all_process_daily_avg_rewards_per_TiB = [math]::Round([int]($all_process_rewards_per_day_estimated) / $_all_process_plotted_size_TiB_disp, 1)
+			$_all_process_daily_avg_rewards_per_TiB = [math]::Round([int]($_all_process_rewards_per_day_estimated) / $_all_process_plotted_size_TiB_disp, 1)
 		}
 		#$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_size_TiB_disp), 1)
 		$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_plotted_size_TiB_disp), 1)
