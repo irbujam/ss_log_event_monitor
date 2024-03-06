@@ -3079,7 +3079,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
-		Write-Host ($_farm_rewards_disp) -ForegroundColor $_farmer_header_data_color
+		Write-Host ($_farm_rewards_disp) -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
 		#Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
 		#Write-Host ($_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated) -ForegroundColor $_farmer_header_data_color
