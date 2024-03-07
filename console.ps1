@@ -1292,7 +1292,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		$_gitVersionDisp = $gitVersion[0]
 		$_gitVersionDispColor = $_html_green
 	}
-	Write-Host
+	
+	fDisplayHelp
+	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 
@@ -1303,7 +1305,6 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#echo `n
 	#
-	fDisplayHelp
 }
 
 function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
@@ -2600,7 +2601,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 		$_gitVersionDispColor = $_html_green
 	}
 
-	Write-Host
+	fDisplayHelp
+	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 
@@ -2611,7 +2613,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#echo `n
 	#
-	fDisplayHelp
 }
 
 function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id, [int]$_io_farmer_serial_num) {
@@ -3834,7 +3835,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_gitVersionDispColor = $_html_green
 	}
 
-	Write-Host
+	fDisplayHelp
+	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 
@@ -3845,16 +3847,15 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#echo `n
 	#
-	fDisplayHelp
 }
 
 function fDisplayHelp() {
-	$_help_test = "SCT:Sector|PH/PD:PerHour/Day|PWR:Power|Cmpl:Completed|PTiB:PerPlottedTiB|PL:Plotted|EX:Expired|RM:Remain|Est:Estimated"
-	#revert back cursor position to last written summary data
-	$_current_cursor_position = $host.UI.RawUI.CursorPosition
+	$_help_text = "SCT=Sector,PH/PD=PerHour/Day,PWR=Power,Cmpl=Complete,PTiB=PerPlottedTiB,PL=Plotted,EX=Expired,RM=Remain,Est=Estimated"
+	##revert back cursor position to last written summary data
+	#$_current_cursor_position = $host.UI.RawUI.CursorPosition
 	#set cursor for help test display
-	[Console]::SetCursorPosition(0, 1)
-	Write-Host $_help_test -BackgroundColor black -ForegroundColor darkgray
-	#revert back cursor position to last written summary data
-	[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
+	#[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
+	Write-Host $_help_text -BackgroundColor black -ForegroundColor darkgray
+	##revert back cursor position to last written summary data
+	#[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
 }
