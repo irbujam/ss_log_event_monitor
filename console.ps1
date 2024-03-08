@@ -1105,12 +1105,6 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	}
 	## farm aggregate sector times
 	$_all_process_sector_time_disp = "-"
-	#### DELETE - start
-	#Write-Host
-	#Write-Host "_all_process_sector_time: " $_all_process_sector_time
-	#Write-Host "_all_process_sector_time_eligibility_count: " $_all_process_sector_time_eligibility_count
-	#Write-Host
-	#### DELETE - end
 	if ($_all_process_sector_time_eligibility_count -gt 0)
 	{
 		$_all_process_sector_time = $_all_process_sector_time / ($_all_process_sector_time_eligibility_count * $_all_process_sector_time_eligibility_count)
@@ -1554,33 +1548,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			# header lables
 			$_b_write_header = $true
 			#
-			<#
-			$_label_hostname = "Hostname"
-			$_label_diskid = "Disk Id"
-			$_label_size = "Size "
-			$_label_percent_complete = "%    "
-			$_label_eta = "ETA   "
-			$_label_replot = "  Replots  "
-			$_label_sectors_per_hour = "SCT  "
-			$_label_minutes_per_sectors = "Time/ "
-			$_label_rewards = "Rewards"
-			$_label_misses = "Miss"
-			
-			$_label_hostname_row2 = "        "
-			$_label_diskid_row2 = "       "
-			$_label_size_row2 = "(TiB)"
-			$_label_percent_complete_row2 = "Cmpl "
-			$_label_eta_row2 = "      "
-			$_label_replot_row2 = "EX/RM/%Cmpl"
-			$_label_sectors_per_hour_row2 = "PH   "
-			$_label_minutes_per_sectors_row2 = "SCT   "
-			$_label_rewards_row2 = "       "
-			$_label_misses_row2 = "    "
-			
-			$_spacer = " "
-			$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
-			$_total_header_labels = 9
-			#>
 			#
 			##
 			$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
@@ -1854,15 +1821,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#									("/").Length + $_rewards_per_day_estimated.Length
 			#
 			#
-			#### DELETE - start
-			#Write-Host
-			#Write-Host "_spacer_length: " $_spacer_length
-			#Write-Host "_label_disk_id_length: " $_label_disk_id_length
-			#Write-Host "_total_header_length: " $_total_header_length
-			#Write-Host "_total_header_labels: " $_total_header_labels
-			#Write-Host "_process_header_filler_length: " $_process_header_filler_length
-			#Write-Host
-			#### DELETE - end
 			#$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length
 			#$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			#$_label_spacer = $_label_spacer + "|"
@@ -2361,7 +2319,14 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				Write-Host $_label_spacer -nonewline
 				#Write-Host $_minutes_per_sector_data_disp -nonewline
-				$_time_per_sector_disp = $_time_per_sector_data_obj.minutes.ToString() + "m" + $_time_per_sector_data_obj.seconds.ToString() + "s"
+				if ($_time_per_sector_data_obj.minutes -gt 0 -or  $_time_per_sector_data_obj.seconds -gt 0)
+				{
+					$_time_per_sector_disp = $_time_per_sector_data_obj.minutes.ToString() + "m" + $_time_per_sector_data_obj.seconds.ToString() + "s"
+				}
+				else 
+				{
+					$_time_per_sector_disp = "-"
+				}
 				Write-Host $_time_per_sector_disp -nonewline
 				
 				
@@ -2799,33 +2764,6 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		# header lables
 		$_b_write_header = $true
 		#
-		<#
-		$_label_hostname = "Hostname"
-		$_label_diskid = "Disk Id"
-		$_label_size = "Size "
-		$_label_percent_complete = "%    "
-		$_label_eta = "ETA   "
-		$_label_replot = "  Replots  "
-		$_label_sectors_per_hour = "SCT  "
-		$_label_minutes_per_sectors = "Time/ "
-		$_label_rewards = "Rewards"
-		$_label_misses = "Miss"
-		
-		$_label_hostname_row2 = "        "
-		$_label_diskid_row2 = "       "
-		$_label_size_row2 = "(TiB)"
-		$_label_percent_complete_row2 = "Cmpl "
-		$_label_eta_row2 = "      "
-		$_label_replot_row2 = "EX/RM/%cmpl"
-		$_label_sectors_per_hour_row2 = "PH   "
-		$_label_minutes_per_sectors_row2 = "SCT   "
-		$_label_rewards_row2 = "       "
-		$_label_misses_row2 = "    "
-		
-		$_spacer = " "
-		$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
-		$_total_header_labels = 9
-		#>
 		#
 		##
 		$_disk_metrics_arr = fGetDiskSectorPerformance $_individual_farmer_metrics_formatted_arr
@@ -3601,7 +3539,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			
 			Write-Host $_label_spacer -nonewline
 			#Write-Host $_minutes_per_sector_data_disp -nonewline
-			$_time_per_sector_disp = $_time_per_sector_data_obj.minutes.ToString() + "m" + $_time_per_sector_data_obj.seconds.ToString() + "s"
+			if ($_time_per_sector_data_obj.minutes -gt 0 -or  $_time_per_sector_data_obj.seconds -gt 0)
+			{
+				$_time_per_sector_disp = $_time_per_sector_data_obj.minutes.ToString() + "m" + $_time_per_sector_data_obj.seconds.ToString() + "s"
+			}
+			else
+			{
+				$_time_per_sector_disp = "-"
+			}
 			Write-Host $_time_per_sector_disp -nonewline
 			
 			
