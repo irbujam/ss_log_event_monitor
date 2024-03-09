@@ -30,6 +30,7 @@ To launch save all files with extension *.ps1  and config.txt file in the same f
   - Script can run on a pc separate from farms/nodes hosted pc 
   - Ability to add or remove node/farmer ip(s) in config without restarting the script, just add a new line for node or farmer below existing entries (currently works for console mode only with web ui disabled in config)
   - No need for log files as monitoring is now using metrics endpoints
+  - Telegram notifications
   - Discord notifications to a webhook of your choice (refer to https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks on how to create a webhook for your own server notifications)
       - Node and Farmer process state is determined and notification is sent to discord if either is offline
   - Summary view providing overall node/farms stats
