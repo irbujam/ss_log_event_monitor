@@ -1373,7 +1373,7 @@ function fSendTelegramBotNotification ([string]$_io_bot_msg) {
 	## base url
 	$_host_base_url = "https://api.telegram.org/bot"
 	#
-	## url endpoint to fecth chat_id
+	## url endpoint to fetch chat_id
 	$_host_url_endpoint = "/getUpdates"
 	## api method
 	$_bot_invoke_method = "GET"
