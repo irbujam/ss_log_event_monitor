@@ -12,6 +12,8 @@ function main {
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
 	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
+	$script:_url_discord = ""
+	$script:_telegram_api_token = ""
 	#
 	$_b_console_disabled = $false
 	####
@@ -50,6 +52,8 @@ function main {
 			}
 			if ($_b_allow_refresh) 
 			{
+				$script:_url_discord = ""
+				$script:_telegram_api_token = ""
 				$script:_individual_farmer_id_arr = $null
 				$Stopwatch.Restart()
 				Clear-Host
@@ -84,6 +88,8 @@ function main {
 							$refreshTimeScaleInSeconds = [int]$_config[1].toString()
 							if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = $_refresh_duration_default}
 						}
+						elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
+						elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
 							$_alert_frequency_seconds = [int]$_config[1].toString()
 						}
@@ -1351,7 +1357,80 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 
 function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 	$JSON = @{ "content" = $ioMsg; } | convertto-json
-	Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
+	if ($ioUrl -and $ioUrl.Trim(" ").length -gt 0)
+	{
+		Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
+	}
+}
+
+function fSendTelegramBotNotification ([string]$_io_bot_msg) {
+	$_b_bot_msg_sent_success = $false
+	#
+	##
+	#
+	$_bot_api_token = $script:_telegram_api_token
+	#
+	## base url
+	$_host_base_url = "https://api.telegram.org/bot"
+	#
+	## url endpoint to fecth chat_id
+	$_host_url_endpoint = "/getUpdates"
+	## api method
+	$_bot_invoke_method = "GET"
+	## full url
+	$_bot_url = $_host_base_url + $_bot_api_token + $_host_url_endpoint
+	## fetch chat_id for bot alert
+	$_bot_resp = fInvokeTelegramBot $_bot_url $_bot_invoke_method
+	$_bot_chat_id = ""
+	foreach ($_chats in $_bot_resp)
+	{
+		if($_chats.message.chat -and  $_chats.message.chat.type)
+		{
+			if ($_chats.message.chat.type.toString() -eq "private")
+			{
+				$_bot_chat_id = $_chats.message.chat.id.toString()
+				break
+			}
+		}
+	}
+	#
+	## outbound msg url endpoint
+	$_host_url_endpoint = "/sendMessage?chat_id=$($_bot_chat_id)&text=$($_io_bot_msg)"
+	## full url
+	$_bot_url = $_host_base_url + $_bot_api_token + $_host_url_endpoint
+	## api method
+	$_bot_invoke_method = "POST"
+	## send msg
+	$_bot_resp = fInvokeTelegramBot $_bot_url $_bot_invoke_method
+	if ($_bot_resp)
+	{
+		$_b_bot_msg_sent_success = $true
+	}
+	#
+	return $_b_bot_msg_sent_success
+}
+
+function fInvokeTelegramBot ([string]$_io_bot_url, [string]$_io_method) {
+	$_response = ""
+	$_respObj = $null
+	
+	try {
+		switch ($_io_method) {
+		"GET" {
+			$_respObj = Invoke-RestMethod -uri $_io_bot_url -Method $_io_method
+		}
+		"POST" {
+			$_respObj = Invoke-RestMethod -uri $_io_bot_url -Method $_io_method 
+		}
+		default {}
+		}
+		#
+		if ($_respObj) {
+			$_response = $_respObj.result
+		}
+	}
+	catch { }
+	return $_response
 }
 
 function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [string]$_io_hostname, [string]$_io_alert_url) {
@@ -1359,6 +1438,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 
 	$_b_process_running_state = $false
 	#
+
 	# get process state, send notification if process is stopped/not running
 	$_resp = fPingMetricsUrl $_io_host_ip		# needs to be outside of elapsed time check as response is used downstream to eliminiate dup call
 	if ($_resp -eq "") {
@@ -1367,6 +1447,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
 			if ($_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
 				fSendDiscordNotification $_io_alert_url $_alert_text
+				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
 			}
 		}
 		catch {}

@@ -5,7 +5,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 	[array]$_process_sub_header_arr = $null
 	[array]$_process_data_arr = $null
 
-	$_url_discord = ""
+	#$_url_discord = ""
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_hostip_arr.Count; $arrPos++)
 	{
 		$_farmer_metrics_raw = ""
@@ -15,8 +15,9 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 		if ($_io_farmers_hostip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_farmers_hostip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 			$_config = $_io_farmers_hostip_arr[$arrPos].toString().split(":").Trim(" ")
 			$_process_type = $_config[0].toString()
-			if ($_process_type.toLower().IndexOf("discord") -ge 0) { $_url_discord = "https:" + $_config[2].toString() }
-			elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+			#if ($_process_type.toLower().IndexOf("discord") -ge 0) { $_url_discord = "https:" + $_config[2].toString() }
+			#elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+			if ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
 				$_host_ip = $_config[1].toString()
 				$_host_port = $_config[2].toString()
 				if ($_config.Count -gt 3) {
@@ -45,7 +46,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					$_hostname = $_host_friendly_name
 				}
 
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $_url_discord
+				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
 				$_b_process_running_ok = $_process_state_arr[1]
 				#
 				# get process header information

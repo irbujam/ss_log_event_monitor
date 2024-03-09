@@ -19,11 +19,12 @@ API-host: 127.0.0.1:5004
 #API-host: 192.168.2.251:5004
 
 #-------------------------------------------------------------------------------------------------------------------------
-# discord webhook - change to use your own
+# discord webhook / Telegram bot api-token - change to use your own
 # Set alert repeat frequency, the value will default to auto-refresh time if not set or a lower value is provided
 #-------------------------------------------------------------------------------------------------------------------------
 
 Discord-url : https://discord.com/api/webhooks/0000000000000000000/1AAAA................
+Telegram-api-token: 1234567890:UUUUUUUUUUUUUUUU.....
 Alert-frequency(seconds) : 3600
 
 #-------------------------------------------------------------------------------------------------------------------------
