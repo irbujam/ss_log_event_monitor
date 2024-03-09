@@ -1415,15 +1415,7 @@ function fInvokeTelegramBot ([string]$_io_bot_url, [string]$_io_method) {
 	$_respObj = $null
 	
 	try {
-		switch ($_io_method) {
-		"GET" {
-			$_respObj = Invoke-RestMethod -uri $_io_bot_url -Method $_io_method
-		}
-		"POST" {
-			$_respObj = Invoke-RestMethod -uri $_io_bot_url -Method $_io_method 
-		}
-		default {}
-		}
+		$_respObj = Invoke-RestMethod -uri $_io_bot_url -Method $_io_method
 		#
 		if ($_respObj) {
 			$_response = $_respObj.result
