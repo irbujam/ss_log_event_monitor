@@ -238,7 +238,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			# wait for request - async
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
-			Write-Host
+			#Write-Host
 			Write-Host
 			Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
@@ -299,7 +299,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_b_write_process_summary_to_console = $false
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
-									Write-Host
+									#Write-Host
 									Write-Host
 									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
@@ -318,7 +318,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_b_write_process_summary_to_console = $true
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
-									Write-Host
+									#Write-Host
 									Write-Host
 									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
@@ -357,6 +357,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									if ($script:_individual_farmer_id_last_pos -ge 0 -and $script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 									{
 										Clear-Host
+										$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
+										Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
+										Write-Host
 										Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
 										Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
@@ -374,6 +377,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 								}
 								LeftArrow {
 									Clear-Host
+									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
+									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
+									Write-Host
 									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
@@ -399,6 +405,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 								}
 								RightArrow {
 									Clear-Host
+									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
+									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
+									Write-Host
 									Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
