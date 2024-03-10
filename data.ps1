@@ -209,7 +209,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 							$_b_add_exp_arr_id = $false
 							break
 						}
-						if ($_b_add_exp_arr_id)
+						if ($_b_add_exp_arr_id -eq $true)
 						{
 							$_expiring_plots_info = [PSCustomObject]@{
 								Id				= $_disk_UUId_obj.Id

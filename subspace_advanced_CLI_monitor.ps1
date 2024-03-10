@@ -26,7 +26,7 @@ function main {
 	$_b_request_processed = $false
 	#
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-	$_b_first_time = $true
+	$script:_b_first_time = $true
 	#
 	[array]$script:_replot_sector_count_hold_arr = $null
 	#
@@ -46,7 +46,7 @@ function main {
 	try {
 		while ($true) {
 			#
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) 
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) 
 			{
 				$_b_allow_refresh = $true
 			}
@@ -93,7 +93,7 @@ function main {
 						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
 							$_alert_frequency_seconds = [int]$_config[1].toString()
 						}
-						elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $_b_first_time) {
+						elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $script:_b_first_time) {
 							
 							$_start_up_view = $_config[1].toString().toLower()
 							if ($_start_up_view.IndexOf("s") -eq 0)
@@ -193,7 +193,7 @@ function main {
 					{
 						$_alert_stopwatch.Restart()
 					}
-					$_b_first_time = $false
+					$script:_b_first_time = $false
 					$_last_display_type_request = fStartCountdownTimer $refreshTimeScaleInSeconds
 					if ($_last_display_type_request.toLower() -eq "summary") { $_b_write_process_summary_to_console = $true; $_b_write_process_details_to_console = $false }
 					elseif ($_last_display_type_request.toLower() -eq "detail") { $_b_write_process_summary_to_console = $false; $_b_write_process_details_to_console = $true }
@@ -253,8 +253,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				Write-Host
 			}
 			Write-Host
-			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) {
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $_b_first_time -eq $true) { 
+			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) { 
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds)
 					{					
 						$Stopwatch.Restart()
@@ -280,6 +280,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					$_end_dt = [datetime]::UtcNow.AddSeconds($refreshTimeScaleInSeconds)
 					#[System.Console]::CursorVisible = $false
 					
+					$script:_b_first_time = $false
 					while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
 						#
 						## check for user toggle on data display type while waiting for refresh
@@ -435,7 +436,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					Write-Host
 
 					Clear-Host
-					$_b_first_time = $false
+					#$script:_b_first_time = $false
 			}
 	}
 	## process request received
@@ -1174,7 +1175,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 			elseif ($_plot_state.toLower() -eq "abouttoexpire") {
 				$_resp_plots_expiring_arr += $_plots_info
-				if ($_b_first_time)				#no need to reset first time sqitch after the fact as the same is done in parent function
+				if ($script:_b_first_time -eq $true)				#no need to reset first time sqitch after the fact as the same is done in parent function
 				{
 					$_expiring_plots_info = [PSCustomObject]@{
 						Id				= $_plot_id
@@ -1200,7 +1201,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 			elseif ($_plot_state.toLower() -eq "expired") {
 				$_resp_plots_expired_arr += $_plots_info
-				if ($_b_first_time)				#no need to reset first time sqitch after the fact as the same is done in parent function
+				if ($script:_b_first_time)				#no need to reset first time sqitch after the fact as the same is done in parent function
 				{
 					$_expired_plots_info = [PSCustomObject]@{
 						Id				= $_plot_id
@@ -1310,15 +1311,36 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 					}
 					$_resp_rewards_arr += $_disk_rewards_metric
 				}
-				elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
+				#elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
+				elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("rejected") -ge 0) {
 					$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)
 					
-					$_disk_misses_metric = [PSCustomObject]@{
-						Id		= $_farmer_disk_id_rewards
-						#Rewards	= $_farmer_disk_proving_success_count
-						Misses	= $_farmer_disk_proving_misses_count
+					#$_disk_misses_metric = [PSCustomObject]@{
+					#	Id		= $_farmer_disk_id_rewards
+					#	#Rewards	= $_farmer_disk_proving_success_count
+					#	Misses	= $_farmer_disk_proving_misses_count
+					#}
+					#$_resp_misses_arr += $_disk_misses_metric
+					$_b_miss_captured_prev = $false
+					for ($_m = 0; $_m -lt $_resp_misses_arr.Count; $_m++)
+					{
+						$_miss_obj = $_resp_misses_arr[$_m]
+						if($_miss_obj.Id -eq $_farmer_disk_id_rewards)
+						{
+							$_resp_misses_arr[$_m].Misses += $_farmer_disk_proving_misses_count
+							$_b_miss_captured_prev = $true
+							break
+						}
 					}
-					$_resp_misses_arr += $_disk_misses_metric
+					if ($_b_miss_captured_prev -eq $false)
+					{
+						$_disk_misses_metric = [PSCustomObject]@{
+							Id		= $_farmer_disk_id_rewards
+							#Rewards	= $_farmer_disk_proving_success_count
+							Misses	= $_farmer_disk_proving_misses_count
+						}
+						$_resp_misses_arr += $_disk_misses_metric
+					}
 				}
 				$_total_rewards_per_farmer += $_farmer_disk_proving_success_count
 				#
@@ -1437,7 +1459,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			if ($_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
 				fSendDiscordNotification $_io_alert_url $_alert_text
 				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
 			}
