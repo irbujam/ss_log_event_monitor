@@ -231,6 +231,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			}
 			else{
 				$_process_fg_color = $_fg_color_red
+				$_b_not_used_alert_status = fNotifyProcessOutOfSyncState $_process_isOftype $_process_alt_name
 			}
 			#
 			#
@@ -1507,10 +1508,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_node_peers_connected = "-"
 						$_node_sync_state_disp = "-"
 						$_node_sync_state_disp_color = $_html_red
+						$_b_not_used_alert_status = fNotifyProcessOutOfSyncState $_process_type $_hostname
 					}
 					elseif ($_node_sync_state -eq 1 -or $_b_process_running_ok -ne $true) {
 						$_node_sync_state_disp = "No"
 						$_node_sync_state_disp_color = $_html_red
+						$_b_not_used_alert_status = fNotifyProcessOutOfSyncState $_process_type $_hostname
 					}
 					Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
 					Write-Host ", " -nonewline
@@ -1697,6 +1700,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#$_process_total_disks_for_eta = 0
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
+				$_label_disk_id_length = $_disk_UUId_obj.Id.Length
+				#
 				# get size, % progresion and ETA at farm level
 				foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
 				{
@@ -1706,7 +1711,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					else {break}
 					#
 
-					$_label_disk_id_length = $_disk_UUId_obj.Id.Length
+					#$_label_disk_id_length = $_disk_UUId_obj.Id.Length
 					foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
 					{
 						if ($_disk_plots_remaining_obj) {
@@ -2413,6 +2418,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				}				
 			}
 			#
+			
 			## write farmer summary at bottom of disk(s) table
 			if ($_label_disk_id_length -gt 0 -and $_b_process_running_ok -eq $true)
 			{
@@ -2926,6 +2932,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#$_process_total_disks_for_eta = 0
 		foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 		{
+			$_label_disk_id_length = $_disk_UUId_obj.Id.Length
+			#
 			# get size, % progresion and ETA at farm level
 			foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
 			{
@@ -2935,7 +2943,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				else {break}
 				#
 
-				$_label_disk_id_length = $_disk_UUId_obj.Id.Length
+				#$_label_disk_id_length = $_disk_UUId_obj.Id.Length
 				foreach ($_disk_plots_remaining_obj in $_disk_plots_remaining_arr)
 				{
 					if ($_disk_plots_remaining_obj) {

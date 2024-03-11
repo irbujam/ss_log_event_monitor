@@ -14,6 +14,7 @@ function main {
 	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
 	$script:_url_discord = ""
 	$script:_telegram_api_token = ""
+	$script:_telegram_chat_id = ""
 	#
 	$_b_console_disabled = $false
 	####
@@ -54,6 +55,7 @@ function main {
 			{
 				$script:_url_discord = ""
 				$script:_telegram_api_token = ""
+				$script:_telegram_chat_id = ""
 				$script:_individual_farmer_id_arr = $null
 				$Stopwatch.Restart()
 				Clear-Host
@@ -90,6 +92,7 @@ function main {
 						}
 						elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 						elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
+						elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
 						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
 							$_alert_frequency_seconds = [int]$_config[1].toString()
 						}
@@ -1412,6 +1415,7 @@ function fSendTelegramBotNotification ([string]$_io_bot_msg) {
 	$_bot_url = $_host_base_url + $_bot_api_token + $_host_url_endpoint
 	## fetch chat_id for bot alert
 	$_bot_resp = fInvokeTelegramBot $_bot_url $_bot_invoke_method
+	<#
 	$_bot_chat_id = ""
 	foreach ($_chats in $_bot_resp)
 	{
@@ -1424,6 +1428,8 @@ function fSendTelegramBotNotification ([string]$_io_bot_msg) {
 			}
 		}
 	}
+	#>
+	$_bot_chat_id = $script:_telegram_chat_id
 	#
 	## outbound msg url endpoint
 	$_host_url_endpoint = "/sendMessage?chat_id=$($_bot_chat_id)&text=$($_io_bot_msg)"
@@ -1483,6 +1489,26 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 	[void]$_resp_process_state_arr.add($_b_process_running_state)
 
 	return $_resp_process_state_arr
+}
+
+function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_hostname) {
+
+	$_b_resp_ok = $false
+	#
+
+	$_alert_text = $_io_process_type + " is out of sync, Hostname:" + $_io_hostname
+	try {
+		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
+		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+			fSendDiscordNotification  $script:_url_discord $_alert_text
+			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
+			$_b_resp_ok = $_b_bot_msg_sent_ok
+		}
+	}
+	catch {}
+	#
+
+	return $_b_resp_ok
 }
 
 function fCheckGitNewVersion {
