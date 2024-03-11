@@ -26,6 +26,8 @@ function main {
 	$_url_prefix_listener = ""
 	$_b_request_processed = $false
 	#
+	$script:_b_user_refresh = $false
+	#
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$script:_b_first_time = $true
 	#
@@ -37,8 +39,8 @@ function main {
 	[array]$script:_char_arr = @("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")
 	[array]$script:_num_key_arr = @("D1","D2","D3","D4","D5","D6","D7","D8","D9","NumPad1","NumPad2","NumPad3","NumPad4","NumPad5","NumPad6","NumPad7","NumPad8","NumPad9")
 	#
-	$_b_write_process_details_to_console = $false
-	$_b_write_process_summary_to_console = $true
+	$script:_b_write_process_details_to_console = $false
+	$script:_b_write_process_summary_to_console = $true
 	#
 	####
 	
@@ -51,8 +53,9 @@ function main {
 			{
 				$_b_allow_refresh = $true
 			}
-			if ($_b_allow_refresh) 
+			if ($_b_allow_refresh -or $script:_b_user_refresh -eq $true) 
 			{
+				#
 				$script:_url_discord = ""
 				$script:_telegram_api_token = ""
 				$script:_telegram_chat_id = ""
@@ -101,13 +104,13 @@ function main {
 							$_start_up_view = $_config[1].toString().toLower()
 							if ($_start_up_view.IndexOf("s") -eq 0)
 							{
-								$_b_write_process_summary_to_console = $true
-								$_b_write_process_details_to_console = $false
+								$script:_b_write_process_summary_to_console = $true
+								$script:_b_write_process_details_to_console = $false
 							}
 							elseif ($_start_up_view.IndexOf("d") -eq 0)
 							{
-								$_b_write_process_summary_to_console = $false
-								$_b_write_process_details_to_console = $true
+								$script:_b_write_process_summary_to_console = $false
+								$script:_b_write_process_details_to_console = $true
 							}
 						}
 						# get max lenght for host alt name
@@ -166,6 +169,7 @@ function main {
 				if ($_b_console_disabled) {
 					$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task
 					#$_http_listener.Close()	
+					$script:_b_first_time = $false
 				}
 				else{
 					##fWriteDetailDataToConsole $_farmers_ip_arr
@@ -175,7 +179,7 @@ function main {
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					if ($_b_write_process_summary_to_console)
+					if ($script:_b_write_process_summary_to_console)
 					{
 						Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 					}
@@ -183,11 +187,11 @@ function main {
 						Write-Host
 					}
 					Write-Host
-					if ($_b_write_process_details_to_console)
+					if ($script:_b_write_process_details_to_console)
 					{
 						fWriteDetailDataToConsole $_farmers_ip_arr
 					}
-					elseif ($_b_write_process_summary_to_console)
+					elseif ($script:_b_write_process_summary_to_console)
 					{
 						fGetSummaryDataForConsole $_farmers_ip_arr
 					}
@@ -198,8 +202,8 @@ function main {
 					}
 					$script:_b_first_time = $false
 					$_last_display_type_request = fStartCountdownTimer $refreshTimeScaleInSeconds
-					if ($_last_display_type_request.toLower() -eq "summary") { $_b_write_process_summary_to_console = $true; $_b_write_process_details_to_console = $false }
-					elseif ($_last_display_type_request.toLower() -eq "detail") { $_b_write_process_summary_to_console = $false; $_b_write_process_details_to_console = $true }
+					if ($_last_display_type_request.toLower() -eq "summary") { $script:_b_write_process_summary_to_console = $true; $script:_b_write_process_details_to_console = $false }
+					elseif ($_last_display_type_request.toLower() -eq "detail") { $script:_b_write_process_summary_to_console = $false; $script:_b_write_process_details_to_console = $true }
 				}
 				
 				###### Auto refresh
@@ -248,7 +252,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 			Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-			if ($_b_write_process_summary_to_console)
+			if ($script:_b_write_process_summary_to_console)
 			{
 				Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 			}
@@ -257,17 +261,17 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			}
 			Write-Host
 			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) { 
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds)
 					{					
 						$Stopwatch.Restart()
 					}
 					#fWriteDetailDataToConsole $_io_farmers_ip_arr
-					if ($_b_write_process_details_to_console)
+					if ($script:_b_write_process_details_to_console)
 					{
 						fWriteDetailDataToConsole $_farmers_ip_arr
 					}
-					elseif ($_b_write_process_summary_to_console)
+					elseif ($script:_b_write_process_summary_to_console)
 					{
 						fGetSummaryDataForConsole $_farmers_ip_arr
 					}
@@ -298,8 +302,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 								F12 {
 									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
-									$_b_write_process_details_to_console = $true
-									$_b_write_process_summary_to_console = $false
+									$script:_b_write_process_details_to_console = $true
+									$script:_b_write_process_summary_to_console = $false
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									#Write-Host
@@ -317,8 +321,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 								F10 {
 									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
-									$_b_write_process_details_to_console = $false
-									$_b_write_process_summary_to_console = $true
+									$script:_b_write_process_details_to_console = $false
+									$script:_b_write_process_summary_to_console = $true
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									#Write-Host
@@ -788,7 +792,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	#Start-Sleep -Milliseconds 200
 	#Start-Sleep -Seconds 1
 	$_context.Response.Close()
-	
+
+	$script:_b_user_refresh = $true
+
 	return $true 
 }
 
@@ -814,8 +820,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				F12 {
 					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
-					$_b_write_process_details_to_console = $true
-					$_b_write_process_summary_to_console = $false
+					$script:_b_write_process_details_to_console = $true
+					$script:_b_write_process_summary_to_console = $false
 					Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
@@ -830,8 +836,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				F10 {
 					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
-					$_b_write_process_details_to_console = $false
-					$_b_write_process_summary_to_console = $true
+					$script:_b_write_process_details_to_console = $false
+					$script:_b_write_process_summary_to_console = $true
 					Write-Host "Press to toggle views: [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
