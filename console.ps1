@@ -850,7 +850,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				}
 				else
 				{
-					$_process_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+					#$_process_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+					$_process_replot_sector_count_disp = "-"
 				}
 			}
 			$_console_data_log += $_label_spacer + $_process_replot_sector_count_disp
@@ -1238,7 +1239,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		}
 		else
 		{
-			$_all_process_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+			#$_all_process_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+			$_all_process_replot_sector_count_disp = "-"
 		}
 	}
 	$_spacer_length = [int]($_label_process_replot_disks.Length) - $_all_process_replot_sector_count_disp.Length
@@ -2304,7 +2306,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					}
 					else
 					{
-						$_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+						#$_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+						$_replot_sector_count_disp = "-"
 					}
 				}
 				Write-Host $_replot_sector_count_disp -nonewline
@@ -2496,7 +2499,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					}
 					else
 					{
-						$_farm_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+						#$_farm_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+						$_farm_replot_sector_count_disp = "-"
 					}
 				}
 				$_spacer_length = $_label_replot.Length - $_farm_replot_sector_count_disp.Length
@@ -3527,7 +3531,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				}
 				else
 				{
-					$_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+					#$_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+					$_replot_sector_count_disp = "-"
 				}
 			}
 			Write-Host $_replot_sector_count_disp -nonewline
@@ -3717,7 +3722,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				}
 				else
 				{
-					$_farm_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+					#$_farm_replot_sector_count_disp = "-" + "/" + "-" + "/" + "-"
+					$_farm_replot_sector_count_disp = "-"
 				}
 			}
 			$_spacer_length = $_label_replot.Length - $_farm_replot_sector_count_disp.Length
