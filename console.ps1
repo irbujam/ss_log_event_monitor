@@ -4072,7 +4072,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 
 function fDisplayHelp() {
 	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,PWR=Power,Cmpl=Complete,PTiB=Per Plotted TiB,EX=Expired,"
-	$_help_text_2 = "RM=Remain,Est=Estimated"
+	$_help_text_2 = "PL=Plotted,RM=Remain,Est=Estimated"
 	##revert back cursor position to last written summary data
 	#$_current_cursor_position = $host.UI.RawUI.CursorPosition
 	#set cursor for help test display
