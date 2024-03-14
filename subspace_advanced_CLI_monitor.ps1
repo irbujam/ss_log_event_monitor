@@ -44,6 +44,7 @@ function main {
 	#
 	####
 	
+	fResizePSWindow
 	Clear-Host
 	
 	try {
@@ -994,6 +995,19 @@ function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType) {
 		$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
 	}
 	return $dataSpacerLabel
+}
+
+function fResizePSWindow () {
+	$pshost = get-host
+	$pswindow = $pshost.ui.rawui
+	$newsize = $pswindow.buffersize
+	$newsize.height = 3000
+	$newsize.width = 150
+	$pswindow.buffersize = $newsize
+	$newsize = $pswindow.windowsize
+	$newsize.height = 40
+	$newsize.width = 125
+	$pswindow.windowsize = $newsize
 }
 
 function fPingMetricsUrl ([string]$ioUrl) {

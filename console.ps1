@@ -37,7 +37,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta = "ETA   "
 	$_label_process_sector_time = "SCT   "
 	$_label_process_total_sectors_per_hour = "SCT  "
-	$_label_process_total_TiB_per_day = "TiB  "
+	$_label_process_total_TiB_per_day = "  PL TiB  "
 	$_label_process_disks = "  Disks   "
 	$_label_process_replot_disks = "   Replots  "
 	$_label_process_rewards = "          Rewards         "
@@ -57,7 +57,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta_row2 = "      "
 	$_label_process_sector_time_row2 = "Time  "
 	$_label_process_total_sectors_per_hour_row2 = "PH   "
-	$_label_process_total_TiB_per_day_row2 = "PD   "
+	$_label_process_total_TiB_per_day_row2 = "----------"
 	$_label_process_disks_row2 = "----------"
 	$_label_process_replot_disks_row2 = "------------"
 	$_label_process_rewards_row2 = "--------------------------"
@@ -77,7 +77,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta_row3 = "      "
 	$_label_process_sector_time_row3 = "      "
 	$_label_process_total_sectors_per_hour_row3 = "     "
-	$_label_process_total_TiB_per_day_row3 = "     "
+	$_label_process_total_TiB_per_day_row3 = "Tot/PD    "
 	$_label_process_disks_row3 = "#/PL/RM   "
 	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl"
 	$_label_process_rewards_row3 = "Tot/PTiB/PH/Est PD/PTiB PD"
@@ -712,12 +712,18 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 
 
 
+			$_process_plotted_size = "-"
+			#if ($_plotted_size_TiB -ne 0 -and $_plotted_size_TiB -ne "-" -and $_process_total_TiB_per_day_disp -ne "-" -and $_process_total_TiB_per_day_disp -ne 0)
+			#{
+				$_process_plotted_size = $_plotted_size_TiB.ToString() + "/" + $_process_total_TiB_per_day_disp
+			#}
 			#
 			#
 			$_spacer_length = [int]($_label_process_total_sectors_per_hour.Length - $_process_total_sectors_per_hour_disp.Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
-			$_console_data_log += $_label_spacer + $_process_total_TiB_per_day_disp
+			#$_console_data_log += $_label_spacer + $_process_total_TiB_per_day_disp
+			$_console_data_log += $_label_spacer + $_process_plotted_size
 			#
 			$_spacer_length = [int]($_label_process_total_sectors_per_hour.Length - $_label_process_total_sectors_per_hour.Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -734,12 +740,12 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 
 
 
-
 			#
 			#
-			##$_spacer_length = [int]($_label_process_sector_time.Length - $_process_sector_time_disp.Length)
-			#$_spacer_length = [int]($_label_process_total_sectors_per_hour.Length - $_process_total_sectors_per_hour_disp.Length)
-			$_spacer_length = [int]($_label_process_total_TiB_per_day.Length - $_process_total_TiB_per_day_disp.Length)
+			###$_spacer_length = [int]($_label_process_sector_time.Length - $_process_sector_time_disp.Length)
+			##$_spacer_length = [int]($_label_process_total_sectors_per_hour.Length - $_process_total_sectors_per_hour_disp.Length)
+			#$_spacer_length = [int]($_label_process_total_TiB_per_day.Length - $_process_total_TiB_per_day_disp.Length)
+			$_spacer_length = [int]($_label_process_total_TiB_per_day.Length - $_process_plotted_size.Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			$_console_data_log += $_label_spacer + $_process_disks_disp
@@ -1215,9 +1221,17 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = "|" + $_all_process_total_sectors_per_hour_disp + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 
-	$_spacer_length = [int]($_label_process_total_TiB_per_day.Length - $_all_process_total_TiB_per_day_disp.Length)
+	$_all_process_TiB_plotted_aggregate = "-"
+	if ($_all_process_plotted_size_TiB_disp -ne "-" -and $_all_process_plotted_size_TiB_disp -ne 0 -and $_all_process_total_TiB_per_day_disp -ne "-" -and $_all_process_total_TiB_per_day_disp -ne 0)
+	{
+		$_all_process_TiB_plotted_aggregate = $_all_process_plotted_size_TiB_disp.ToString() + "/" + $_all_process_total_TiB_per_day_disp
+	}
+
+	#$_spacer_length = [int]($_label_process_total_TiB_per_day.Length - $_all_process_total_TiB_per_day_disp.Length)
+	$_spacer_length = [int]($_label_process_total_TiB_per_day.Length - $_all_process_TiB_plotted_aggregate.Length)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-	$_label_spacer = "|" + $_all_process_total_TiB_per_day_disp + $_label_spacer
+	#$_label_spacer = "|" + $_all_process_total_TiB_per_day_disp + $_label_spacer
+	$_label_spacer = "|" + $_all_process_TiB_plotted_aggregate + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 
 	$_spacer_length = [int]($_label_process_disks.Length - $_all_process_disks_disp.Length)
@@ -1335,6 +1349,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_diskid = "Disk Id"
 	$_label_size = "Size "
 	$_label_percent_complete = "%    "
+	$_label_size_plotted = "PL TiB"
 	$_label_eta = "ETA   "
 	$_label_replot = "  Replots  "
 	$_label_sectors_per_hour = "SCT  "
@@ -1346,6 +1361,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_diskid_row2 = "       "
 	$_label_size_row2 = "(TiB)"
 	$_label_percent_complete_row2 = "Cmpl "
+	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
 	$_label_replot_row2 = "EX/RM/%Cmpl"
 	$_label_sectors_per_hour_row2 = "PH   "
@@ -1354,8 +1370,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_misses_row2 = "    "
 	#
 	$_spacer = " "
-	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
-	$_total_header_labels = 9
+	#$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
+	#$_total_header_labels = 9
+	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_size_plotted.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
+	$_total_header_labels = 10
 	#
 	for ($arrPos = 0; $arrPos -lt $_io_farmers_ip_arr.Count; $arrPos++)
 	{
@@ -1403,7 +1421,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
-					$_total_spacer_length = ("--------------------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
 					#$_spacer_length = $_total_spacer_length
 					#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1749,7 +1767,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
 			if ($_label_disk_id_length -eq 0)
 			{
-				$_spacer_length = ("--------------------------------------------------------------------------------------").Length - $_process_header_filler_length
+				$_spacer_length = ("---------------------------------------------------------------------------------------------").Length - $_process_header_filler_length
 			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
@@ -1819,7 +1837,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			if ($_label_disk_id_length -eq 0)
 			{
-				$_spacer_length = ("--------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+				$_spacer_length = ("---------------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
@@ -1861,7 +1879,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			## display break-up (disk level) information for a given farm
 			#
-			$_total_spacer_length = ("--------------------------------------------------------------------------------------").Length
+			$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
 			#$_spacer_length = $_total_spacer_length
 			#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 			#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1914,6 +1932,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer -nonewline 
 					Write-Host $_label_percent_complete -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_size_plotted -nonewline -ForegroundColor $_disk_header_color
 
 					$_spacer_length = 0
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1976,6 +2000,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer -nonewline 
 					Write-Host $_label_percent_complete_row2 -nonewline -ForegroundColor $_disk_header_color
+
+					$_spacer_length = 0
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline 
+					Write-Host $_label_size_plotted_row2 -nonewline -ForegroundColor $_disk_header_color
 
 					$_spacer_length = 0
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -2045,6 +2075,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					Write-Host $_label_spacer -nonewline 
 
 					$_spacer_length = $_label_percent_complete.Length
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+					$_label_spacer = "|" + $_label_spacer
+					Write-Host $_label_spacer -nonewline 
+
+					$_spacer_length = $_label_size_plotted.Length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 					$_label_spacer = "|" + $_label_spacer
 					Write-Host $_label_spacer -nonewline 
@@ -2255,7 +2290,21 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						Write-Host $_label_spacer -nonewline
 						Write-Host $_plotting_percent_complete_disp -nonewline
 
+						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
+						$_total_disk_plotted_TiB_disp = "-"
+						if ($_total_disk_plotted_TiB -gt 0)
+						{
+							$_total_disk_plotted_TiB_disp = $_total_disk_plotted_TiB.ToString()
+						}
+
 						$_spacer_length = $_label_percent_complete.Length - $_plotting_percent_complete_disp.Length
+						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+						$_label_spacer = $_label_spacer + "|"
+						Write-Host $_label_spacer -nonewline
+						#Write-Host $_eta_disp -nonewline
+						Write-Host $_total_disk_plotted_TiB_disp -nonewline
+
+						$_spacer_length = $_label_size_plotted.Length - $_total_disk_plotted_TiB_disp.Length
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_label_spacer = $_label_spacer + "|"
 						Write-Host $_label_spacer -nonewline
@@ -2279,6 +2328,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					Write-Host "-" -nonewline
 
 					$_spacer_length = $_label_percent_complete.Length - ("-").Length
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline
+					Write-Host "-" -nonewline
+
+					$_spacer_length = $_label_size_plotted.Length - ("-").Length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer -nonewline
@@ -2437,6 +2492,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				$_label_spacer = "|" + $_label_spacer
 				Write-Host $_label_spacer -nonewline 
+
+				$_spacer_length = $_label_size_plotted.Length
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+				$_label_spacer = "|" + $_label_spacer
+				Write-Host $_label_spacer -nonewline 
+
 				$_spacer_length = $_label_eta.Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				$_label_spacer = "|" + $_label_spacer
@@ -2479,6 +2540,17 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = "|" + $_farm_progress_disp + $_label_spacer
 				Write-Host $_label_spacer -nonewline 
+
+				$_farm_plotted_size_TiB_disp = "-"
+				if ($_farm_plotted_size_TiB -gt 0)
+				{
+					$_farm_plotted_size_TiB_disp = $_farm_plotted_size_TiB.ToString()
+				}
+				$_spacer_length = $_label_size_plotted.Length - $_farm_plotted_size_TiB_disp.Length
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_label_spacer = "|" + $_farm_plotted_size_TiB_disp + $_label_spacer
+				Write-Host $_label_spacer -nonewline 
+
 				$_spacer_length = $_label_eta.Length - $_farm_eta_disp.Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = "|" + $_farm_eta_disp + $_label_spacer
@@ -2620,6 +2692,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_diskid = "Disk Id"
 	$_label_size = "Size "
 	$_label_percent_complete = "%    "
+	$_label_size_plotted = "PL TiB"
 	$_label_eta = "ETA   "
 	$_label_replot = "  Replots  "
 	$_label_sectors_per_hour = "SCT  "
@@ -2632,6 +2705,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_diskid_row2 = "       "
 	$_label_size_row2 = "(TiB)"
 	$_label_percent_complete_row2 = "Cmpl "
+	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
 	$_label_replot_row2 = "EX/RM/%cmpl"
 	$_label_sectors_per_hour_row2 = "PH   "
@@ -2641,8 +2715,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_misses_row2 = "    "
 	#
 	$_spacer = " "
-	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
-	$_total_header_labels = 9
+	#$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
+	#$_total_header_labels = 9
+	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_size_plotted.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
+	$_total_header_labels = 10
 	#
 	$_individual_farmer_metrics_raw = ""
 	[array]$_individual_farmer_state_arr = $null
@@ -2670,7 +2746,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
 		$_b_process_running_ok = $_individual_farmer_state_arr[1]
 		
-		$_total_spacer_length = ("--------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
 		$_spacer_length = $_total_spacer_length - 2
 		#$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
@@ -2983,7 +3059,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
 		if ($_label_disk_id_length -eq 0)
 		{
-			$_spacer_length = ("--------------------------------------------------------------------------------------").Length - $_process_header_filler_length
+			$_spacer_length = ("---------------------------------------------------------------------------------------------").Length - $_process_header_filler_length
 		}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_label_spacer = $_label_spacer + "|"
@@ -3089,7 +3165,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		## display break-up (disk level) information for a given farm
 		#
-		$_total_spacer_length = ("--------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
 		#$_spacer_length = $_total_spacer_length
 		#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 		#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -3141,6 +3217,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer -nonewline 
 				Write-Host $_label_percent_complete -nonewline -ForegroundColor $_disk_header_color
+
+				$_spacer_length = 0
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_label_spacer = $_label_spacer + "|"
+				Write-Host $_label_spacer -nonewline 
+				Write-Host $_label_size_plotted -nonewline -ForegroundColor $_disk_header_color
 
 				$_spacer_length = 0
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -3203,6 +3285,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer -nonewline 
 				Write-Host $_label_percent_complete_row2 -nonewline -ForegroundColor $_disk_header_color
+
+				$_spacer_length = 0
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_label_spacer = $_label_spacer + "|"
+				Write-Host $_label_spacer -nonewline 
+				Write-Host $_label_size_plotted_row2 -nonewline -ForegroundColor $_disk_header_color
 
 				$_spacer_length = 0
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -3272,6 +3360,11 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				Write-Host $_label_spacer -nonewline 
 
 				$_spacer_length = $_label_percent_complete.Length
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+				$_label_spacer = "|" + $_label_spacer
+				Write-Host $_label_spacer -nonewline 
+
+				$_spacer_length = $_label_size_plotted.Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				$_label_spacer = "|" + $_label_spacer
 				Write-Host $_label_spacer -nonewline 
@@ -3480,7 +3573,21 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					Write-Host $_label_spacer -nonewline
 					Write-Host $_plotting_percent_complete_disp -nonewline
 
+					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
+					$_total_disk_plotted_TiB_disp = "-"
+					if ($_total_disk_plotted_TiB -gt 0)
+					{
+						$_total_disk_plotted_TiB_disp = $_total_disk_plotted_TiB.ToString()
+					}
+
 					$_spacer_length = $_label_percent_complete.Length - $_plotting_percent_complete_disp.Length
+					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+					$_label_spacer = $_label_spacer + "|"
+					Write-Host $_label_spacer -nonewline
+					#Write-Host $_eta_disp -nonewline
+					Write-Host $_total_disk_plotted_TiB_disp -nonewline
+
+					$_spacer_length = $_label_size_plotted.Length - $_total_disk_plotted_TiB_disp.Length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer -nonewline
@@ -3504,6 +3611,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				Write-Host "-" -nonewline
 
 				$_spacer_length = $_label_percent_complete.Length - ("-").Length
+				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_label_spacer = $_label_spacer + "|"
+				Write-Host $_label_spacer -nonewline
+				Write-Host "-" -nonewline
+
+				$_spacer_length = $_label_size_plotted.Length - ("-").Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer -nonewline
@@ -3660,6 +3773,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 			$_label_spacer = "|" + $_label_spacer
 			Write-Host $_label_spacer -nonewline 
+
+			$_spacer_length = $_label_size_plotted.Length
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+			$_label_spacer = "|" + $_label_spacer
+			Write-Host $_label_spacer -nonewline 
+
 			$_spacer_length = $_label_eta.Length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 			$_label_spacer = "|" + $_label_spacer
@@ -3702,6 +3821,17 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = "|" + $_farm_progress_disp + $_label_spacer
 			Write-Host $_label_spacer -nonewline 
+
+			$_farm_plotted_size_TiB_disp = "-"
+			if ($_farm_plotted_size_TiB -gt 0)
+			{
+				$_farm_plotted_size_TiB_disp = $_farm_plotted_size_TiB.ToString()
+			}
+			$_spacer_length = $_label_size_plotted.Length - $_farm_plotted_size_TiB_disp.Length
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			$_label_spacer = "|" + $_farm_plotted_size_TiB_disp + $_label_spacer
+			Write-Host $_label_spacer -nonewline 
+
 			$_spacer_length = $_label_eta.Length - $_farm_eta_disp.Length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = "|" + $_farm_eta_disp + $_label_spacer
