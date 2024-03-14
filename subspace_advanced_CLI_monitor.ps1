@@ -503,9 +503,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 				$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
 				$_b_i_was_here = $true
-				#$_process_eta = [math]::Round((([double]($_process_farm_sub_header.MinutesPerSectorAvg) * $_process_farm_sub_header.RemainingSectors)) / ($_process_farm_sub_header.TotalDisksForETA * 60 * 24), 2)
-				#$_process_eta_disp = $_process_eta.toString() + " days"
-				$_process_eta = [double](($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors) / $_process_farm_sub_header.TotalDisksForETA)
+				##$_process_eta = [math]::Round((([double]($_process_farm_sub_header.MinutesPerSectorAvg) * $_process_farm_sub_header.RemainingSectors)) / ($_process_farm_sub_header.TotalDisksForETA * 60 * 24), 2)
+				##$_process_eta_disp = $_process_eta.toString() + " days"
+				#$_process_eta = [double](($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors) / $_process_farm_sub_header.TotalDisksForETA)
+				$_process_eta = [double]($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors)
 				$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 				$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 			}

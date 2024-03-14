@@ -576,7 +576,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 						$_all_process_total_sectors += [int]($_sub_header.TotalSectors)
 						#
 						if ($_sub_header.RemainingSectors -ne "-" -and $_sub_header.SectorTime -ne $null -and $_sub_header.TotalDisksForETA -ne 0) {
-							$_process_eta = [double](($_sub_header.SectorTime * $_sub_header.RemainingSectors) / $_sub_header.TotalDisksForETA)
+							#$_process_eta = [double](($_sub_header.SectorTime * $_sub_header.RemainingSectors) / $_sub_header.TotalDisksForETA)
+							$_process_eta = [double]($_sub_header.SectorTime * $_sub_header.RemainingSectors)
 							$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 							#$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 							$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
