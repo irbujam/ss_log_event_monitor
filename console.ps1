@@ -1384,7 +1384,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	#
 	## header lables
 	$_label_hostname = "Hostname"
-	$_label_diskid = "Disk Id"
+	$_label_diskid = "Plot Id"
 	$_label_size = "Size "
 	$_label_percent_complete = "%    "
 	$_label_size_plotted = "PL TiB"
@@ -2776,7 +2776,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	#
 	# header lables
 	$_label_hostname = "Hostname"
-	$_label_diskid = "Disk Id"
+	$_label_diskid = "Plot Id"
 	$_label_size = "Size "
 	$_label_percent_complete = "%    "
 	$_label_size_plotted = "PL TiB"
