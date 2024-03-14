@@ -1013,7 +1013,12 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width,
 	#$newsize.width = 125
 	#Write-Host "_io_ps_window_height: " $_io_ps_window_height
 	#Write-Host "_io_ps_window_width: " $_io_ps_window_width
-	$newsize.height = $_io_ps_window_height + 8	# accouting for extra rows including function keys & help text line 
+	$_height = $_io_ps_window_height
+	if($_height -gt 50)
+	{
+		$_height = 50
+	}
+	$newsize.height = $_height + 8	# accouting for extra rows including function keys & help text line 
 	$newsize.width = $_io_ps_window_width + 2
 	$pswindow.windowsize = $newsize
 }
