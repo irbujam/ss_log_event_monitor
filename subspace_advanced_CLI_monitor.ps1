@@ -1004,9 +1004,10 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width,
 	$pswindow = $pshost.ui.rawui
 	if ($_io_reset_buffer_size -eq $true)
 	{
+		#Write-Host "here"
 		$newsize = $pswindow.buffersize
 		$newsize.height = 3000
-		$newsize.width = 150
+		$newsize.width = 500
 		$pswindow.buffersize = $newsize
 	}
 	$newsize = $pswindow.windowsize
