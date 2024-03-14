@@ -1,6 +1,11 @@
 
 function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
+	#
+	$_num_rows = 0
+	$_num_cols = 0
+	#
+	#
 	## get process header and disk data
 	$_process_metrics_arr = fGetDataForHtml $_io_process_arr
 	$_process_header_arr = $_process_metrics_arr[0].ProcessHeader
@@ -117,6 +122,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	##$_label_separator_count = 13
 	#$_label_separator_count = 14
 	$_label_separator_count = 15
+	$_num_cols = $_label_total_length + $_label_separator_count
 	#
 	#
 	#$_label_line_separator = "-"
@@ -302,6 +308,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_spacer_length = $_label_line_separator_length_node
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
+				$_num_rows += 1
 				$_spacer_length = [math]::Round(($_label_line_separator_length_node - $_temp_label_.Length)/ 2, 0)
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = "|" + $_line_separator 
@@ -312,20 +319,26 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = $_line_separator + "|"
 				Write-Host $_line_separator -Foregroundcolor $_header_color
+				$_num_rows += 1
 				###
 				$_spacer_length = $_label_line_separator_length_node
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				#Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
 				Write-Host ("|" + $_line_separator + "|") -Foregroundcolor $_header_color
+				$_num_rows += 1
 				#
 				Write-Host $_console_header_log -Foregroundcolor $_header_color
+				$_num_rows += 1
 				Write-Host $_console_header_row2_log -Foregroundcolor $_header_color
+				$_num_rows += 1
 				Write-Host $_console_header_row3_log -Foregroundcolor $_header_color
+				$_num_rows += 1
 				#
 				$_spacer_length = $_label_line_separator_length_node
 				$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				#Write-Host $_line_separator_upper -Foregroundcolor $_header_color
 				Write-Host $_console_header_log_finish_line -Foregroundcolor $_header_color
+				$_num_rows += 1
 				#
 				#Write-Host $_console_data_log
 				Write-Host $_console_data_log_begin -nonewline
@@ -335,6 +348,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_console_data_log_process_sync_state_filler -nonewline 
 				Write-Host $_process_sync_state -nonewline -ForegroundColor $_process_fg_color
 				Write-Host $_console_data_log_end
+				$_num_rows += 1
 				$_b_process_header_printed = $true
 			}
 			else 
@@ -351,6 +365,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_console_data_log_process_sync_state_filler -nonewline 
 				Write-Host $_process_sync_state -nonewline -ForegroundColor $_process_fg_color
 				Write-Host $_console_data_log_end
+				$_num_rows += 1
 			}
 	}
 	#
@@ -358,6 +373,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_spacer_length = $_label_line_separator_length_node
 	$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 	Write-Host ($_spacer + $_line_separator_upper) -Foregroundcolor $_header_color
+	$_num_rows += 1
 	#
 	#
 	##
@@ -952,6 +968,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_spacer_length = $_label_line_separator_length
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
+				$_num_rows += 1
 				$_spacer_length = [math]::Round(($_label_line_separator_length - $_temp_label_.Length)/ 2, 0)
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = "|" + $_line_separator 
@@ -962,6 +979,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_line_separator = $_line_separator + "|"
 				Write-Host $_line_separator -Foregroundcolor $_header_color
+				$_num_rows += 1
 				###
 				#
 				# reserve spot for overall farm process summary line
@@ -980,15 +998,20 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 				#Write-Host ($_spacer + $_line_separator) -Foregroundcolor $_header_color
 				Write-Host ("|" + $_line_separator + "|") -Foregroundcolor $_header_color
+				$_num_rows += 1
 				#
 				Write-Host $_console_header_log -Foregroundcolor $_header_color
+				$_num_rows += 1
 				Write-Host $_console_header_row2_log -Foregroundcolor $_header_color
+				$_num_rows += 1
 				Write-Host $_console_header_row3_log -Foregroundcolor $_header_color
+				$_num_rows += 1
 				#
 				$_spacer_length = $_label_line_separator_length
 				$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				#Write-Host $_line_separator_upper -Foregroundcolor $_header_color
 				Write-Host $_console_header_log_finish_line -Foregroundcolor $_header_color
+				$_num_rows += 1
 				#
 				#Write-Host $_console_data_log
 				Write-Host $_console_data_log_begin -nonewline
@@ -998,6 +1021,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_console_data_log_process_misses_filler -nonewline 
 				Write-Host $_process_misses -nonewline -ForegroundColor $_process_fg_color
 				Write-Host $_console_data_log_end
+				$_num_rows += 1
 				$_b_process_header_printed = $true
 			}
 			else 
@@ -1014,6 +1038,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_console_data_log_process_misses_filler -nonewline 
 				Write-Host $_process_misses -nonewline -ForegroundColor $_process_fg_color
 				Write-Host $_console_data_log_end
+				$_num_rows += 1
 			}
 	}
 	#
@@ -1101,6 +1126,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_console_header_log_finish_line += $_label_spacer
 	#
 	Write-Host $_console_header_log_finish_line
+	$_num_rows += 1
 
 
 	##
@@ -1282,6 +1308,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 	$_label_spacer = "|" + $_label_spacer
 	Write-Host $_label_spacer
+	$_num_rows += 1
 	#
 	# write finish line
 	$_spacer_length = [int]($_label_serial_num.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length + 3)
@@ -1290,6 +1317,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_spacer_length = $_label_line_separator_length - ($_label_serial_num.Length + $_process_alt_name_max_length + $_label_process_state.Length + $_label_process_uptime.Length + 3) - 1
 	$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 	Write-Host ($_spacer + $_line_separator_upper) -Foregroundcolor $_header_color
+	$_num_rows += 1
 	#$_most_recent_CursorPosition = $host.UI.RawUI.CursorPosition
 	#
 	####
@@ -1308,17 +1336,27 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	$_num_rows += 1
 
 
 	## display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
 	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	$_num_rows += 1
 	#echo `n
+	#
+	fResizePSWindow $_num_rows $_num_cols $false
 	#
 }
 
 function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
+	#
+	#
+	$_num_rows = 0
+	$_num_cols = 0
+	#
+	#
 	#$_url_discord = ""
 	#
 	# define color pallete
@@ -1422,6 +1460,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_node_peers_connected = 0
 				if ($_process_type.toLower() -eq "farmer") {
 					$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
+					$_num_cols = $_total_spacer_length + 2		# extra seperators at start & end of line
 					#$_spacer_length = $_total_spacer_length
 					#$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					#Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
@@ -1434,6 +1473,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						#Write-Host $_label_line_separator_upper -nonewline -ForegroundColor $_line_spacer_color
 						#Write-Host ("" + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
 						Write-Host (" " + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
+						$_num_rows += 1
 						$_b_first_farm_process = $false
 					}
 					else
@@ -1448,6 +1488,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 							$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
 							$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 							Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+							$_num_rows += 1
 						}
 						#
 						# write a blank line
@@ -1457,6 +1498,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_spacer_length = $_total_spacer_length - 2
 						$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 						Write-Host (" " + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
+						$_num_rows += 1
 					}
 					#Write-Host ("" + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
 					#echo `n
@@ -1539,6 +1581,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					Write-Host ", " -nonewline
 					Write-Host "Peers:" -nonewline -ForegroundColor $_farmer_header_color
 					Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
+					$_num_rows += 1
 				}
 			}
 			#elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
@@ -1713,6 +1756,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_process_completed_sectors_disp = "-"
 			$_process_remaining_sectors = 0
 			$_process_remaining_sectors_disp = "-"
+			#
+			#
+			$_max_process_remaining_sectors = 0
+			#
+			#
 			$_process_total_sectors = 0
 			$_process_total_sectors_disp = "-"
 			$_process_total_disks = 0
@@ -1753,7 +1801,14 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						
 						$_process_remaining_sectors += $_reminaing_sectors
 						$_process_remaining_sectors_disp = $_process_remaining_sectors
-
+						#
+						#
+						if($_reminaing_sectors -gt $_max_process_remaining_sectors)
+						{
+							$_max_process_remaining_sectors = $_reminaing_sectors
+						}	
+						#
+						#
 						$_process_completed_sectors += $_completed_sectors
 						$_process_completed_sectors_disp = $_process_completed_sectors
 
@@ -1772,10 +1827,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			Write-Host $_label_spacer
+			$_num_rows += 1
 			# hold cursor position for farm level rewards
 			Write-Host "|" -nonewline
 			$_farm_level_rewards_CursorPosition = $host.UI.RawUI.CursorPosition
 			Write-Host ""
+			$_num_rows += 1
 			#
 			## build and display farm level progress and ETA
 			#
@@ -1788,10 +1845,20 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			$_farm_eta = 0
 			$_farm_eta_disp = "-"
-			if ($_process_remaining_sectors -ne 0 -and $_process_total_disks_disp -ne 0) {
-				#$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_disp * 60 * 24), 2)
-				#$_farm_eta_disp = $_farm_eta.toString() + " days"
-				$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
+			#if ($_process_remaining_sectors -ne 0 -and $_process_total_disks_disp -ne 0) {
+			#
+			#
+			if ($_max_process_remaining_sectors -gt 0) {
+			#
+			#
+				##$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_disp * 60 * 24), 2)
+				##$_farm_eta_disp = $_farm_eta.toString() + " days"
+				#$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
+				#
+				#
+				$_farm_eta = [double]($_avg_seconds_per_sector * $_max_process_remaining_sectors)
+				#
+				#
 				$_farm_eta_obj = New-TimeSpan -seconds $_farm_eta
 				#$_farm_eta_disp =  $_farm_eta_obj.days.ToString() + "d " + $_farm_eta_obj.hours.ToString() + "h " + $_farm_eta_obj.minutes.ToString() + "m " 	## + $_farm_eta_obj.seconds.ToString() + "s"
 				$_farm_eta_disp =  fConvertTimeSpanToString $_farm_eta_obj
@@ -1843,6 +1910,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
 			Write-Host $_farm_rewards_disp -nonewline -ForegroundColor $_farmer_header_data_color
 			Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
+			$_num_rows += 1
 			#$_process_header_filler_length += 	("Rewards(Tot/PTiB/PH/Est PD):").Length + $_rewards_total.toString().Length + ("/").Length + $_rewards_per_TiB.toString().Length + ("/").Length + $_rewards_per_hour.Length + 
 			#									("/").Length + $_rewards_per_day_estimated.Length
 			#
@@ -1887,6 +1955,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 			#Write-Host (" " + $_label_spacer + " ") -ForegroundColor $_line_spacer_color
 			Write-Host ("|" + $_label_spacer + "|") -ForegroundColor $_line_spacer_color
+			$_num_rows += 1
 			#
 
 			$_farm_replot_sector_count = 0
@@ -1979,6 +2048,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer
+					$_num_rows += 1
 					#
 					#
 					## header line #2
@@ -2047,6 +2117,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer
+					$_num_rows += 1
 
 					# draw line
 					#if ($_disk_UUId_obj -ne $null) {
@@ -2118,6 +2189,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					Write-Host $_label_spacer
+					$_num_rows += 1
 					#
 					$_b_write_header = $false
 				}
@@ -2453,6 +2525,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					
 					Write-Host $_label_spacer
+					$_num_rows += 1
 					
 					$_b_misses_data_printed = $true
 				}
@@ -2473,6 +2546,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					
 					Write-Host $_label_spacer
+					$_num_rows += 1
 				}				
 			}
 			#
@@ -2526,6 +2600,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer
+				$_num_rows += 1
 				#
 				#
 				$_spacer_length = $_label_disk_id_length + 1
@@ -2622,6 +2697,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer
+				$_num_rows += 1
 			}
 			##
 			#
@@ -2637,6 +2713,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 		$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+		$_num_rows += 1
 	}
 
 	
@@ -2653,17 +2730,27 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	$_num_rows += 1
 
 	##
 	# display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
 	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	$_num_rows += 1
 	#echo `n
+	#
+	fResizePSWindow $_num_rows $_num_cols $false
 	#
 }
 
 function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id, [int]$_io_farmer_serial_num) {
+	#
+	#
+	$_num_rows = 0
+	$_num_cols = 0
+	#
+	#
 	#
 	# define color pallete
 	$_header_color = "white"
@@ -2747,6 +2834,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_b_process_running_ok = $_individual_farmer_state_arr[1]
 		
 		$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
+		$_num_cols = $_total_spacer_length + 2		# extra seperators at start & end of line
 		$_spacer_length = $_total_spacer_length - 2
 		#$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
@@ -2756,6 +2844,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			#Write-Host $_label_line_separator_upper -nonewline -ForegroundColor $_line_spacer_color
 			#Write-Host ("" + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
 			Write-Host (" " + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
+			$_num_rows += 1
 			$_b_first_farm_process = $false
 		}
 		else
@@ -2771,15 +2860,18 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+				$_num_rows += 1
 			}
 			#
 			# write a blank line
 			Write-Host " " -ForegroundColor $_line_spacer_color
+			$_num_rows += 1
 			#
 			# write a line above process header to provide enclosure
 			$_spacer_length = $_total_spacer_length - 2
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 			Write-Host (" " + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
+			$_num_rows += 1
 		}
 		#Write-Host ("" + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
 		
@@ -3005,6 +3097,11 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_process_completed_sectors_disp = "-"
 		$_process_remaining_sectors = 0
 		$_process_remaining_sectors_disp = "-"
+		#
+		#
+		$_max_process_remaining_sectors = 0
+		#
+		#
 		$_process_total_sectors = 0
 		$_process_total_sectors_disp = "-"
 		$_process_total_disks = 0
@@ -3045,6 +3142,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					
 					$_process_remaining_sectors += $_reminaing_sectors
 					$_process_remaining_sectors_disp = $_process_remaining_sectors
+					#
+					#
+					if($_reminaing_sectors -gt $_max_process_remaining_sectors)
+					{
+						$_max_process_remaining_sectors = $_reminaing_sectors
+					}	
+					#
+					#
 
 					$_process_completed_sectors += $_completed_sectors
 					$_process_completed_sectors_disp = $_process_completed_sectors
@@ -3064,10 +3169,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_label_spacer = $_label_spacer + "|"
 		Write-Host $_label_spacer
+		$_num_rows += 1
 		# hold cursor position for farm level rewards
 		Write-Host "|" -nonewline
 		$_farm_level_rewards_CursorPosition = $host.UI.RawUI.CursorPosition
 		Write-Host ""
+		$_num_rows += 1
 		#
 		## build and display farm level progress and ETA
 		#
@@ -3080,10 +3187,20 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		$_farm_eta = 0
 		$_farm_eta_disp = "-"
-		if ($_process_remaining_sectors -ne 0 -and $_process_total_disks_disp -ne 0) {
-			#$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_disp * 60 * 24), 2)
-			#$_farm_eta_disp = $_farm_eta.toString() + " days"
-			$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
+		#if ($_process_remaining_sectors -ne 0 -and $_process_total_disks_disp -ne 0) {
+		#
+		#
+		if ($_max_process_remaining_sectors -gt 0) {
+		#
+		#
+			##$_farm_eta = [math]::Round((([double]($_avg_minutes_per_sector) * $_process_remaining_sectors)) / ($_process_total_disks_disp * 60 * 24), 2)
+			##$_farm_eta_disp = $_farm_eta.toString() + " days"
+			#$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
+			#
+			#
+			$_farm_eta = [double]($_avg_seconds_per_sector * $_max_process_remaining_sectors)
+			#
+			#
 			$_farm_eta_obj = New-TimeSpan -seconds $_farm_eta
 			#$_farm_eta_disp =  $_farm_eta_obj.days.ToString() + "d " + $_farm_eta_obj.hours.ToString() + "h " + $_farm_eta_obj.minutes.ToString() + "m " 	## + $_farm_eta_obj.seconds.ToString() + "s"
 			$_farm_eta_disp =  fConvertTimeSpanToString $_farm_eta_obj
@@ -3135,6 +3252,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
 		Write-Host ($_farm_rewards_disp) -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
+		$_num_rows += 1
 		#Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
 		#Write-Host ($_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated) -ForegroundColor $_farmer_header_data_color
 		#
@@ -3173,6 +3291,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 		#Write-Host (" " + $_label_spacer + " ") -ForegroundColor $_line_spacer_color
 		Write-Host ("|" + $_label_spacer + "|") -ForegroundColor $_line_spacer_color
+		$_num_rows += 1
 
 		$_farm_replot_sector_count = 0
 		$_farm_replot_sector_count_hold = 0
@@ -3264,6 +3383,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer
+				$_num_rows += 1
 				#
 				#
 				## header line #2
@@ -3332,6 +3452,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer
+				$_num_rows += 1
 
 				# draw line
 				#if ($_disk_UUId_obj -ne $null) {
@@ -3403,6 +3524,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				Write-Host $_label_spacer
+				$_num_rows += 1
 				#
 				$_b_write_header = $false
 			}
@@ -3736,6 +3858,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = $_label_spacer + "|"
 				
 				Write-Host $_label_spacer
+				$_num_rows += 1
 				
 				$_b_misses_data_printed = $true
 			}
@@ -3756,7 +3879,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = $_label_spacer + "|"
 				
 				Write-Host $_label_spacer
-			}				
+				$_num_rows += 1
+			}
 		}
 		## write farmer summary at bottom of disk(s) table
 		if ($_label_disk_id_length -gt 0)
@@ -3807,6 +3931,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			Write-Host $_label_spacer
+			$_num_rows += 1
 			#
 			#
 			$_spacer_length = $_label_disk_id_length + 1
@@ -3900,6 +4025,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			Write-Host $_label_spacer
+			$_num_rows += 1
 		}
 		##
 		#
@@ -3914,6 +4040,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_spacer_length =  $_total_header_length + $_total_header_labels - 2	# excluding line under vertical separators
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 		Write-Host $_label_spacer -ForegroundColor $_line_spacer_color
+		$_num_rows += 1
 	}
 	
 	## display latest github version info
@@ -3929,23 +4056,29 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	$_num_rows += 1
 
 
 	## display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
 	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	$_num_rows += 1
 	#echo `n
+	#
+	fResizePSWindow $_num_rows $_num_cols $false
 	#
 }
 
 function fDisplayHelp() {
-	$_help_text = "SCT=Sector,PH/PD=PerHour/Day,PWR=Power,Cmpl=Complete,PTiB=PerPlottedTiB,PL=Plotted,EX=Expired,RM=Remain,Est=Estimated"
+	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,PWR=Power,Cmpl=Complete,PTiB=Per Plotted TiB,EX=Expired,"
+	$_help_text_2 = "RM=Remain,Est=Estimated"
 	##revert back cursor position to last written summary data
 	#$_current_cursor_position = $host.UI.RawUI.CursorPosition
 	#set cursor for help test display
 	#[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
-	Write-Host $_help_text -BackgroundColor black -ForegroundColor darkgray
+	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
+	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 	##revert back cursor position to last written summary data
 	#[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
 }

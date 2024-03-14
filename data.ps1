@@ -113,6 +113,11 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_process_total_sectors_disp = "-"
 			$_process_remaining_sectors = 0
 			$_process_remaining_sectors_disp = "-"
+			#
+			#
+			$_max_process_remaining_sectors = 0
+			#
+			#
 			$_process_total_disks = 0
 			$_process_total_disks_disp = "-"
 			$_process_total_disks_for_eta = 0
@@ -260,7 +265,14 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						
 						$_process_remaining_sectors += $_reminaing_sectors
 						$_process_remaining_sectors_disp = $_process_remaining_sectors
-
+						#
+						#
+						if($_reminaing_sectors -gt $_max_process_remaining_sectors)
+						{
+							$_max_process_remaining_sectors = $_reminaing_sectors
+						}	
+						#
+						#
 						$_process_completed_sectors += $_completed_sectors
 						$_process_completed_sectors_disp = $_process_completed_sectors
 						$_process_total_sectors += $_total_sectors_GiB
@@ -428,7 +440,12 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				SectorTime			= $_farm_sector_times
 				TotalSectors		= $_process_total_sectors_disp
 				CompletedSectors	= $_process_completed_sectors_disp
-				RemainingSectors	= $_process_remaining_sectors_disp
+				#RemainingSectors	= $_process_remaining_sectors_disp
+				#
+				#
+				RemainingSectors	= $_max_process_remaining_sectors
+				#
+				#
 				TotalDisks			= $_process_total_disks_disp
 				TotalDisksForETA	= $_process_total_disks_for_eta
 				TotalRewards		= $_disk_sector_performance_obj.TotalRewards.toString()
