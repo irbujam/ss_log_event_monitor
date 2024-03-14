@@ -2262,7 +2262,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
+						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
 						#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 						if ($_total_sectors_GiB -ne 0) {
@@ -3545,7 +3545,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
+					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
 					#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 					if ($_total_sectors_GiB -ne 0) {
