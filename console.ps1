@@ -1857,7 +1857,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				#$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
 				#
 				#
-				$_farm_eta = [double]($_avg_seconds_per_sector * $_max_process_remaining_sectors)
+				$_farm_eta = [double](($_avg_seconds_per_sector * $_max_process_remaining_sectors) / $_process_total_disks_disp)
 				#
 				#
 				$_farm_eta_obj = New-TimeSpan -seconds $_farm_eta
@@ -3199,7 +3199,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			#$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
 			#
 			#
-			$_farm_eta = [double]($_avg_seconds_per_sector * $_max_process_remaining_sectors)
+			$_farm_eta = [double](($_avg_seconds_per_sector * $_max_process_remaining_sectors) / $_process_total_disks_disp)
 			#
 			#
 			$_farm_eta_obj = New-TimeSpan -seconds $_farm_eta
