@@ -10,8 +10,8 @@ To launch save all files with extension *.ps1  and sample-config.txt file in the
 **Pre-requisites:**
 - Must use subspace advanced CLI release (Feb 15 or later) for the node and farmer
 - Powershell version 5.1 is installed
-- Add --prometheus-listen-on [node-local-ip:port] to your node start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:1111)  
-- Add --prometheus-listen-on [farmer-local-ip:port] to your farmer start-up file, use an available port (example --prometheus-listen-on 192.168.2.251:2222)
+- Add --prometheus-listen-on [node-local-ip:port] to your node start-up file, use an available port and do not reuse any port on same machine (example --prometheus-listen-on 192.168.2.251:1111)  
+- Add --prometheus-listen-on [farmer-local-ip:port] to your farmer start-up file, use an available port and do not reuse any port on same machine (example --prometheus-listen-on 192.168.2.251:2222)
 - Change settings in the config.txt file so that the ip:port are matching to your node and farmer set-up
 
 > To enable web access, do the following:
