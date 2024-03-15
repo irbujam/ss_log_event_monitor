@@ -1347,7 +1347,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_num_rows += 1
 	#echo `n
 	#
-	fResizePSWindow $_num_rows $_num_cols $false
+	fResizePSWindow $_num_rows $_num_cols
 	#
 }
 
@@ -2741,7 +2741,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_num_rows += 1
 	#echo `n
 	#
-	fResizePSWindow $_num_rows $_num_cols $false
+	fResizePSWindow $_num_rows $_num_cols
 	#
 }
 
@@ -4067,7 +4067,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_num_rows += 1
 	#echo `n
 	#
-	fResizePSWindow $_num_rows $_num_cols $false
+	fResizePSWindow $_num_rows $_num_cols
 	#
 }
 

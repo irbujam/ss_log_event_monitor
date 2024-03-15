@@ -998,36 +998,30 @@ function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType) {
 	return $dataSpacerLabel
 }
 
-function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width, [bool]$_io_reset_buffer_size) {
-	
-	$pshost = get-host
-	$pswindow = $pshost.ui.rawui
-	if ($_io_reset_buffer_size -eq $true)
-	{
-		#Write-Host "here"
-		$newsize = $pswindow.buffersize
-		$newsize.height = 3000
-		$newsize.width = 150
-		$pswindow.buffersize = $newsize
-	}
-	$newsize = $pswindow.windowsize
-	#$newsize.height = 40
-	#$newsize.width = 125
-	#Write-Host "_io_ps_window_height: " $_io_ps_window_height
-	#Write-Host "_io_ps_window_width: " $_io_ps_window_width
-	$_height = $_io_ps_window_height
-	if($_height -gt 50)
-	{
-		$_height = 50
-	}
-	$_width = $_io_ps_window_width
-	if($_width -gt 145)
-	{
-		$_width = 145
-	}
-	$newsize.height = $_height + 8	# accouting for extra rows including function keys & help text line 
-	$newsize.width = $_width + 2
-	$pswindow.windowsize = $newsize
+function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
+	$_height = $_io_ps_window_height + 8
+	$_width = $_io_ps_window_width + 2
+	#
+	$_pswindow = $host.ui.rawui
+	$_window  = $_pswindow.WindowSize
+
+	# check user supplied height & width are less than max allowed size
+	if ($_height -gt $_pswindow.MaxPhysicalWindowSize.Height) { $_height = $_pswindow.MaxPhysicalWindowSize.Height }
+	if ($_width -gt $_pswindow.MaxPhysicalWindowSize.Width)	{ $_width = $_pswindow.MaxPhysicalWindowSize.Width }
+
+	# Set window dimensions if smaller than buffer, if not then sthis step will be skipped so we need to set window dimensions later also to cover all scenarios
+	$_buffer  = $_pswindow.BufferSize
+	If ($_buffer.Width -gt $_width ) { $_window.Width = $_width }
+	If ($_buffer.Height -gt $_height ) { $_window.Height = $_height }
+
+	# initial resizing if needed
+	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_window.Width,$_window.Height)
+
+	# Set the Buffer
+	$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.size($_width,3000)
+
+	# Now set the WindowSize
+	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_width,$_height)
 }
 
 function fPingMetricsUrl ([string]$ioUrl) {
