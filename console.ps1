@@ -541,6 +541,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_plotted_size_TiB = 0
 			$_overall_progress = "-"
 			$_process_eta_disp = "-"
+			#
+			$_all_process_eta = 0
+			$_all_process_eta_disp = "-"
+			#
 			$_process_sector_time_disp = "-"
 			$_process_total_sectors_per_hour_disp = "-"
 			$_process_total_TiB_per_day = 0
@@ -564,10 +568,12 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 					#
 					if ($_sub_header.TotalSectors -ne "-")
 					{
-						#$_process_size_TiB = ([math]::Ceiling(([int]($_sub_header.TotalSectors) / 1000) * 10) / 10).ToString() + "TiB"
-						#$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString() + "TiB"
-						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString()
-						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) / 1000, 1)).ToString()
+						##$_process_size_TiB = ([math]::Ceiling(([int]($_sub_header.TotalSectors) / 1000) * 10) / 10).ToString() + "TiB"
+						##$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString() + "TiB"
+						#$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString()
+						#$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) / 1000, 1)).ToString()
+						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / $script:_TiB_to_GiB_converter, 1)).ToString()
+						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) / $script:_TiB_to_GiB_converter, 1)).ToString()
 						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
 						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
 						#
@@ -581,6 +587,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 							#$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 							$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
+							
+							if ($_process_eta -gt $_all_process_eta)
+							{
+								$_all_process_eta = $_process_eta
+								$_all_process_eta_disp = $_process_eta_disp
+							}
+							
 							#
 							#$_process_sector_time = New-TimeSpan -seconds ($_sub_header.SectorTime / $_sub_header.TotalDisksForETA)
 							$_temp_sector_time_per_farm = $_sub_header.SectorTime / $_sub_header.TotalDisksForETA
@@ -593,7 +606,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							{
 								$_process_total_sectors_per_hour = [math]::Round(3600 / $_temp_sector_time_per_farm, 1)
 								$_process_total_sectors_per_hour_disp = $_process_total_sectors_per_hour.toString()
-								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / 1000) * 24, 1)
+								#$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / 1000) * 24, 1)
+								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / $script:_TiB_to_GiB_converter) * 24, 1)
 								$_process_total_TiB_per_day_disp = $_process_total_TiB_per_day.toString()
 							}
 						}
@@ -1132,8 +1146,11 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 
 	##
 	### write overall farm process summary line at previously reserved spot
-	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / 1000, 1))
-	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB / 1000, 1))
+	#$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / 1000, 1))
+	#$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB / 1000, 1))
+	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / $script:_TiB_to_GiB_converter, 1))
+	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB / $script:_TiB_to_GiB_converter, 1))
+
 	if ($_all_process_total_sectors -gt 0)
 	{
 		$_all_process_progress_disp = ([math]::Round(($_all_process_completed_sectors / $_all_process_total_sectors) * 100, 1)).toString() + "%"
@@ -1155,7 +1172,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	{
 		$_all_process_total_sectors_per_hour = [math]::Round(3600 / $_all_process_sector_time, 1)
 		$_all_process_total_sectors_per_hour_disp = $_all_process_total_sectors_per_hour.toString()
-		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour / 1000) * 24, 1)
+		#$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour / 1000) * 24, 1)
+		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour / $script:_TiB_to_GiB_converter) * 24, 1)
 		$_all_process_total_TiB_per_day_disp = $_all_process_total_tiB_per_day.toString()
 	}
 	## farm aggregate rewards
@@ -1233,9 +1251,11 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = "|" + $_all_process_progress_disp + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 
-	$_spacer_length = [int]($_label_process_eta.Length)
+	#$_spacer_length = [int]($_label_process_eta.Length)
+	$_spacer_length = [int]($_label_process_eta.Length - $_all_process_eta_disp.Length)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-	$_label_spacer = "|" + $_label_spacer
+	#$_label_spacer = "|" + $_label_spacer
+	$_label_spacer = "|" + $_all_process_eta_disp + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 
 	$_spacer_length = [int]($_label_process_sector_time.Length - $_all_process_sector_time_disp.Length)
@@ -1872,11 +1892,13 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_farm_size_disp = "-"
 			if ($_process_total_sectors_disp -ne "-") {
 				$_farm_plotted_size = [int]($_process_completed_sectors)
-				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
+				#$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
+				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / $script:_TiB_to_GiB_converter, 1)
 				#
 				$_farm_size = [int]($_process_total_sectors)
 				#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
-				$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
+				#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
+				$_farm_size_TiB = [math]::Round($_farm_size / $script:_TiB_to_GiB_converter, 1)
 				$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 			}
 			#
@@ -2335,7 +2357,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
+						#$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
+						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / $script:_TiB_to_GiB_converter, 1)
 						#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 						if ($_total_sectors_GiB -ne 0) {
@@ -2363,7 +2386,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						Write-Host $_label_spacer -nonewline
 						Write-Host $_plotting_percent_complete_disp -nonewline
 
-						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
+						#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
+						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / $script:_TiB_to_GiB_converter, 1)
 						$_total_disk_plotted_TiB_disp = "-"
 						if ($_total_disk_plotted_TiB -gt 0)
 						{
@@ -2676,11 +2700,13 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 
 				##Write-Host "Rewards(Tot/PTiB/PH/Est PD/PTiB PD):" -nonewline -ForegroundColor $_farmer_header_color
 				#$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated
-				#$_spacer_length = $_label_rewards.Length - $_farm_rewards_disp.Length
-				$_spacer_length = $_label_rewards.Length
+				##$_spacer_length = $_label_rewards.Length - $_farm_rewards_disp.Length
+				#$_spacer_length = $_label_rewards.Length
+				$_spacer_length = $_label_rewards.Length - $_rewards_total.toString().Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-				#$_label_spacer = "|" + $_farm_rewards_disp + $_label_spacer
-				$_label_spacer = "|" + $_label_spacer
+				##$_label_spacer = "|" + $_farm_rewards_disp + $_label_spacer
+				#$_label_spacer = "|" + $_label_spacer
+				$_label_spacer = "|" + $_rewards_total.toString() + $_label_spacer
 				Write-Host $_label_spacer -nonewline 
 				#
 				$_farm_misses_count_data_color = $_fg_color_white
@@ -3214,11 +3240,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_farm_size_disp = "-"
 		if ($_process_total_sectors_disp -ne "-") {
 			$_farm_plotted_size = [int]($_process_completed_sectors)
-			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
+			#$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
+			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / $script:_TiB_to_GiB_converter, 1)
 			#
 			$_farm_size = [int]($_process_total_sectors)
 			#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
-			$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
+			#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
+			$_farm_size_TiB = [math]::Round($_farm_size / $script:_TiB_to_GiB_converter, 1)
 			$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 		}
 		#
@@ -3668,7 +3696,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
+					#$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
+					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / $script:_TiB_to_GiB_converter, 1)
 					#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 					if ($_total_sectors_GiB -ne 0) {
@@ -3696,7 +3725,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					Write-Host $_label_spacer -nonewline
 					Write-Host $_plotting_percent_complete_disp -nonewline
 
-					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
+					#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
+					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / $script:_TiB_to_GiB_converter, 1)
 					$_total_disk_plotted_TiB_disp = "-"
 					if ($_total_disk_plotted_TiB -gt 0)
 					{
@@ -4004,11 +4034,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 
 			##Write-Host "Rewards(Tot/PTiB/PH/Est PD):" -nonewline -ForegroundColor $_farmer_header_color
 			#$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour + "/" + $_rewards_per_day_estimated
-			#$_spacer_length = $_label_rewards.Length - $_farm_rewards_disp.Length
-			$_spacer_length = $_label_rewards.Length
+			##$_spacer_length = $_label_rewards.Length - $_farm_rewards_disp.Length
+			#$_spacer_length = $_label_rewards.Length
+			$_spacer_length = $_label_rewards.Length - $_rewards_total.toString().Length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-			#$_label_spacer = "|" + $_farm_rewards_disp + $_label_spacer
-			$_label_spacer = "|" + $_label_spacer
+			##$_label_spacer = "|" + $_farm_rewards_disp + $_label_spacer
+			#$_label_spacer = "|" + $_label_spacer
+			$_label_spacer = "|" + $_rewards_total.toString() + $_label_spacer
 			Write-Host $_label_spacer -nonewline 
 			#
 			$_farm_misses_count_data_color = $_fg_color_white

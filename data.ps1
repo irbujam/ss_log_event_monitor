@@ -278,7 +278,9 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						$_process_total_sectors += $_total_sectors_GiB
 						$_process_total_sectors_disp = $_process_total_sectors
 						
-						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
+						#$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
+						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / $script:_TiB_to_GiB_converter, 2)
+
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 						if ($_total_sectors_GiB -ne 0) {
 							$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
