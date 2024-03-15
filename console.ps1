@@ -2735,7 +2735,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	}
 	#
 	# draw finish line
-	if ($_label_disk_id_length -gt 0 -and $_b_process_running_ok -eq $true)
+	#if ($_label_disk_id_length -gt 0 -and $_b_process_running_ok -eq $true)
+	if ($_label_disk_id_length -gt 0)
 	{
 		$_spacer_length = $_label_disk_id_length + 1
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
