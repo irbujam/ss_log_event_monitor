@@ -1002,14 +1002,14 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width,
 	
 	$pshost = get-host
 	$pswindow = $pshost.ui.rawui
-	#if ($_io_reset_buffer_size -eq $true)
-	#{
+	if ($_io_reset_buffer_size -eq $true)
+	{
 		#Write-Host "here"
 		$newsize = $pswindow.buffersize
 		$newsize.height = 3000
-		$newsize.width = $_io_ps_window_width + 10
+		$newsize.width = 150
 		$pswindow.buffersize = $newsize
-	#}
+	}
 	$newsize = $pswindow.windowsize
 	#$newsize.height = 40
 	#$newsize.width = 125
@@ -1019,6 +1019,11 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width,
 	if($_height -gt 50)
 	{
 		$_height = 50
+	}
+	$_width = $_io_ps_window_width
+	if($_width -gt 145)
+	{
+		$_width = 145
 	}
 	$newsize.height = $_height + 8	# accouting for extra rows including function keys & help text line 
 	$newsize.width = $_io_ps_window_width + 2
