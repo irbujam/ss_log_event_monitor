@@ -16,7 +16,10 @@ function main {
 	$script:_telegram_api_token = ""
 	$script:_telegram_chat_id = ""
 	#
+	$script:_piece_cache_size_percent = 0		# default to 0 if no user specified value
 	$script:_TiB_to_GiB_converter = 1024
+	$script:_sector_size_GiB = 0.9843112		# sector size for 1000 pieces (current default) is 1056896064 bytes
+	$script:_mulitplier_size_converter = 1 
 	#
 	$_b_console_disabled = $false
 	####
@@ -99,6 +102,7 @@ function main {
 						elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 						elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 						elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
+						elseif ($_process_type.toLower().IndexOf("piece_cache_size") -ge 0) { $_piece_cache_size_text = [int](fExtractTextFromString $_config[1].toString() "%") }
 						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
 							$_alert_frequency_seconds = [int]$_config[1].toString()
 						}
@@ -134,6 +138,12 @@ function main {
 				}
 				# check if alert frequency was provided in config and if not default to aut-refresh frequency 
 				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null -or $_alert_frequency_seconds -lt $refreshTimeScaleInSeconds) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
+				#
+				# set piece_cache_size to user input or to default as needed
+				if ($_piece_cache_size_text -eq "" -or $_piece_cache_size_text.Length -le 0) { $script:_piece_cache_size_percent = 0 }
+				else { $script:_piece_cache_size_percent = [int]($_piece_cache_size_text) }
+				# set size multiplier
+				$script:_mulitplier_size_converter = $script:_sector_size_GiB / (1 - ($script:_piece_cache_size_percent * 0.01))
 				#
 				### Check if API mode enabled and we have a host
 				#
@@ -514,7 +524,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
 			#$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
-			$_process_size_TiB = [math]::Round($_process_size / $script:_TiB_to_GiB_converter, 2)
+			$_process_size_TiB = [math]::Round($_process_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 
 			$_process_size_disp = $_process_size_TiB.ToString()
 		}
@@ -1000,6 +1010,13 @@ function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType) {
 		$dataSpacerLabel = $dataSpacerLabel + $ioSpaceType
 	}
 	return $dataSpacerLabel
+}
+
+function fExtractTextFromString([string]$_io_source_str, [string]$_delimiter){
+	$_return_text = ""
+	$iPos = $_io_source_str.IndexOf($_delimiter)
+	$_return_text = $_io_source_str.SubString(0,$iPos)
+	return $_return_text
 }
 
 function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {

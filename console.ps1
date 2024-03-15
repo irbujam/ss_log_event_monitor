@@ -572,8 +572,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 						##$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString() + "TiB"
 						#$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / 1000, 1)).ToString()
 						#$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) / 1000, 1)).ToString()
-						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) / $script:_TiB_to_GiB_converter, 1)).ToString()
-						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) / $script:_TiB_to_GiB_converter, 1)).ToString()
+						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)).ToString()
+						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)).ToString()
 						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
 						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
 						#
@@ -607,7 +607,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 								$_process_total_sectors_per_hour = [math]::Round(3600 / $_temp_sector_time_per_farm, 1)
 								$_process_total_sectors_per_hour_disp = $_process_total_sectors_per_hour.toString()
 								#$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / 1000) * 24, 1)
-								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour / $script:_TiB_to_GiB_converter) * 24, 1)
+								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 1)
 								$_process_total_TiB_per_day_disp = $_process_total_TiB_per_day.toString()
 							}
 						}
@@ -1148,8 +1148,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	### write overall farm process summary line at previously reserved spot
 	#$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / 1000, 1))
 	#$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB / 1000, 1))
-	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB / $script:_TiB_to_GiB_converter, 1))
-	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB / $script:_TiB_to_GiB_converter, 1))
+	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1))
+	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1))
 
 	if ($_all_process_total_sectors -gt 0)
 	{
@@ -1173,7 +1173,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		$_all_process_total_sectors_per_hour = [math]::Round(3600 / $_all_process_sector_time, 1)
 		$_all_process_total_sectors_per_hour_disp = $_all_process_total_sectors_per_hour.toString()
 		#$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour / 1000) * 24, 1)
-		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour / $script:_TiB_to_GiB_converter) * 24, 1)
+		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 1)
 		$_all_process_total_TiB_per_day_disp = $_all_process_total_tiB_per_day.toString()
 	}
 	## farm aggregate rewards
@@ -1367,7 +1367,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_num_rows += 1
 	#echo `n
 	#
+	#$_last_cursor_position = $host.UI.RawUI.CursorPosition
 	fResizePSWindow $_num_rows $_num_cols
+	#[Console]::SetCursorPosition(0, 0)
+	#[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
 }
 
@@ -1893,12 +1896,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			if ($_process_total_sectors_disp -ne "-") {
 				$_farm_plotted_size = [int]($_process_completed_sectors)
 				#$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
-				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / $script:_TiB_to_GiB_converter, 1)
+				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 				#
 				$_farm_size = [int]($_process_total_sectors)
 				#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
 				#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
-				$_farm_size_TiB = [math]::Round($_farm_size / $script:_TiB_to_GiB_converter, 1)
+				$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 				$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 			}
 			#
@@ -2358,7 +2361,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 						#$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
-						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / $script:_TiB_to_GiB_converter, 1)
+						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 						#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 						if ($_total_sectors_GiB -ne 0) {
@@ -2387,7 +2390,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						Write-Host $_plotting_percent_complete_disp -nonewline
 
 						#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
-						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / $script:_TiB_to_GiB_converter, 1)
+						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 						$_total_disk_plotted_TiB_disp = "-"
 						if ($_total_disk_plotted_TiB -gt 0)
 						{
@@ -2767,7 +2770,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_num_rows += 1
 	#echo `n
 	#
+	$_last_cursor_position = $host.UI.RawUI.CursorPosition
 	fResizePSWindow $_num_rows $_num_cols
+	[Console]::SetCursorPosition(0, 0)
+	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
 }
 
@@ -3241,12 +3247,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		if ($_process_total_sectors_disp -ne "-") {
 			$_farm_plotted_size = [int]($_process_completed_sectors)
 			#$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / 1000, 1)
-			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size / $script:_TiB_to_GiB_converter, 1)
+			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 			#
 			$_farm_size = [int]($_process_total_sectors)
 			#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 2)
 			#$_farm_size_TiB = [math]::Round($_farm_size / 1000, 1)
-			$_farm_size_TiB = [math]::Round($_farm_size / $script:_TiB_to_GiB_converter, 1)
+			$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 			$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 		}
 		#
@@ -3697,7 +3703,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 					#$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 1)
-					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / $script:_TiB_to_GiB_converter, 1)
+					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 					#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 					if ($_total_sectors_GiB -ne 0) {
@@ -3726,7 +3732,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					Write-Host $_plotting_percent_complete_disp -nonewline
 
 					#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
-					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / $script:_TiB_to_GiB_converter, 1)
+					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
 					$_total_disk_plotted_TiB_disp = "-"
 					if ($_total_disk_plotted_TiB -gt 0)
 					{
@@ -4099,7 +4105,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_num_rows += 1
 	#echo `n
 	#
+	$_last_cursor_position = $host.UI.RawUI.CursorPosition
 	fResizePSWindow $_num_rows $_num_cols
+	[Console]::SetCursorPosition(0, 0)
+	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
 }
 

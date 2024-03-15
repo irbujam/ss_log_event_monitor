@@ -67,5 +67,14 @@ Farmer : 192.168.2.203:8181 : ryz-3600
 Farmer : 192.168.2.105:8181: ryz-7900x
 
 #-------------------------------------------------------------------------------------------------------------------------
+# Account for reserved disk space for piece_cache in total space allocated for the farm
+#
+# Supplied initial value is 1% assuming it is the currently reserved space for piece_cache, of the total space allocated
+# If no value is provided the default is 0%, meaning farm size displayed is without piece_cache reserved space allocation
+#-------------------------------------------------------------------------------------------------------------------------
+
+piece_cache_size: 1%
+
+#-------------------------------------------------------------------------------------------------------------------------
 #
 ## end of config file
