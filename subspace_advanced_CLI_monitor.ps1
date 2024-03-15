@@ -16,6 +16,8 @@ function main {
 	$script:_telegram_api_token = ""
 	$script:_telegram_chat_id = ""
 	#
+	$script:_TiB_to_GiB_converter = 1024
+	#
 	$_b_console_disabled = $false
 	####
 	$_b_listener_running = $false
@@ -511,7 +513,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
-			$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
+			#$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
+			$_process_size_TiB = [math]::Round($_process_size / $script:_TiB_to_GiB_converter, 2)
+
 			$_process_size_disp = $_process_size_TiB.ToString()
 		}
 
@@ -1003,24 +1007,20 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width)
 	$_width = $_io_ps_window_width + 2
 	#
 	$_pswindow = $host.ui.rawui
-	$_window  = $_pswindow.WindowSize
-
-	# check user supplied height & width are less than max allowed size
+	# check user supplied height & width are less than max allowed size, resize to max allowed if needed
 	if ($_height -gt $_pswindow.MaxPhysicalWindowSize.Height) { $_height = $_pswindow.MaxPhysicalWindowSize.Height }
 	if ($_width -gt $_pswindow.MaxPhysicalWindowSize.Width)	{ $_width = $_pswindow.MaxPhysicalWindowSize.Width }
 
-	# Set window dimensions if smaller than buffer, if not then sthis step will be skipped so we need to set window dimensions later also to cover all scenarios
+	# Set window dimensions if smaller than buffer, if not then this step will be skipped so we need to set window dimensions later also to cover all scenarios
+	$_window  = $_pswindow.WindowSize
 	$_buffer  = $_pswindow.BufferSize
 	If ($_buffer.Width -gt $_width ) { $_window.Width = $_width }
 	If ($_buffer.Height -gt $_height ) { $_window.Height = $_height }
 
-	# initial resizing if needed
+	# if window is smaller than buffer, resize window
 	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_window.Width,$_window.Height)
-
-	# Set the Buffer
+	# buffer resize, follwed by window resize 
 	$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.size($_width,3000)
-
-	# Now set the WindowSize
 	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_width,$_height)
 }
 
