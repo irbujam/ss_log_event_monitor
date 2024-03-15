@@ -1,6 +1,6 @@
 # subspace monitoring powershell script
 A simple to run and lightweight windows powershell script that captures live information from subspace advanced CLI farmer and node metrics endpoint (farmer and node themselves can run on any OS).
-To launch save all files with extension *.ps1  and sample-config.txt file in the same folder on a local computer, copy contents of sample-config.txt to a new file and name it config.txt. adjust config to your needs and run subspace_advanced_CLI_monitor.ps1 file. Ensure that you have read the pre-requisites below.
+To launch save all files with extension *.ps1  and sample-config.txt file in the same folder on a local computer, copy contents of sample-config.txt to a new file and name it config.txt. Adjust config to your needs and run subspace_advanced_CLI_monitor.ps1 file. Ensure that you have read the pre-requisites below.
 
 <img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="410" height="240" /><img src="https://github.com/irbujam/images/blob/main/detail.PNG" width="410" height="240" />
     
