@@ -1269,7 +1269,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_console_header_log_finish_line += $_label_spacer
 
 	$_all_process_TiB_plotted_aggregate = "-"
-	if ($_all_process_plotted_size_TiB_disp -ne "-" -and $_all_process_plotted_size_TiB_disp -ne 0 -and $_all_process_total_TiB_per_day_disp -ne "-" -and $_all_process_total_TiB_per_day_disp -ne 0)
+	#if ($_all_process_plotted_size_TiB_disp -ne "-" -and $_all_process_plotted_size_TiB_disp -ne 0 -and $_all_process_total_TiB_per_day_disp -ne "-" -and $_all_process_total_TiB_per_day_disp -ne 0)
+	if ($_all_process_plotted_size_TiB_disp -ne "-" -and $_all_process_plotted_size_TiB_disp -ne 0)
 	{
 		$_all_process_TiB_plotted_aggregate = $_all_process_plotted_size_TiB_disp.ToString() + "/" + $_all_process_total_TiB_per_day_disp
 	}
