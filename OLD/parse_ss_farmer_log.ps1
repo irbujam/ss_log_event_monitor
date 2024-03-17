@@ -717,7 +717,10 @@ function main {
 				if ($plotSpeedByDiskArr[$arrPos] -gt 0) {
 					$sectorPlotRate = [math]::Round(($sectorCountByDiskArr[$arrPos] * 3600) / $plotSpeedByDiskArr[$arrPos], 1)
 					$minutesPerSector = [math]::Round($plotSpeedByDiskArr[$arrPos] / ($sectorCountByDiskArr[$arrPos] * 60), 1)
-					$secondsPerSector = $plotSpeedByDiskArr[$arrPos] / $sectorCountByDiskArr[$arrPos]
+					if ($sectorCountByDiskArr[$arrPos] -gt 0)
+					{
+						$secondsPerSector = $plotSpeedByDiskArr[$arrPos] / $sectorCountByDiskArr[$arrPos]
+					}
 					$plottingRate = [math]::Round(($sectorPlotRate * $singleSectorSize) / 60 , 1)
 					#
 					#$avgSectorPerMinute = $avgSectorPerMinute + $sectorPlotRate
