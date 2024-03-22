@@ -5,7 +5,8 @@ To launch save all files with extension *.ps1  and sample-config.txt file in the
 <img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="410" height="240" /><img src="https://github.com/irbujam/images/blob/main/detail.PNG" width="410" height="240" />
     
 
-> Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually (just needs little time for data to show up in the metrics endpoint after restart)
+> Note: If you recently restarted Farmer please wait for few minutes and the metrics will show eventually
+>         Tip: To validate prometheus-listen-on endpoints defined in node & farmer start-up files are working correctly, use a web browser and check data is populated at endpoints - http://node-local-ip:port/metrics & http://farmer-local-ip:port/metrics
 
 **Pre-requisites:**
 - Must use subspace advanced CLI release (Feb 15 or later) for the node and farmer
