@@ -45,7 +45,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day = "  PL TiB  "
 	$_label_process_disks = "  Plots   "
 	$_label_process_replot_disks = "   Replots  "
-	$_label_process_rewards = "          Rewards         "
+	$_label_process_rewards = "           Rewards          "
 	$_label_process_misses = "Miss"
 	# node extra columns
 	$_label_process_sync_status = "Synced"
@@ -65,7 +65,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day_row2 = "----------"
 	$_label_process_disks_row2 = "----------"
 	$_label_process_replot_disks_row2 = "------------"
-	$_label_process_rewards_row2 = "--------------------------"
+	$_label_process_rewards_row2 = "----------------------------"
 	$_label_process_misses_row2 = "    "
 	# node extra columns
 	$_label_process_sync_status_row2 = "      "
@@ -85,7 +85,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day_row3 = "Tot/PD    "
 	$_label_process_disks_row3 = "#/Cmpl/RM "
 	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl"
-	$_label_process_rewards_row3 = "Tot/PTiB/PH/Est PD/PTiB PD"
+	$_label_process_rewards_row3 = "Tot/PPTiB/PH/Est PD/PPTiB PD"
 	$_label_process_misses_row3 = "    "
 	# node extra columns
 	$_label_process_sync_status_row3 = "      "
@@ -1354,7 +1354,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		$_gitVersionDispColor = $_html_green
 	}
 	
-	fDisplayHelp
+	fDisplayHelpSummary
 	#Write-Host
 	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
 	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
@@ -1926,7 +1926,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 1)
 				}
 			}
-			$_farm_rewards_disp_label = "Rewards(Tot/PTiB/PH/Est PD/PTiB PD):"
+			$_farm_rewards_disp_label = "Rewards(Tot/PPTiB/PH/Est PD/PPTiB PD):"
 			$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			if ($_label_disk_id_length -eq 0)
@@ -3278,7 +3278,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 1)
 			}
 		}
-		$_farm_rewards_disp_label = "Rewards(Tot/PTiB/PH/Est PD/PTiB PD):"
+		$_farm_rewards_disp_label = "Rewards(Tot/PPTiB/PH/Est PD/PPTiB PD):"
 		$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 		if ($_label_disk_id_length -eq 0)
@@ -4114,15 +4114,16 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	#
 }
 
-function fDisplayHelp() {
-	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,PWR=Power,Cmpl=Complete,PTiB=Per Plotted TiB,EX=Expired,"
-	$_help_text_2 = "PL=Plotted,RM=Remain,Est=Estimated"
-	##revert back cursor position to last written summary data
-	#$_current_cursor_position = $host.UI.RawUI.CursorPosition
-	#set cursor for help test display
-	#[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
+function fDisplayHelpSummary() {
+	$_help_text_1 = "PWR=Power,SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,EX=Expired Sectors,"
+	$_help_text_2 = "RM=Remaining Sectors,Est=Estimated"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
-	##revert back cursor position to last written summary data
-	#[Console]::SetCursorPosition($_current_cursor_position.X, $_current_cursor_position.Y)
+}
+
+function fDisplayHelp() {
+	$_help_text_1 = "PWR=Power,SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,"
+	$_help_text_2 = "PL=Plotted,EX=Expired Sectors,RM=Remaining Sectors,Est=Estimated"
+	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
+	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }

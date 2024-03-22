@@ -1290,15 +1290,71 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 			}
 		}
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		##elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		#{
+		#	$_uptime_seconds = $_metrics_obj.Value
+		#	$_unique_farm_id = $_metrics_obj.Instance
+		#	$_farm_id_info = [PSCustomObject]@{
+		#		Id		= $_unique_farm_id
+		#	}
+		#	$_resp_UUId_arr += $_farm_id_info
+		#}
 		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		{
-			$_uptime_seconds = $_metrics_obj.Value
+			$_uptime_value_int_ = [int]($_metrics_obj.Value)
+			if ($_uptime_seconds -lt $_uptime_value_int_)
+			{
+				$_uptime_seconds = $_uptime_value_int_
+			}
 			$_unique_farm_id = $_metrics_obj.Instance
 			$_farm_id_info = [PSCustomObject]@{
 				Id		= $_unique_farm_id
 			}
-			$_resp_UUId_arr += $_farm_id_info
+			#
+			$_b_add_UUId_arr_id = $true
+			for ($_h = 0; $_h -lt $_resp_UUId_arr.count; $_h++)
+			{
+				if ($_resp_UUId_arr[$_h]) {
+					if ($_unique_farm_id -eq $_resp_UUId_arr[$_h].Id)
+					{
+						$_b_add_UUId_arr_id = $false
+						break
+					}
+				}
+			}
+			if ($_b_add_UUId_arr_id)
+			{
+				$_resp_UUId_arr += $_farm_id_info
+			}
+		}
+		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		{
+			$_uptime_value_int_ = [int]($_metrics_obj.Value)
+			if ($_uptime_seconds -lt $_uptime_value_int_)
+			{
+				$_uptime_seconds = $_uptime_value_int_
+			}
+			$_unique_farm_id = $_metrics_obj.Instance
+			$_farm_id_info = [PSCustomObject]@{
+				Id		= $_unique_farm_id
+			}
+			#
+			$_b_add_UUId_arr_id = $true
+			for ($_h = 0; $_h -lt $_resp_UUId_arr.count; $_h++)
+			{
+				if ($_resp_UUId_arr[$_h]) {
+					if ($_unique_farm_id -eq $_resp_UUId_arr[$_h].Id)
+					{
+						$_b_add_UUId_arr_id = $false
+						break
+					}
+				}
+			}
+			if ($_b_add_UUId_arr_id)
+			{
+				$_resp_UUId_arr += $_farm_id_info
+			}
 		}
 		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
 		{
