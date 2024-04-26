@@ -1012,11 +1012,160 @@ function fBuildDynamicSpacer ([int]$ioSpacerLength, [string]$ioSpaceType) {
 	return $dataSpacerLabel
 }
 
-function fExtractTextFromString([string]$_io_source_str, [string]$_delimiter){
+function fExtractTextFromString([string]$_io_source_str, [string]$_delimiter) {
 	$_return_text = ""
 	$iPos = $_io_source_str.IndexOf($_delimiter)
 	$_return_text = $_io_source_str.SubString(0,$iPos)
 	return $_return_text
+}
+
+function fSortObjArrBySectorRemaining ([array]$_io_source_arr, [int]$_io_incomplete_plots_count) {
+	[array]$_arr_sorted = $null
+	$_sectors_remain_count_hold = 0
+	$_b_first_entry = $true
+	$_incomplete_plots_count_iterator = 0
+
+	foreach ($_tmp_obj in $_io_source_arr)
+	{
+		$_disk_id_obj = $null
+		foreach ($_source_arr_obj in $_io_source_arr)
+		{
+			$_plot_id = $_source_arr_obj.Id
+			$_sectors_remain_count = $_source_arr_obj.Sectors
+			#if ($_b_first_entry -eq $true -and $_sectors_remain_count -gt 0)
+			if ($_b_first_entry -eq $true)
+			{
+				$_b_add_to_sorted_arr = $true
+				for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
+				{
+					if ($_arr_sorted[$_h]) {
+						if ($_plot_id -eq $_arr_sorted[$_h].Id)
+						{
+							$_b_add_to_sorted_arr = $false
+							break
+						}
+					}
+				}
+				if ($_b_add_to_sorted_arr -eq $true)
+				{
+					$_sectors_remain_count_lowest = $_sectors_remain_count
+					#$_disk_id_obj = $_source_arr_obj
+					#$_disk_id_obj.Sectors = $_sectors_remain_count_lowest
+					#$_disk_id_obj.AdditionalSectorsForETA = 0
+					#$_disk_id_obj.ETA = 0
+					$_disk_obj = [PSCustomObject]@{
+						Id						= $_plot_id
+						PlotState				= $_source_arr_obj.PlotState
+						Sectors					= $_sectors_remain_count_lowest
+						AdditionalSectorsForETA = 0
+						PlotCountMultiplier 	= 0
+						ETA = 0
+					}
+					$_disk_id_obj = $_disk_obj
+				}
+				$_sectors_remain_count_hold = $_sectors_remain_count
+				$_b_first_entry = $false
+			}
+			#elseif ($_sectors_remain_count -gt 0 -and $_sectors_remain_count -lt $_sectors_remain_count_hold)
+			elseif ($_sectors_remain_count -le $_sectors_remain_count_hold)
+			{
+				$_b_add_to_sorted_arr = $true
+				for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
+				{
+					if ($_arr_sorted[$_h]) {
+						if ($_plot_id -eq $_arr_sorted[$_h].Id)
+						{
+							$_b_add_to_sorted_arr = $false
+							break
+						}
+					}
+				}
+				if ($_b_add_to_sorted_arr -eq $true)
+				{
+					$_sectors_remain_count_lowest = $_sectors_remain_count
+					#$_disk_id_obj = $_source_arr_obj
+					#$_disk_id_obj.Sectors = $_sectors_remain_count_lowest
+					#$_disk_id_obj.AdditionalSectorsForETA = 0
+					#$_disk_id_obj.ETA = 0
+					$_disk_obj = [PSCustomObject]@{
+						Id						= $_plot_id
+						PlotState				= $_source_arr_obj.PlotState
+						Sectors					= $_sectors_remain_count_lowest
+						AdditionalSectorsForETA = 0
+						PlotCountMultiplier 	= 0
+						ETA = 0
+					}
+					$_disk_id_obj = $_disk_obj
+				}
+				$_sectors_remain_count_hold = $_sectors_remain_count
+			}
+		}
+		if ($_disk_id_obj)
+		{
+			if ($_disk_id_obj.Sectors -gt 0)
+			{
+				$_disk_id_obj.PlotCountMultiplier = $_io_incomplete_plots_count - $_incomplete_plots_count_iterator
+				$_incomplete_plots_count_iterator += 1
+			}
+			else 
+			{
+				$_disk_id_obj.PlotCountMultiplier = 0
+			}
+			$_arr_sorted += $_disk_id_obj
+		}
+	}
+	# add the last element of unsorted array to sorted array
+	foreach ($_source_arr_obj in $_io_source_arr)
+	{
+		#$_disk_id_obj = $_source_arr_obj
+		#$_disk_id_obj.AdditionalSectorsForETA = 0
+		#$_disk_id_obj.ETA = 0
+		$_disk_obj = [PSCustomObject]@{
+			Id						= $_source_arr_obj.Id
+			PlotState				= $_source_arr_obj.PlotState
+			Sectors					= $_source_arr_obj.Sectors
+			AdditionalSectorsForETA = 0
+			PlotCountMultiplier 	= 0
+			ETA = 0
+		}
+		$_disk_id_obj = $_disk_obj
+		#
+		for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
+		{
+			$_b_add_to_sorted_arr = $true
+			if ($_disk_id_obj.Id -eq $_arr_sorted[$_h].Id)
+			{
+				$_b_add_to_sorted_arr = $false
+				break
+			}
+		}
+		if ($_b_add_to_sorted_arr -eq $true)
+		{
+			if ($_disk_id_obj.Sectors -gt 0)
+			{
+				$_disk_id_obj.PlotCountMultiplier = $_io_incomplete_plots_count - $_incomplete_plots_count_iterator
+			}
+			else 
+			{
+				$_disk_id_obj.PlotCountMultiplier = 0
+			}
+			$_arr_sorted += $_disk_id_obj
+		}
+	}
+	# calc remaining sectors multiplier [P(n+1) - P(n-1)]
+	for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
+	{
+		if ($_h -eq 0)
+		{
+			$_arr_sorted[$_h].AdditionalSectorsForETA = $_arr_sorted[$_h].Sectors
+		}
+		else 
+		{
+			$_arr_sorted[$_h].AdditionalSectorsForETA = $_arr_sorted[$_h].Sectors - $_arr_sorted[$_h - 1].Sectors
+		}
+	}
+
+	return $_arr_sorted
 }
 
 function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {

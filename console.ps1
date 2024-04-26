@@ -1651,7 +1651,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_disk_plots_remaining_arr = $_disk_metrics_arr[0].PlotsRemaining
 			$_disk_plots_expired_arr = $_disk_metrics_arr[0].PlotsExpired
 			$_disk_plots_expiring_arr = $_disk_metrics_arr[0].PlotsAboutToExpire
-
 			# Write uptime information to console
 			$_avg_sectors_per_hour = 0.0
 			$_avg_sectors_per_hour_disp = "-"
@@ -1752,7 +1751,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 
 				$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
 			}
-
+			
 			#
 			#### Change start - Commented below lines  -  moved to bottom of data table for farmer
 			#
@@ -1842,6 +1841,25 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					}
 				}
 			}
+			#
+			#
+			$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks
+			$_eta_hold_ = 0
+			for ($_h = 0; $_h -lt $_disk_plots_remaining_arr_sorted.count; $_h++)
+			{
+				$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_farm_sector_times) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
+				$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
+			}
+			#### DELETE - start
+			#Write-Host
+			#Write-Host "_disk_plots_remaining_arr.Count: " $_disk_plots_remaining_arr.Count
+			#Write-Host "_disk_plots_remaining_arr: " $_disk_plots_remaining_arr
+			#Write-Host
+			#Write-Host "_disk_plots_remaining_arr_sorted.Count: " $_disk_plots_remaining_arr_sorted.Count
+			#Write-Host "_disk_plots_remaining_arr_sorted: " $_disk_plots_remaining_arr_sorted
+			#Write-Host
+			#### DELETE - end
+			#
 			#
 			## write process header line end character
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
@@ -2370,9 +2388,17 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 						}
 						if ($_minutes_per_sector_data_disp -ne "-") {
-							#$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
-							#$_eta_disp = $_eta.toString() + " days"
-							$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
+							##$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
+							##$_eta_disp = $_eta.toString() + " days"
+							#$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
+							foreach ($_disk_plots_remaining_sorted_obj in $_disk_plots_remaining_arr_sorted)
+							{
+								if ($_disk_plots_remaining_sorted_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_sorted_obj.Id) { continue }
+								}
+								else {break}
+								$_eta = $_disk_plots_remaining_sorted_obj.ETA
+							}
 							$_eta_obj = New-TimeSpan -seconds $_eta
 							#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
 							$_eta_disp = fConvertTimeSpanToString $_eta_obj
@@ -3195,6 +3221,25 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			}
 		}
 		#
+		#
+		$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks
+		$_eta_hold_ = 0
+		for ($_h = 0; $_h -lt $_disk_plots_remaining_arr_sorted.count; $_h++)
+		{
+			$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_farm_sector_times) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
+			$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
+		}
+		#### DELETE - start
+		#Write-Host
+		#Write-Host "_disk_plots_remaining_arr.Count: " $_disk_plots_remaining_arr.Count
+		#Write-Host "_disk_plots_remaining_arr: " $_disk_plots_remaining_arr
+		#Write-Host
+		#Write-Host "_disk_plots_remaining_arr_sorted.Count: " $_disk_plots_remaining_arr_sorted.Count
+		#Write-Host "_disk_plots_remaining_arr_sorted: " $_disk_plots_remaining_arr_sorted
+		#Write-Host
+		#### DELETE - end
+		#
+		#
 		## write process header line end character
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
 		if ($_label_disk_id_length -eq 0)
@@ -3713,9 +3758,17 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 						$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 					}
 					if ($_minutes_per_sector_data_disp -ne "-") {
-						#$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
-						#$_eta_disp = $_eta.toString() + " days"
-						$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
+						##$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
+						##$_eta_disp = $_eta.toString() + " days"
+						#$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
+						foreach ($_disk_plots_remaining_sorted_obj in $_disk_plots_remaining_arr_sorted)
+						{
+							if ($_disk_plots_remaining_sorted_obj) {
+								if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_sorted_obj.Id) { continue }
+							}
+							else {break}
+							$_eta = $_disk_plots_remaining_sorted_obj.ETA
+						}
 						$_eta_obj = New-TimeSpan -seconds $_eta
 						#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
 						$_eta_disp = fConvertTimeSpanToString $_eta_obj
