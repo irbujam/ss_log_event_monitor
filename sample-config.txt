@@ -31,7 +31,6 @@ Alert-frequency(seconds) : 3600
 
 #-------------------------------------------------------------------------------------------------------------------------
 ## adjust console screen refresh time as apppropriate (if 0 is provided the value will default to 30 seconds)
-## recommended value: 60 seconds
 #-------------------------------------------------------------------------------------------------------------------------
 
 Auto-refresh(seconds) : 60
