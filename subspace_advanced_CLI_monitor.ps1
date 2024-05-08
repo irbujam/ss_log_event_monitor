@@ -39,7 +39,7 @@ function main {
 	[array]$script:_replot_sector_count_hold_arr = $null
 	#
 	# 5/7/2024 - Begin Change
-	[array]$script:_incremental_plot_elpased_time_arr = $null
+	[array]$script:_incremental_plot_elapsed_time_arr = $null
 	# 5/7/2024 - End Change
 	#
 	[array]$script:_individual_farmer_id_arr = $null
@@ -1372,6 +1372,9 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
+		# 5/7/2024 - Begin Change
+		$_b_incremental_sector_count_changed = $false
+		# 5/7/2024 - End Change
 		if ($_metrics_obj.Name.IndexOf("subspace_farmer_sectors_total_sectors") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		{
 			$_plot_id = ($_metrics_obj.Instance -split ",")[0]
@@ -1524,27 +1527,31 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 					Id							= $_farmer_disk_id
 					CompletedSectorsInSession	= $_completed_sectors
 					ElapsedTime					= $_uptime_seconds
+					DeltaSectorsCompleted		= $_completed_sectors
+					DeltaElapsedTime			= $_uptime_seconds
+					PlottingElapsedTime			= 0
 				}
 				#
 				$_b_add_to_arr = $true
-				for ($_h = 0; $_h -lt $script:_incremental_plot_elpased_time_arr.count; $_h++)
+				for ($_h = 0; $_h -lt $script:_incremental_plot_elapsed_time_arr.count; $_h++)
 				{
-					if ($script:_incremental_plot_elpased_time_arr[$_h]) {
-						if ($_farmer_disk_id -eq $script:_incremental_plot_elpased_time_arr[$_h].Id)
+					if ($script:_incremental_plot_elapsed_time_arr[$_h]) {
+						if ($_farmer_disk_id -eq $script:_incremental_plot_elapsed_time_arr[$_h].Id)
 						{
-							## DELETE - start
-							#Write-Host "_incremental_plot_elpased_time_arr[$_h].Id : " $script:_incremental_plot_elpased_time_arr[$_h].Id
-							#Write-Host "_incremental_plot_elpased_time_arr[$_h].CompletedSectorsInSession : " $script:_incremental_plot_elpased_time_arr[$_h].CompletedSectorsInSession
-							#Write-Host "_completed_sectors : " $_completed_sectors
-							#Write-Host "_uptime_seconds : " $_uptime_seconds
-							## DELETE - end
-							if ($script:_incremental_plot_elpased_time_arr[$_h].CompletedSectorsInSession -lt $_completed_sectors)
+							if ($script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession -lt $_completed_sectors)
 							{
 							## DELETE - start
-							#Write-Host ">>>>>> here <<<<<< - value changed - recalculating elased time for later user"
+							#Write-Host "_completed_sectors : " $_completed_sectors
+							#Write-Host "_uptime_seconds : " $_uptime_seconds
+							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].Id : " $script:_incremental_plot_elapsed_time_arr[$_h].Id
+							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession : " $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
+							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].ElapsedTime : " $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
 							## DELETE - end
-								$script:_incremental_plot_elpased_time_arr[$_h].CompletedSectorsInSession = $_completed_sectors
-								$script:_incremental_plot_elpased_time_arr[$_h].ElapsedTime = $_uptime_seconds
+								$_b_incremental_sector_count_changed = $true
+								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
+								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_uptime_seconds - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+								$script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession = $_completed_sectors
+								$script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime = $_uptime_seconds
 							}
 							$_b_add_to_arr = $false
 							break
@@ -1553,7 +1560,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 				if ($_b_add_to_arr)
 				{
-					$script:_incremental_plot_elpased_time_arr += $_incremental_plot_info
+					$script:_incremental_plot_elapsed_time_arr += $_incremental_plot_info
 				}
 			}
 		}
@@ -1569,15 +1576,27 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_farmer_disk_id = $_metrics_obj.Instance
 				$_completed_sectors = [int]($_metrics_obj.Value)
-				$_elpased_time = 0
+				#$_elapsed_time = 0
+				$_delta_elapsed_time = 0
+				$_delta_sectors_completed = 0
 				#
 				# 5/7/2024 - Begin Change
-				for ($_h = 0; $_h -lt $script:_incremental_plot_elpased_time_arr.count; $_h++)
+				for ($_h = 0; $_h -lt $script:_incremental_plot_elapsed_time_arr.count; $_h++)
 				{
-					if ($script:_incremental_plot_elpased_time_arr[$_h]) {
-						if ($_farmer_disk_id -eq $script:_incremental_plot_elpased_time_arr[$_h].Id)
+					if ($script:_incremental_plot_elapsed_time_arr[$_h]) {
+						if ($_farmer_disk_id -eq $script:_incremental_plot_elapsed_time_arr[$_h].Id)
 						{
-							$_elpased_time = $script:_incremental_plot_elpased_time_arr[$_h].ElapsedTime
+							#$_elapsed_time = $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+							if ($_b_incremental_sector_count_changed -and $_metrics_obj.Name.toLower().IndexOf("sum") -ge 0)
+							{
+								if ($script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime -gt 0)
+								{
+									#$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_metrics_obj.Value - $script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime
+								}
+								$script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime = $_metrics_obj.Value
+							}
+							$_delta_elapsed_time = $script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime
+							$_delta_sectors_completed = $script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted
 							break
 						}
 					}
@@ -1585,11 +1604,15 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				# 5/7/2024 - End Change
 				#
 				# 5/7/2024 - Begin Change
-				#if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_metrics_obj.Value) }
-				if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_elpased_time) }
+				##if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_metrics_obj.Value) }
+				#if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_elapsed_time) }
+				if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_delta_elapsed_time) }
 				# 5/7/2024 - End Change
 				
-				if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_metrics_obj.Value) }
+				# 5/7/2024 - Begin Change
+				#if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_metrics_obj.Value) }
+				if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_delta_sectors_completed) }
+				# 5/7/2024 - End Change
 				if ($_farmer_disk_sector_plot_time -gt 0 -and $_farmer_disk_sector_plot_count -gt 0) 
 				{
 					$_sectors_per_hour = 0.0
