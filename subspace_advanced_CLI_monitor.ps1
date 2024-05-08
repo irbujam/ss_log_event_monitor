@@ -1548,8 +1548,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].ElapsedTime : " $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
 							## DELETE - end
 								$_b_incremental_sector_count_changed = $true
-								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
-								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_uptime_seconds - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+								#$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
+								#$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_uptime_seconds - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors
+								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_uptime_seconds
 								$script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession = $_completed_sectors
 								$script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime = $_uptime_seconds
 							}
