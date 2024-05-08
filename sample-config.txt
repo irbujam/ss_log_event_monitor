@@ -33,7 +33,7 @@ Alert-frequency(seconds) : 3600
 ## adjust console screen refresh time as apppropriate (if 0 is provided the value will default to 30 seconds)
 #-------------------------------------------------------------------------------------------------------------------------
 
-Auto-refresh(seconds) : 300
+Auto-refresh(seconds) : 60
 
 #-------------------------------------------------------------------------------------------------------------------------
 ## adjust screen view at start-up (S-Summary, D-Detail). "S" is default
