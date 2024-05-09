@@ -7,6 +7,7 @@ $host.UI.RawUI.WindowTitle = "Subspace Advanced CLI Process Monitor"
 function main {
 	$_b_allow_refresh = $false
 	# 5/7/2024 - Begin Change
+	$script:_b_enable_new_sector_times_calc = $false
 	$script:_total_time_elpased_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	# 5/7/2024 - End Change
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -1575,7 +1576,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 								#Write-Host "_total_elpased_time/_completed_sectors : " $_total_elpased_time /$_completed_sectors
 								#### DELETE - end
 
-								if ($_completed_sectors -gt 0 -and $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
+								if ($script:_b_enable_new_sector_times_calc -and $_completed_sectors -gt 0 -and $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
 								{								
 									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
 									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
