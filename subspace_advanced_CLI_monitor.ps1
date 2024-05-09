@@ -6,6 +6,9 @@
 $host.UI.RawUI.WindowTitle = "Subspace Advanced CLI Process Monitor"
 function main {
 	$_b_allow_refresh = $false
+	# 5/7/2024 - Begin Change
+	$script:_total_time_elpased_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	# 5/7/2024 - End Change
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_for_git_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$gitVersion = fCheckGitNewVersion
@@ -1346,6 +1349,10 @@ function fGetNodeMetrics ([array]$_io_node_metrics_arr) {
 function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_resp_disk_metrics_arr = [System.Collections.ArrayList]@()
 
+	# 5/7/2024 - Begin Change
+	[array]$_most_recent_uptime_by_farmId_arr = $null
+	# 5/7/2024 - End Change
+
 	[array]$_resp_UUId_arr = $null
 	[array]$_resp_sector_perf_arr = $null
 	[array]$_resp_rewards_arr = $null
@@ -1483,6 +1490,14 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_resp_UUId_arr += $_farm_id_info
 			}
+			# 5/7/2024 - Begin Change
+			$_elapsed_time_info = [PSCustomObject]@{
+				Id							= $_unique_farm_id
+				TotalElapsedTime			= $_uptime_value_int_
+			}
+			#
+			$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
+			# 5/7/2024 - End Change
 		}
 		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		{
@@ -1517,18 +1532,29 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		# 5/7/2024 - Begin Change
 		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_encoding_time_seconds_count") -ge 0)
 		{
+			$_total_elpased_time = 0
 			if ($_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 			{
 				$_farmer_disk_id = $_metrics_obj.Instance
 				$_completed_sectors = [int]($_metrics_obj.Value)
 				#
-				# 5/7/2024 - Begin Change
+				for ($_h = 0; $_h -lt $_most_recent_uptime_by_farmId_arr.count; $_h++)
+				{
+					if ($_most_recent_uptime_by_farmId_arr[$_h]) {
+						if ($_farmer_disk_id -eq $_most_recent_uptime_by_farmId_arr[$_h].Id)
+						{
+							$_total_elpased_time = $_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime
+							break
+						}
+					}
+				}
+				#
 				$_incremental_plot_info = [PSCustomObject]@{
 					Id							= $_farmer_disk_id
 					CompletedSectorsInSession	= $_completed_sectors
-					ElapsedTime					= $_uptime_seconds
+					ElapsedTime					= $_total_elpased_time
 					DeltaSectorsCompleted		= $_completed_sectors
-					DeltaElapsedTime			= $_uptime_seconds
+					DeltaElapsedTime			= $_total_elpased_time
 					PlottingElapsedTime			= 0
 				}
 				#
@@ -1540,20 +1566,27 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						{
 							if ($script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession -lt $_completed_sectors)
 							{
-							## DELETE - start
-							#Write-Host "_completed_sectors : " $_completed_sectors
-							#Write-Host "_uptime_seconds : " $_uptime_seconds
-							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].Id : " $script:_incremental_plot_elapsed_time_arr[$_h].Id
-							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession : " $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
-							#Write-Host "_incremental_plot_elapsed_time_arr[$_h].ElapsedTime : " $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
-							## DELETE - end
 								$_b_incremental_sector_count_changed = $true
-								#$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
-								#$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_uptime_seconds - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
-								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors
-								$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_uptime_seconds
+
+								#### DELETE - start
+								#Write-Host "_total_time_elpased_stopwatch.Elapsed.TotalSeconds: " $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds
+								#Write-Host "_total_elpased_time: " $_total_elpased_time
+								#Write-Host "_completed_sectors: " $_completed_sectors
+								#Write-Host "_total_elpased_time/_completed_sectors : " $_total_elpased_time /$_completed_sectors
+								#### DELETE - end
+
+								if ($_completed_sectors -gt 0 -and $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
+								{								
+									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
+									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+								}
+								else
+								{
+									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors
+									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time
+								}
 								$script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession = $_completed_sectors
-								$script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime = $_uptime_seconds
+								$script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime = $_total_elpased_time
 							}
 							$_b_add_to_arr = $false
 							break
@@ -1593,6 +1626,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							{
 								if ($script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime -gt 0)
 								{
+									# NOT USED anymore as it does not provide valid results, using elapsed time instead
 									#$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_metrics_obj.Value - $script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime
 								}
 								$script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime = $_metrics_obj.Value
