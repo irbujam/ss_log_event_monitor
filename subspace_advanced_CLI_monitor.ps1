@@ -7,7 +7,7 @@ $host.UI.RawUI.WindowTitle = "Subspace Advanced CLI Process Monitor"
 function main {
 	$_b_allow_refresh = $false
 	# 5/7/2024 - Begin Change
-	$script:_b_enable_new_sector_times_calc = $false
+	$script:_b_enable_new_sector_times_calc = $true
 	$script:_total_time_elpased_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	# 5/7/2024 - End Change
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
