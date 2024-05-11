@@ -385,6 +385,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_b_process_header_printed = $false
 	#
 	##
+	# 5/11/2024 - Start Change
+	$_all_process_sector_PH = 0
+	# 5/11/2024 - End Change
+
 	$_all_process_sector_time = 0
 	$_all_process_sector_time_eligibility_count = 0
 	$_all_process_sectors_per_hour = 0
@@ -598,6 +602,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							#$_process_sector_time = New-TimeSpan -seconds ($_sub_header.SectorTime / $_sub_header.TotalDisksForETA)
 							$_temp_sector_time_per_farm = $_sub_header.SectorTime / $_sub_header.TotalDisksForETA
 							$_all_process_sector_time += $_temp_sector_time_per_farm
+							# 5/11/2024 - Start change
+							$_all_process_sector_PH += [math]::Round(([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA),1)
+							# 5/11/2024 - End change
 							$_all_process_sector_time_eligibility_count += 1
 							$_process_sector_time = New-TimeSpan -seconds $_temp_sector_time_per_farm
 							$_process_sector_time_disp =  $_process_sector_time.minutes.ToString() + "m" + $_process_sector_time.seconds.ToString() + "s"
@@ -1159,7 +1166,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_all_process_sector_time_disp = "-"
 	if ($_all_process_sector_time_eligibility_count -gt 0)
 	{
-		$_all_process_sector_time = $_all_process_sector_time / ($_all_process_sector_time_eligibility_count * $_all_process_sector_time_eligibility_count)
+		# 5/11/2024 - Start change
+		#$_all_process_sector_time = $_all_process_sector_time / ($_all_process_sector_time_eligibility_count * $_all_process_sector_time_eligibility_count)
+		$_all_process_sector_time = [math]::Round(3600 / $_all_process_sector_PH, 1)
+		# 5/11/2024 - End change
 		$_all_process_sector_time_obj = New-TimeSpan -seconds $_all_process_sector_time
 		$_all_process_sector_time_disp = $_all_process_sector_time_obj.minutes.ToString() + "m" + $_all_process_sector_time_obj.seconds.ToString() + "s"
 	}
@@ -1170,7 +1180,11 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_all_process_total_TiB_per_day_disp = "-"
 	if ($_all_process_sector_time -gt 0)
 	{
-		$_all_process_total_sectors_per_hour = [math]::Round(3600 / $_all_process_sector_time, 1)
+		# 5/11/2024 - Start change
+		#$_all_process_total_sectors_per_hour = [math]::Round(3600 / $_all_process_sector_time, 1)
+		$_all_process_total_sectors_per_hour = $_all_process_sector_PH
+		# 5/11/2024 - End change
+
 		$_all_process_total_sectors_per_hour_disp = $_all_process_total_sectors_per_hour.toString()
 		#$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour / 1000) * 24, 1)
 		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 1)
