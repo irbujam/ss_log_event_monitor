@@ -1168,10 +1168,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	{
 		# 5/11/2024 - Start change
 		#$_all_process_sector_time = $_all_process_sector_time / ($_all_process_sector_time_eligibility_count * $_all_process_sector_time_eligibility_count)
-		$_all_process_sector_time = [math]::Round(3600 / $_all_process_sector_PH, 1)
+		if ($_all_process_sector_PH -gt 0)
+		{
+			$_all_process_sector_time = [math]::Round(3600 / $_all_process_sector_PH, 1)
+		}
 		# 5/11/2024 - End change
-		$_all_process_sector_time_obj = New-TimeSpan -seconds $_all_process_sector_time
-		$_all_process_sector_time_disp = $_all_process_sector_time_obj.minutes.ToString() + "m" + $_all_process_sector_time_obj.seconds.ToString() + "s"
+		if ($_all_process_sector_time -gt 0)
+		{
+			$_all_process_sector_time_obj = New-TimeSpan -seconds $_all_process_sector_time
+			$_all_process_sector_time_disp = $_all_process_sector_time_obj.minutes.ToString() + "m" + $_all_process_sector_time_obj.seconds.ToString() + "s"
+		}
 	}
 	## farm aggregate sectors per hour
 	$_all_process_total_sectors_per_hour = 0
