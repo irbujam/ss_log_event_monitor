@@ -10,11 +10,6 @@ function main {
 	$script:_b_enable_new_sector_times_calc = $true
 	$script:_total_time_elpased_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	# 5/7/2024 - End Change
-	#
-	# 5/20/2024 - Begin Change
-	$script:_all_process_eta = 0
-	$script:_all_process_eta_disp = "-"
-	# 5/20/2024 - End Change
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_for_git_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$gitVersion = fCheckGitNewVersion
@@ -74,6 +69,10 @@ function main {
 			}
 			if ($_b_allow_refresh -or $script:_b_user_refresh -eq $true) 
 			{
+				# 5/20/2024 - Begin Change
+				$script:_all_process_eta = 0
+				$script:_all_process_eta_disp = "-"
+				# 5/20/2024 - End Change
 				#
 				$script:_url_discord = ""
 				$script:_telegram_api_token = ""
