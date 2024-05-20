@@ -546,8 +546,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_overall_progress = "-"
 			$_process_eta_disp = "-"
 			#
-			$_all_process_eta = 0
-			$_all_process_eta_disp = "-"
+			# 5/20/2024 - Begin Change
+			#$_all_process_eta = 0
+			#$_all_process_eta_disp = "-"
+			# 5/20/2024 - End Change
 			#
 			$_process_sector_time_disp = "-"
 			$_process_total_sectors_per_hour_disp = "-"
@@ -592,11 +594,18 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							#$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 							$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 							
-							if ($_process_eta -gt $_all_process_eta)
+							# 5/20/2024 - Begin Change
+							#if ($_process_eta -gt $_all_process_eta)
+							#{
+							#	$_all_process_eta = $_process_eta
+							#	$_all_process_eta_disp = $_process_eta_disp
+							#}
+							if ($_process_eta -gt $script:_all_process_eta)
 							{
-								$_all_process_eta = $_process_eta
-								$_all_process_eta_disp = $_process_eta_disp
+								$script:_all_process_eta = $_process_eta
+								$script:_all_process_eta_disp = $_process_eta_disp
 							}
+							# 5/20/2024 - End Change
 							
 							#
 							#$_process_sector_time = New-TimeSpan -seconds ($_sub_header.SectorTime / $_sub_header.TotalDisksForETA)
@@ -1272,10 +1281,23 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_console_header_log_finish_line += $_label_spacer
 
 	#$_spacer_length = [int]($_label_process_eta.Length)
-	$_spacer_length = [int]($_label_process_eta.Length - $_all_process_eta_disp.Length)
+	
+	#### DELETE - start
+	#Write-Host
+	#Write-Host "_all_process_eta_disp: " $script:_all_process_eta_disp
+	#Write-Host
+	#### DELETE - end
+	
+	# 5/20/2024 - Begin Change
+	#$_spacer_length = [int]($_label_process_eta.Length - $_all_process_eta_disp.Length)
+	$_spacer_length = [int]($_label_process_eta.Length - $script:_all_process_eta_disp.Length)
+	# 5/20/2024 - End Change
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 	#$_label_spacer = "|" + $_label_spacer
-	$_label_spacer = "|" + $_all_process_eta_disp + $_label_spacer
+	# 5/20/2024 - Begin Change
+	#$_label_spacer = "|" + $_all_process_eta_disp + $_label_spacer
+	$_label_spacer = "|" + $script:_all_process_eta_disp + $_label_spacer
+	# 5/20/2024 - End Change
 	$_console_header_log_finish_line += $_label_spacer
 
 	$_spacer_length = [int]($_label_process_sector_time.Length - $_all_process_sector_time_disp.Length)
@@ -1870,15 +1892,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_farm_sector_times) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
 				$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
 			}
-			#### DELETE - start
-			#Write-Host
-			#Write-Host "_disk_plots_remaining_arr.Count: " $_disk_plots_remaining_arr.Count
-			#Write-Host "_disk_plots_remaining_arr: " $_disk_plots_remaining_arr
-			#Write-Host
-			#Write-Host "_disk_plots_remaining_arr_sorted.Count: " $_disk_plots_remaining_arr_sorted.Count
-			#Write-Host "_disk_plots_remaining_arr_sorted: " $_disk_plots_remaining_arr_sorted
-			#Write-Host
-			#### DELETE - end
 			#
 			#
 			## write process header line end character
@@ -3249,15 +3262,6 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_farm_sector_times) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
 			$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
 		}
-		#### DELETE - start
-		#Write-Host
-		#Write-Host "_disk_plots_remaining_arr.Count: " $_disk_plots_remaining_arr.Count
-		#Write-Host "_disk_plots_remaining_arr: " $_disk_plots_remaining_arr
-		#Write-Host
-		#Write-Host "_disk_plots_remaining_arr_sorted.Count: " $_disk_plots_remaining_arr_sorted.Count
-		#Write-Host "_disk_plots_remaining_arr_sorted: " $_disk_plots_remaining_arr_sorted
-		#Write-Host
-		#### DELETE - end
 		#
 		#
 		## write process header line end character
