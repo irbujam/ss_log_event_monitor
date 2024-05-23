@@ -268,6 +268,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { 
 			
 			# wait for request - async
+			#
+			# 5/20/2024 - Begin Change
+			$script:_all_process_eta = 0
+			$script:_all_process_eta_disp = "-"
+			# 5/20/2024 - End Change
+			#
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 			#Write-Host
