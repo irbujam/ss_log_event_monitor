@@ -1326,7 +1326,7 @@ function fGetNodeMetrics ([array]$_io_node_metrics_arr) {
 	#
 	foreach ($_metrics_obj in $_io_node_metrics_arr)
 	{
-		if ($_metrics_obj.Name.IndexOf("substrate_sub_libp2p_is_major_syncing") -ge 0 -and $_metrics_obj.Name.IndexOf("chain") -ge 0) 
+		if ($_metrics_obj.Name.toLower().IndexOf("substrate_sub_libp2p_is_major_syncing") -ge 0 -and $_metrics_obj.Name.toLower().IndexOf("chain") -ge 0) 
 		{
 			$_node_sync_status = $_metrics_obj.Value
 			$_chain_id_sync = $_metrics_obj.Instance
@@ -1336,7 +1336,7 @@ function fGetNodeMetrics ([array]$_io_node_metrics_arr) {
 			}
 			$_node_sync_arr += $_node_sync_info
 		}
-		elseif ($_metrics_obj.Name.IndexOf("substrate_sub_libp2p_peers_count") -ge 0 -and $_metrics_obj.Name.IndexOf("chain") -ge 0) 
+		elseif ($_metrics_obj.Name.toLower().IndexOf("substrate_sub_libp2p_peers_count") -ge 0 -and $_metrics_obj.Name.toLower().IndexOf("chain") -ge 0) 
 		{
 			$_node_peer_count = $_metrics_obj.Value
 			$_chain_id_peer = $_metrics_obj.Instance
@@ -1393,7 +1393,12 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		# 5/7/2024 - Begin Change
 		$_b_incremental_sector_count_changed = $false
 		# 5/7/2024 - End Change
-		if ($_metrics_obj.Name.IndexOf("subspace_farmer_sectors_total_sectors") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		##
+		# 7/18/2024 - Begin Change
+		#if ($_metrics_obj.Name.IndexOf("subspace_farmer_sectors_total_sectors") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		if (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sectors_total_sectors") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sectors_total_sectors") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		# 7/18/2024 - End Change
+		##
 		{
 			$_plot_id = ($_metrics_obj.Instance -split ",")[0]
 			$_plot_state = $_metrics_obj.Criteria.ToString().Trim('"')
@@ -1474,7 +1479,12 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		#	}
 		#	$_resp_UUId_arr += $_farm_id_info
 		#}
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		##
+		# 7/18/2024 - Begin Change
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_auditing_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		# 7/18/2024 - End Change
+		##
 		{
 			$_uptime_value_int_ = [int]($_metrics_obj.Value)
 			if ($_uptime_seconds -lt $_uptime_value_int_)
@@ -1510,7 +1520,12 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
 			# 5/7/2024 - End Change
 		}
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		##
+		# 7/18/2024 - Begin Change
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_downloading_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		# 7/18/2024 - End Change
+		##
 		{
 		# 5/7/2024 - Begin Change
 			#$_uptime_value_int_ = [int]($_metrics_obj.Value)
@@ -1541,7 +1556,12 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 		}
 		# 5/7/2024 - Begin Change
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_encoding_time_seconds_count") -ge 0)
+		##
+		# 7/18/2024 - Begin Change
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_encoding_time_seconds_count") -ge 0)
+		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_encoding_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_encoding_time_seconds_count") -ge 0)
+		# 7/18/2024 - End Change
+		##
 		{
 			$_total_elpased_time = 0
 			if ($_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
@@ -1579,13 +1599,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							{
 								$_b_incremental_sector_count_changed = $true
 
-								#### DELETE - start
-								#Write-Host "_total_time_elpased_stopwatch.Elapsed.TotalSeconds: " $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds
-								#Write-Host "_total_elpased_time: " $_total_elpased_time
-								#Write-Host "_completed_sectors: " $_completed_sectors
-								#Write-Host "_total_elpased_time/_completed_sectors : " $_total_elpased_time /$_completed_sectors
-								#### DELETE - end
-
 								if ($script:_b_enable_new_sector_times_calc -and $_completed_sectors -gt 0 -and $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
 								{								
 									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
@@ -1611,7 +1624,12 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 		}
 		# 5/7/2024 - End Change
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
+		##
+		# 7/18/2024 - Begin Change
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
+		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_plotting_time_seconds") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
+		# 7/18/2024 - End Change
+		##
 		{
 			if ($_metrics_obj.Id.toLower().IndexOf("unit") -ge 0 -or $_metrics_obj.Id.toLower().IndexOf("type") -ge 0)
 			{
@@ -1698,11 +1716,21 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 			}
 		}
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) 
+		##
+		# 7/18/2024 - Begin Change
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) 
+		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_plotted_counter_sectors_total") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) 
+		# 7/18/2024 - End Change
+		##
 		{
 			$_total_sectors_plot_count = [int]($_metrics_obj.Value) 
 		}
-		elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
+		##
+		# 7/18/2024 - Begin Change
+		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
+		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_proving_time_seconds") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
+		# 7/18/2024 - End Change
+		##
 		{
 			if ($_metrics_obj.Id.toLower().IndexOf("unit") -ge 0 -or $_metrics_obj.Id.toLower().IndexOf("type") -ge 0)
 			{
