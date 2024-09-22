@@ -135,6 +135,44 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	$_spacer = " "
 	#
+	# 9/21/2024 - Begin Change
+	for ($arrPos = 0; $arrPos -lt $_io_process_arr.Count; $arrPos++)
+	{
+		$_farmer_metrics_raw = ""
+		$_node_metrics_raw = ""
+		[array]$_process_state_arr = $null
+		$_b_process_running_ok = $false
+		if ($_io_process_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_process_arr[$arrPos].toString().IndexOf("#") -lt 0) {
+			$_config = $_io_process_arr[$arrPos].toString().split(":").Trim(" ")
+			$_process_type = $_config[0].toString()
+			if ($_process_type.toLower().IndexOf("nats") -ge 0) { 
+				$_host_ip = $_config[1].toString()
+				$_host_port = $_config[2].toString()
+				$_host_friendly_name = ""
+				if ($_config.Count -gt 3) {
+					$_host_friendly_name = $_config[3].toString()
+				}
+				$_host_url = $_host_ip + ":" + $_host_port
+				$_hostname = ""
+				
+				$_hostname = $_host_ip
+				if ($_host_friendly_name -and $_host_friendly_name.length -gt 0)
+				{
+					$_hostname = $_host_friendly_name
+				}
+				#Write-Host
+				#$_num_rows += 1
+				##
+				fWriteNatsServerInfoToConsole $_host_url $_io_process_arr
+				$_num_rows += $script:_news_rows_written_to_console + 6		##to acccount for headers and line seperator rows
+				##
+				Write-Host
+				$_num_rows += 1
+			}
+		}
+	}
+	# 9/21/2024 - End Change
+	#
 	## read and display node table
 	$_console_header_log = ""
 	$_console_header_row2_log = ""
@@ -1491,7 +1529,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_process_type = $_config[0].toString()
 			#if ($_process_type.toLower().IndexOf("discord") -ge 0) { $_url_discord = "https:" + $_config[2].toString() }
 			#elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
-			if ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+			#
+			# 9/21/2024 - Begin Change
+			#if ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+			if ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer" -or $_process_type.toLower().IndexOf("nats") -ge 0) { 
+			# 9/21/2024 - End Change
 				$_host_ip = $_config[1].toString()
 				$_host_port = $_config[2].toString()
 				$_host_friendly_name = ""
@@ -1521,10 +1563,32 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_hostname = $_host_friendly_name
 				}
 
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-				$_b_process_running_ok = $_process_state_arr[1]
+				# 9/21/2024 - Begin Change
+				#$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+				#$_b_process_running_ok = $_process_state_arr[1]
+				if (!($_process_type.toLower().IndexOf("nats") -ge 0))
+				{
+					$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+					$_b_process_running_ok = $_process_state_arr[1]
+				}
+				# 9/21/2024 - End Change
 				
 				$_node_peers_connected = 0
+				# 9/21/2024 - Begin Change
+				if ($_process_type.toLower().IndexOf("nats") -ge 0)
+				{
+					#Write-Host
+					#$_num_rows += 1
+					##
+					fWriteNatsServerInfoToConsole $_host_url $_io_farmers_ip_arr
+					$_num_rows += $script:_news_rows_written_to_console + 6		##to acccount for headers and line seperator rows
+					##
+					Write-Host
+					$_num_rows += 1
+				}
+				else
+				{
+				# 9/21/2024 - End Change
 				if ($_process_type.toLower() -eq "farmer") {
 					$_total_spacer_length = ("---------------------------------------------------------------------------------------------").Length
 					$_num_cols = $_total_spacer_length + 2		# extra seperators at start & end of line
@@ -1570,7 +1634,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					#Write-Host ("" + $_label_spacer + " " ) -ForegroundColor $_line_spacer_color
 					#echo `n
 				}
-				else {				# get node metrics
+				# 9/21/2024 - Begin Change
+				#else {				# get node metrics
+				elseif ($_process_type.toLower() -eq "node") {				# get node metrics
+				# 9/21/2024 - End Change
 					$_node_metrics_raw = $_process_state_arr[0]
 					[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
 					$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
@@ -1650,6 +1717,9 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
 					$_num_rows += 1
 				}
+				# 9/21/2024 - Begin Change
+				}
+				# 9/21/2024 - End Change
 			}
 			#elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 			#	$refreshTimeScaleInSeconds = [int]$_config[1].toString()

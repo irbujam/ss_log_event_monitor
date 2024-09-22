@@ -43,6 +43,17 @@ Auto-refresh(seconds) : 60
 Start-up-View (S/D) : S
 
 #-------------------------------------------------------------------------------------------------------------------------
+## insert a new line for each nats server like shown in sample below
+## change IP and port to match your nats server set-up
+##
+#
+# Tip: you can add or remove a line for nats server while the script is running and the updates will show in next refresh
+#-------------------------------------------------------------------------------------------------------------------------
+
+## comment below line(s) if not using cluster
+Nats-server: 192.168.2.203:18080
+
+#-------------------------------------------------------------------------------------------------------------------------
 ## insert a new line for each node like shown in sample below
 ## change IP and port to match your node set-up
 ##
@@ -52,7 +63,7 @@ Start-up-View (S/D) : S
 # Tip: you can add or remove a line for node while the script is running and the updates will show in next refresh
 #-------------------------------------------------------------------------------------------------------------------------
 
-Node: 192.168.2.203:9191 :ryz-3600 
+Node: 192.168.2.203:9191 :pc1
 
 #-------------------------------------------------------------------------------------------------------------------------
 ## insert a new line for each farmer like shown in sample below
@@ -64,17 +75,19 @@ Node: 192.168.2.203:9191 :ryz-3600
 # Tip: you can add or remove a line for farmer while the script is running and the updates will show in next refresh
 #-------------------------------------------------------------------------------------------------------------------------
 
-Farmer : 192.168.2.203:8181 : ryz-3600
-Farmer : 192.168.2.105:8181: ryz-7900x
+Farmer : 192.168.2.203:8181 : pc1
+Farmer : 192.168.2.105:8181: pc2
 
 #-------------------------------------------------------------------------------------------------------------------------
 # Account for reserved disk space for piece_cache in total space allocated for the farm
 #
 # Supplied initial value is 1% assuming it is the currently reserved space for piece_cache, of the total space allocated
 # If no value is provided the default is 0%, meaning farm size displayed is without piece_cache reserved space allocation
+#
+# Tip: Set this value to 0% if using cluster, set to 1% for non-cluster
 #-------------------------------------------------------------------------------------------------------------------------
 
-piece_cache_size: 1%
+piece_cache_size: 0%
 
 #-------------------------------------------------------------------------------------------------------------------------
 #

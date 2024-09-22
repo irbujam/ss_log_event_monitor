@@ -55,6 +55,14 @@ function main {
 	$script:_b_write_process_details_to_console = $false
 	$script:_b_write_process_summary_to_console = $true
 	#
+	# 9/21/2024 - Begin Change
+	[array]$script:_ss_controller_obj_arr = $null
+	[array]$script:_ss_cache_obj_arr = $null
+	[array]$script:_ss_farmer_obj_arr = $null
+	[array]$script:_ss_plotter_obj_arr = $null
+	$script:_nats_server_health_status = $null
+	$script:_news_rows_written_to_console = 0
+	# 9/21/2024 - End Change
 	####
 	
 	fResizePSWindow 40 125 $true
@@ -132,7 +140,7 @@ function main {
 								$script:_b_write_process_details_to_console = $true
 							}
 						}
-						# get max lenght for host alt name
+						# get max length for host alt name
 						elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
 							$_process_ip = $_config[1].toString()
 							$_process_hostname_alt = ""
@@ -259,6 +267,9 @@ function main {
 . "$PSScriptRoot\charts.ps1"
 . "$PSScriptRoot\data.ps1"
 . "$PSScriptRoot\console.ps1"
+# 9/21/2024 - Begin Change
+. "$PSScriptRoot\nats_io.ps1"
+# 9/21/2024 - End Change
 
 function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task) {
 	$_html_full = $null
