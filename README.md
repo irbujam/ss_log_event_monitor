@@ -30,7 +30,7 @@ To launch the monitor save all files with extension *.ps1  and sample-config.txt
   
 > Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
   
-  - Script can run independently on a pc separate from cluster/farms/nodes hosted pc 
+  - Monitor script can run independently on a pc separate from cluster/farms/nodes hosted pc 
   - Run-time changes to config.txt reflected in minitor (only works with web ui disabled in config)
   - No need for log files as monitoring is now using metrics endpoints
   - discord and telegram alert notifications
