@@ -12,7 +12,7 @@ To launch the monitor save all files with extension *.ps1  and sample-config.txt
 - Must use advanced CLI release (Sep 17 or later)
 - Powershell version 5.1 is installed
 - Add --prometheus-listen-on [node-local-ip:port] to your node start-up script
-- Add --prometheus-listen-on [farmer/controller/cache/plotter-local-ip:port] to respective component (farmer/controller/cache/plotter) start-up script
+- Add --prometheus-listen-on to respective component (farmer/controller/cache/plotter) start-up script
 - Use an available and unique port for  each component
 - Add [command line option] -m <http port> to nats-server start script and also add the same nats-server ip/port to  config.txt file
 - Change settings in the config.txt file so that the ip:port are matching to your node, farmer, and nats set-up
