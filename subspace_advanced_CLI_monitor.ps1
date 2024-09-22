@@ -62,6 +62,7 @@ function main {
 	[array]$script:_ss_plotter_obj_arr = $null
 	$script:_nats_server_health_status = $null
 	$script:_news_rows_written_to_console = 0
+	$script:_custom_alert_text = ""
 	# 9/21/2024 - End Change
 	####
 	
@@ -1831,7 +1832,8 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 	$JSON = @{ "content" = $ioMsg; } | convertto-json
 	if ($ioUrl -and $ioUrl.Trim(" ").length -gt 0)
 	{
-		Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
+		#Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
+		$_resp = Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 	}
 }
 

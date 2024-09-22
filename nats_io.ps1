@@ -6,7 +6,6 @@ function fGenAlertNotifications ([string]$_io_alert_text) {
 	try {
 		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
 		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
-		#if ($_seconds_elapsed -ge $_alert_frequency_seconds) {
 			fSendDiscordNotification $script:_url_discord $_io_alert_text
 			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_io_alert_text
 		}
@@ -256,6 +255,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_process_arr) {
 [array]$_nats_active_connection_obj_arr = $null
 
+	$script:_custom_alert_text = ""
 	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_io_nats_url
 	##
 	#Write-Host "_ss_controller_obj_arr = " $script:_ss_controller_obj_arr
@@ -349,8 +349,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -383,8 +385,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Controller" + " status: Inactive, Host:" + "None set-up"
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Controller" + " status: Inactive, Host:" + "None set-up"
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Controller" + " status: Inactive, Host:" + "None set-up"
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -460,8 +464,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -493,8 +499,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Cache" + " status: Inactive, Host:" + "None set-up"
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Cache" + " status: Inactive, Host:" + "None set-up"
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Cache" + " status: Inactive, Host:" + "None set-up"
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -605,8 +613,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Farmer" + " status: Stopped, Host:" + $_ss_farmer_obj_arr_item.IP
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -638,8 +648,11 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Farmer" + " status: Inactive, Host:" + "None set-up"
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
+			#fGenAlertNotifications $_alert_text
+			if ($_nats_farmer_hostname.Length -le 0) { $_nats_farmer_hostname = "None set-up" }
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -715,8 +728,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -753,8 +768,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		}
 		else {
 			$_console_msg_color = $_html_red
-			$_alert_text = "SS Plotter" + " status: Inactive, Host:" + "None set-up"
-			fGenAlertNotifications $_alert_text
+			#$_alert_text = "SS Plotter" + " status: Inactive, Host:" + "None set-up"
+			#fGenAlertNotifications $_alert_text
+			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+			$script:_custom_alert_text += "SS Plotter" + " status: Inactive, Host:" + "None set-up"
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -814,7 +831,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	# set cursor position to nats finish line separator location
 	[Console]::SetCursorPosition($_finish_line_separator_nats_server_CursorPosition.X, $_finish_line_separator_nats_server_CursorPosition.Y)
 	##
-	##NOT USED
+	##NOT USED - below lines
 	[array]$_nats_closed_connection_obj_arr = $null
 	if ($script:_nats_server_health_status) 
 	{
@@ -826,7 +843,14 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		##Not used currently
 		#Write-Host "_nats_closed_connection_obj_arr_item = " $_nats_closed_connection_obj_arr_item
 	}
-	##
+	##NOT USED - above lines
+	#
+	# send alerts
+	if ($script:_nats_server_health_status)
+	{
+		fGenAlertNotifications $script:_custom_alert_text
+	}
+	#
 }
 
 <#
