@@ -37,5 +37,5 @@ To launch the monitor save all files with extension *.ps1  and sample-config.txt
   - Summary and detail stats view configurable (and sticks) at start-up
   - Local Time Zone display
   
->*** For questions and feedback please contact (rs_00) in subspace discord channel.
+>*** For questions and feedback please contact (rs_00) in autonomys discord channel.
 
