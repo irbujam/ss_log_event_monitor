@@ -14,7 +14,7 @@ To launch the monitor save all files with extension *.ps1  and sample-config.txt
 - Add --prometheus-listen-on [node-local-ip:port] to your node start-up script
 - Add --prometheus-listen-on to respective component (farmer/controller/cache/plotter) start-up script
 - Use an available and unique port for  each component
-- Add [command line option] -m <http port> to nats-server start script and also add the same nats-server ip/port to  config.txt file
+- Add [command line option] -m <http port> and -n <server name> to nats-server start script (example: nats-server -n ss-nats--my-server1 -m 18080 -c nats.config)
 - Change settings in the config.txt file so that the ip:port are matching to your node, farmer, and nats set-up
 
 > To enable web access, do the following:
