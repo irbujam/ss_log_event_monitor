@@ -2,6 +2,17 @@
 	Script location on Github: https://github.com/irbujam/ss_log_event_monitor
 	--------------------------------------------------------------------------------------------- #>
 
+function fGenAlertNotifications ([string]$_io_alert_text) {
+	try {
+		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
+		#if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+		if ($_seconds_elapsed -ge $_alert_frequency_seconds) {
+			fSendDiscordNotification $script:_url_discord $_io_alert_text
+			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_io_alert_text
+		}
+	}
+	catch {}
+}
 
 function fPingNatsServer ([string]$_io_nats_url) {
 [object]$_io_nats_response_obj = [PSCustomObject]@{
@@ -27,11 +38,7 @@ function fPingNatsServer ([string]$_io_nats_url) {
 	}
 	catch {
 		$_alert_text = "Nats Server" + " status: Stopped, Host:" + $_io_nats_url
-		try {
-			fSendDiscordNotification $script:_url_discord $_alert_text
-			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-		}
-		catch {}
+		fGenAlertNotifications $_alert_text
 		$_io_nats_response_obj.ServerName = "No Active Nats Server"
 	}
 	return $_io_nats_response_obj
@@ -317,6 +324,11 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 				break
 			}
 		}
+		if ($_ss_controller_disp_name_length -eq 0)
+		{
+			$_ss_controller_disp_name_length = $_ss_controller_obj_arr_item.IP.Length
+		}
+		#
 		Write-Host "" -ForegroundColor $_line_spacer_color
 		#
 		# set cursor position to first header data location
@@ -338,11 +350,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -376,11 +384,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Controller" + " status: Inactive, Host:" + "None set-up"
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -433,6 +437,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 				break
 			}
 		}
+		if ($_ss_cache_disp_name_length -eq 0)
+		{
+			$_ss_cache_disp_name_length = $_ss_cache_obj_arr_item.IP.Length
+		}
 		#
 		# set cursor position to first header data location
 		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1+$_ss_cache_obj_arr_pos))
@@ -453,11 +461,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -490,11 +494,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Cache" + " status: Inactive, Host:" + "None set-up"
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -546,6 +546,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 				$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
 				break
 			}
+		}
+		if ($_ss_farmer_disp_name_length -eq 0)
+		{
+			$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
 		}
 		#
 		# set cursor position to first header data location
@@ -602,11 +606,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Farmer" + " status: Stopped, Host:" + $_ss_farmer_obj_arr_item.IP
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -639,8 +639,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Farmer" + " status: Inactive, Host:" + "None set-up"
-			fSendDiscordNotification $script:_url_discord $_alert_text
-			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -693,6 +692,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 				break
 			}
 		}
+		if ($_ss_plotter_disp_name_length -eq 0)
+		{
+			$_ss_plotter_disp_name_length = $_ss_plotter_obj_arr_item.IP.Length
+		}
 		#
 		# set cursor position to first header data location
 		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1+$_ss_plotter_obj_arr_pos))
@@ -713,11 +716,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -755,11 +754,7 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		else {
 			$_console_msg_color = $_html_red
 			$_alert_text = "SS Plotter" + " status: Inactive, Host:" + "None set-up"
-			try {
-				fSendDiscordNotification $script:_url_discord $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			}
-			catch {}
+			fGenAlertNotifications $_alert_text
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
