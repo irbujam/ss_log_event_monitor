@@ -27,8 +27,7 @@ To launch the monitor save all files with extension *.ps1  and sample-config.txt
 **Key features:**
   - monitoring support for cluster set-up
   - Multi component (remote or local) location and multi OS supported for monitoring
-  
-> Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
+  - Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
   
   - Monitor script can run independently on a pc separate from cluster/farms/nodes hosted pc 
   - Run-time changes to config.txt reflected in minitor (only works with web ui disabled in config)
