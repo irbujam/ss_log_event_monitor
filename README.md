@@ -9,7 +9,7 @@ To launch the monitor save all files with extension *.ps1  and sample-config.txt
 > - Tip: To validate prometheus-listen-on endpoints defined in node & farmer start-up files are working correctly, use a web browser and check data is populated at endpoints - http://node-local-ip:port/metrics & http://farmer-local-ip:port/metrics
 
 **Pre-requisites:**
-- Must use advanced CLI release (Sep 17 or later)
+- Must use latest advanced CLI release
 - Powershell version 5.1 is installed
 - Add --prometheus-listen-on [node-local-ip:port] to your node start-up script
 - Add --prometheus-listen-on to respective component (farmer/controller/cache/plotter) start-up script
