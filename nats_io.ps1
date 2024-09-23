@@ -86,11 +86,17 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 				}
 				else
 				{
-					#if ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.plotter") -ge 0)
-					#{
-						##Write-Host "_nats_connection_item_subs_arr.IndexOf('subspace.plotter') = " $_nats_connection_item_subs_arr.toLower().IndexOf("subspace.plotter")
-						$_io_nats_connections_obj.Plotter = $_nats_connection_item_details_obj
-					#}
+					for ($_nats_connection_item_subs_arr_pos = 0; $_nats_connection_item_subs_arr_pos -lt $_nats_connection_item_subs_arr.Count; $_nats_connection_item_subs_arr_pos++)
+					{
+						#if ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.plotter") -ge 0)
+						#Write-Host "_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos] = " $_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos]
+						if ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.plotter") -ge 0)
+						{
+							##Write-Host "_nats_connection_item_subs_arr.IndexOf('subspace.plotter') = " $_nats_connection_item_subs_arr.toLower().IndexOf("subspace.plotter")
+							$_io_nats_connections_obj.Plotter = $_nats_connection_item_details_obj
+							break
+						}
+					}
 				}
 			}
 			$_io_nats_connections_obj_arr += $_io_nats_connections_obj
@@ -900,32 +906,4 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	}
 	#
 }
-
-<#
-function fMainProcess {
-[array]$script:_ss_controller_obj_arr = $null
-[array]$script:_ss_cache_obj_arr = $null
-[array]$script:_ss_farmer_obj_arr = $null
-[array]$script:_ss_plotter_obj_arr = $null
-$script:_nats_server_health_status = $null
-$script:_nats_server_name = $null
-$script:_news_rows_written_to_console = 0
-
-	while ($true) {
-		Clear-Host
-		####
-		Write-Host "Begin"
-		####
-		$_nats_server_base_url = "192.168.2.22:18080"
-		fWriteNatsServerInfoToConsole $_nats_server_base_url
-		####
-		Write-Host "Finish"
-		Read-Host
-		####
-	}
-}
-
-
-fMainProcess
-#>
 
