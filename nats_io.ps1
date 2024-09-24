@@ -880,6 +880,7 @@ $_new_rows_for_console = 0
 	}
 	#
 	##Write finish line seprator
+	if ($_new_rows_for_console -eq 0) { $_new_rows_for_console = 1 }
 	$script:_new_rows_written_to_console += $_new_rows_for_console
 	# set cursor position to first header data location
 	[Console]::SetCursorPosition(($_header_filler_length + 3), ($_line_separator_controller_CursorPosition.Y+$_new_rows_for_console))
