@@ -321,12 +321,18 @@ $_new_rows_for_console = 0
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 			{
 				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos]
-				#if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_controller_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-				if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller.IP)
+				if ($_ss_controller_obj_arr_item.ServerName -eq $_nats_active_connection_obj_arr_item.ServerName)
 				{
-					$_b_nats_connection_type_match_found = $true
-					$_ss_controller_disp_name_length = $_ss_controller_obj_arr_item.IP.Length
-					break
+					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Controller.Count; $_connection_arr_pos++)
+					{
+						#if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_controller_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
+						if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller.IP)
+						{
+							$_b_nats_connection_type_match_found = $true
+							$_ss_controller_disp_name_length = $_ss_controller_obj_arr_item.IP.Length
+							break
+						}
+					}
 				}
 			}
 			if ($_ss_controller_disp_name_length -eq 0)
@@ -457,12 +463,18 @@ $_new_rows_for_console = 0
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 			{
 				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos]
-				#if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_cache_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-				if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache.IP)
+				if ($_ss_cache_obj_arr_item.ServerName -eq $_nats_active_connection_obj_arr_item.ServerName)
 				{
-					$_b_nats_connection_type_match_found = $true
-					$_ss_cache_disp_name_length = $_ss_cache_obj_arr_item.IP.Length
-					break
+					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Cache.Count; $_connection_arr_pos++)
+					{
+						#if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_cache_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
+						if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache.IP)
+						{
+							$_b_nats_connection_type_match_found = $true
+							$_ss_cache_disp_name_length = $_ss_cache_obj_arr_item.IP.Length
+							break
+						}
+					}
 				}
 			}
 			if ($_ss_cache_disp_name_length -eq 0)
@@ -587,15 +599,21 @@ $_new_rows_for_console = 0
 			$_item_sequence_num += 1
 		#
 		#
-			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Farmer.Count; $_nats_active_connection_obj_arr_pos++)
+			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 			{
-				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr.Farmer[$_nats_active_connection_obj_arr_pos]
-				#if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_farmer_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-				if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP)
+				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos]
+				if ($_ss_farmer_obj_arr_item.ServerName -eq $_nats_active_connection_obj_arr_item.ServerName)
 				{
-					$_b_nats_connection_type_match_found = $true
-					$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
-					break
+					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Farmer.Count; $_connection_arr_pos++)
+					{
+						#if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_farmer_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
+						if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer.IP)
+						{
+							$_b_nats_connection_type_match_found = $true
+							$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
+							break
+						}
+					}
 				}
 			}
 			if ($_ss_farmer_disp_name_length -eq 0)
@@ -759,12 +777,18 @@ $_new_rows_for_console = 0
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 			{
 				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos]
-				#if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_plotter_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-				if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter.IP)
+				if ($_ss_plotter_obj_arr_item.ServerName -eq $_nats_active_connection_obj_arr_item.ServerName)
 				{
-					$_b_nats_connection_type_match_found = $true
-					$_ss_plotter_disp_name_length = $_ss_plotter_obj_arr_item.IP.Length
-					break
+					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Plotter.Count; $_connection_arr_pos++)
+					{
+						#if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_plotter_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
+						if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter.IP)
+						{
+							$_b_nats_connection_type_match_found = $true
+							$_ss_plotter_disp_name_length = $_ss_plotter_obj_arr_item.IP.Length
+							break
+						}
+					}
 				}
 			}
 			if ($_ss_plotter_disp_name_length -eq 0)
