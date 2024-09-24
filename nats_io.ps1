@@ -6,7 +6,7 @@ function fGenAlertNotifications ([string]$_io_alert_text) {
 	try {
 		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
 		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
-			fSendDiscordNotification $script:_url_discord $_io_alert_text
+			#fSendDiscordNotification $script:_url_discord $_io_alert_text
 			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_io_alert_text
 		}
 	}
@@ -44,6 +44,11 @@ function fPingNatsServer ([string]$_io_nats_url) {
 }
 
 function fGetNatsServerActiveConnections ([string]$_io_nats_url) {
+[array]$_controller_obj_arr = $null
+[array]$_cache_obj_arr = $null
+[array]$_farmer_obj_arr = $null
+[array]$_plotter_obj_arr = $null
+#
 [array]$_io_nats_connections_obj_arr = $null
 $_io_nats_connections_obj = [PSCustomObject]@{
 	ServerName	= $script:_nats_server_name
@@ -52,7 +57,8 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 	Farmer		= $null
 	Plotter		= $null
 }
-
+#
+##
 	$_nats_url_endpoint = "http://" + $_io_nats_url + "/connz?subs=1"
 	try {
 		$_nats_resp_obj = Invoke-RestMethod -Method 'GET' -uri $_nats_url_endpoint -TimeoutSec 5
@@ -64,6 +70,7 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 			{
 				$_nats_connection_item = $_nats_connections_arr[$_nats_connections_arr_pos]
 				$_nats_connection_item_details_obj = [PSCustomObject]@{
+					ServerName	= $script:_nats_server_name
 					CID			= $_nats_connection_item.cid
 					IP		 	= $_nats_connection_item.ip
 					Port		= $_nats_connection_item.port
@@ -74,36 +81,41 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 				[array]$_nats_connection_item_subs_arr = $_nats_connection_item.subscriptions_list
 				if ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.piece") -ge 0)
 				{
-					$_io_nats_connections_obj.Controller = $_nats_connection_item_details_obj
+					$_controller_obj_arr += $_nats_connection_item_details_obj
 				}
 				elseif ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.default.cache-identify") -ge 0)
 				{
-					$_io_nats_connections_obj.Cache = $_nats_connection_item_details_obj
+					$_cache_obj_arr += $_nats_connection_item_details_obj
 				}
 				elseif ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.farmer-identify") -ge 0)
 				{
-					$_io_nats_connections_obj.Farmer = $_nats_connection_item_details_obj
+					$_farmer_obj_arr += $_nats_connection_item_details_obj
 				}
 				else
 				{
 					for ($_nats_connection_item_subs_arr_pos = 0; $_nats_connection_item_subs_arr_pos -lt $_nats_connection_item_subs_arr.Count; $_nats_connection_item_subs_arr_pos++)
 					{
-						#if ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.plotter") -ge 0)
-						#Write-Host "_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos] = " $_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos]
 						if ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.plotter") -ge 0)
 						{
-							##Write-Host "_nats_connection_item_subs_arr.IndexOf('subspace.plotter') = " $_nats_connection_item_subs_arr.toLower().IndexOf("subspace.plotter")
-							$_io_nats_connections_obj.Plotter = $_nats_connection_item_details_obj
+							$_plotter_obj_arr += $_nats_connection_item_details_obj
 							break
 						}
 					}
 				}
 			}
-			$_io_nats_connections_obj_arr += $_io_nats_connections_obj
 		}
+		$_io_nats_connections_obj.Controller = $_controller_obj_arr
+		$_io_nats_connections_obj.Cache = $_cache_obj_arr
+		$_io_nats_connections_obj.Farmer = $_farmer_obj_arr
+		$_io_nats_connections_obj.Plotter = $_plotter_obj_arr
+		$_io_nats_connections_obj_arr += $_io_nats_connections_obj
 	}
 	catch {}
-	#Write-Host "_io_nats_connections_obj_arr = " $_io_nats_connections_obj_arr
+	#Write-Host "_io_nats_connections_obj.ServerName = " $_io_nats_connections_obj.ServerName
+	#Write-Host "_io_nats_connections_obj.Controller = " $_io_nats_connections_obj.Controller
+	#Write-Host "_io_nats_connections_obj.Cache      = " $_io_nats_connections_obj.Cache
+	#Write-Host "_io_nats_connections_obj.Farmer     = " $_io_nats_connections_obj.Farmer
+	#Write-Host "_io_nats_connections_obj.Plotter    = " $_io_nats_connections_obj.Plotter
 	return $_io_nats_connections_obj_arr
 }
 
@@ -150,120 +162,91 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 	$script:_nats_server_name = $_nats_server_response.ServerName
 	if ($script:_nats_server_health_status) {
 		$_nats_active_connection_obj_arr = fGetNatsServerActiveConnections $_io_nats_url
-	}
-	else 
-	{
-		$script:_ss_controller_obj_arr = $null
-		$script:_ss_cache_obj_arr = $null
-		$script:_ss_farmer_obj_arr = $null
-		$script:_ss_plotter_obj_arr = $null
-	}
-	#
-	for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
-	{
-			$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos]
-			##
-			if ($_nats_active_connection_obj_arr_item.Controller)
+		for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
+		{
+			#$script:_ss_controller_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Controller
+			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Controller
+			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
-				$_ss_controller_obj_item = [PSCustomObject]@{
-					ServerName 	= $script:_nats_server_name
-					IP		 	= $_nats_active_connection_obj_arr_item.Controller.IP
-					Port		= $_nats_active_connection_obj_arr_item.Controller.Port
-				}
-				$_b_new_controller = $true
+				$_nats_controller_obj_item = $_nats_controller_obj_item_arr[$_nats_controller_obj_item_arr_pos]
+				[boolean]$_b_new_cluster_component = $true
 				for ($_ss_controller_obj_arr_pos = 0; $_ss_controller_obj_arr_pos -lt $script:_ss_controller_obj_arr.Count; $_ss_controller_obj_arr_pos++)
 				{
-					$_ss_controller_obj_arr_item = $script:_ss_controller_obj_arr[$_ss_controller_obj_arr_pos]
-					#if ($_ss_controller_obj_item.IP -eq $_ss_controller_obj_arr_item.IP -and $_ss_controller_obj_item.Port -eq $_ss_controller_obj_arr_item.Port)
-					if ($_ss_controller_obj_item.IP -eq $_ss_controller_obj_arr_item.IP)
+					if ($script:_ss_controller_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
-						$_b_new_controller = $false
-						break
+						$_b_new_cluster_component = $false
 					}
 				}
-				if ($_b_new_controller)
+				if ($_b_new_cluster_component)
 				{
-					$script:_ss_controller_obj_arr += $_ss_controller_obj_item
+					$script:_ss_controller_obj_arr += $_nats_controller_obj_item
 				}
 			}
-			##
-			if ($_nats_active_connection_obj_arr_item.Cache)
+			#$script:_ss_cache_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Cache
+			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Cache
+			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
-				$_ss_cache_obj_item = [PSCustomObject]@{
-					ServerName 	= $script:_nats_server_name
-					IP		 	= $_nats_active_connection_obj_arr_item.Cache.IP
-					Port		= $_nats_active_connection_obj_arr_item.Cache.Port
-				}
-				$_b_new_cache = $true
+				$_nats_controller_obj_item = $_nats_controller_obj_item_arr[$_nats_controller_obj_item_arr_pos]
+				[boolean]$_b_new_cluster_component = $true
 				for ($_ss_cache_obj_arr_pos = 0; $_ss_cache_obj_arr_pos -lt $script:_ss_cache_obj_arr.Count; $_ss_cache_obj_arr_pos++)
 				{
-					$_ss_cache_obj_arr_item = $script:_ss_cache_obj_arr[$_ss_cache_obj_arr_pos]
-					#if ($_ss_cache_obj_item.IP -eq $_ss_cache_obj_arr_item.IP -and $_ss_cache_obj_item.Port -eq $_ss_cache_obj_arr_item.Port)
-					if ($_ss_cache_obj_item.IP -eq $_ss_cache_obj_arr_item.IP)
+					if ($script:_ss_cache_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
-						$_b_new_cache = $false
-						break
+						$_b_new_cluster_component = $false
 					}
 				}
-				if ($_b_new_cache)
+				if ($_b_new_cluster_component)
 				{
-					$script:_ss_cache_obj_arr += $_ss_cache_obj_item
+					$script:_ss_cache_obj_arr += $_nats_controller_obj_item
 				}
 			}
-			##
-			if ($_nats_active_connection_obj_arr_item.Farmer)
+			#$script:_ss_farmer_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Farmer
+			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Farmer
+			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
-				$_ss_farmer_obj_item = [PSCustomObject]@{
-					ServerName 	= $script:_nats_server_name
-					IP		 	= $_nats_active_connection_obj_arr_item.Farmer.IP
-					Port		= $_nats_active_connection_obj_arr_item.Farmer.Port
-				}
-				$_b_new_farmer = $true
+				$_nats_controller_obj_item = $_nats_controller_obj_item_arr[$_nats_controller_obj_item_arr_pos]
+				[boolean]$_b_new_cluster_component = $true
 				for ($_ss_farmer_obj_arr_pos = 0; $_ss_farmer_obj_arr_pos -lt $script:_ss_farmer_obj_arr.Count; $_ss_farmer_obj_arr_pos++)
 				{
-					$_ss_farmer_obj_arr_item = $script:_ss_farmer_obj_arr[$_ss_farmer_obj_arr_pos]
-					#if ($_ss_farmer_obj_item.IP -eq $_ss_farmer_obj_arr_item.IP -and $_ss_farmer_obj_item.Port -eq $_ss_farmer_obj_arr_item.Port)
-					if ($_ss_farmer_obj_item.IP -eq $_ss_farmer_obj_arr_item.IP)
+					if ($script:_ss_farmer_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
-						$_b_new_farmer = $false
-						break
+						$_b_new_cluster_component = $false
 					}
 				}
-				if ($_b_new_farmer)
+				if ($_b_new_cluster_component)
 				{
-					$script:_ss_farmer_obj_arr += $_ss_farmer_obj_item
+					$script:_ss_farmer_obj_arr += $_nats_controller_obj_item
 				}
 			}
-			##
-			if ($_nats_active_connection_obj_arr_item.Plotter)
+			#
+			#$script:_ss_plotter_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Plotter
+			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Plotter
+			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
-				$_ss_plotter_obj_item = [PSCustomObject]@{
-					ServerName 	= $script:_nats_server_name
-					IP		 	= $_nats_active_connection_obj_arr_item.Plotter.IP
-					Port		= $_nats_active_connection_obj_arr_item.Plotter.Port
-				}
-				$_b_new_farmer = $true
+				$_nats_controller_obj_item = $_nats_controller_obj_item_arr[$_nats_controller_obj_item_arr_pos]
+				[boolean]$_b_new_cluster_component = $true
 				for ($_ss_plotter_obj_arr_pos = 0; $_ss_plotter_obj_arr_pos -lt $script:_ss_plotter_obj_arr.Count; $_ss_plotter_obj_arr_pos++)
 				{
-					$_ss_plotter_obj_arr_item = $script:_ss_plotter_obj_arr[$_ss_plotter_obj_arr_pos]
-					#if ($_ss_plotter_obj_item.IP -eq $_ss_plotter_obj_arr_item.IP -and $_ss_plotter_obj_item.Port -eq $_ss_plotter_obj_arr_item.Port)
-					if ($_ss_plotter_obj_item.IP -eq $_ss_plotter_obj_arr_item.IP)
+					if ($script:_ss_plotter_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
-						$_b_new_farmer = $false
-						break
+						$_b_new_cluster_component = $false
 					}
 				}
-				if ($_b_new_farmer)
+				if ($_b_new_cluster_component)
 				{
-					$script:_ss_plotter_obj_arr += $_ss_plotter_obj_item
+					$script:_ss_plotter_obj_arr += $_nats_controller_obj_item
 				}
 			}
+		}
 	}
+	#
+	#
 	return $_nats_active_connection_obj_arr
 }
 
 function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_process_arr) {
 [array]$_nats_active_connection_obj_arr = $null
+$_new_rows_for_console = 0
 
 	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_io_nats_url
 	$script:_custom_alert_text = "Nats Server Name: $script:_nats_server_name"
@@ -295,7 +278,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	Write-Host "" -ForegroundColor $_line_spacer_color
 	#
 	##
-	$_header_title = "   Controller    "
+	$_controller_header_title = "   Controller    "
+	$_header_title = $_controller_header_title
 	$_console_msg = "|" 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	$_header_filler_length += $_header_title.Length
@@ -317,7 +301,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	#
 	$_ss_controller_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
-	if ($script:_news_rows_written_to_console -lt $script:_ss_controller_obj_arr.Count) { $script:_news_rows_written_to_console = $script:_ss_controller_obj_arr.Count }
+	[boolean]$_no_connection_exists = $true
+	$_item_sequence_num = -1
+	#if ($script:_new_rows_written_to_console -lt $script:_ss_controller_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_controller_obj_arr.Count }
+	if ($_new_rows_for_console -lt $script:_ss_controller_obj_arr.Count) { $_new_rows_for_console = $script:_ss_controller_obj_arr.Count }
 	for ($_ss_controller_obj_arr_pos = 0; $_ss_controller_obj_arr_pos -lt $script:_ss_controller_obj_arr.Count; $_ss_controller_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
@@ -327,6 +314,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		if ($_ss_controller_obj_arr_item.ServerName -eq $script:_nats_server_name)
 		{
+			$_no_connection_exists = $false
+			$_item_sequence_num += 1
 		#
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
@@ -348,7 +337,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 			Write-Host "" -ForegroundColor $_line_spacer_color
 			#
 			# set cursor position to first header data location
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 0), ($_line_separator_controller_CursorPosition.Y+1+$_ss_controller_obj_arr_pos))
+			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 0), ($_line_separator_controller_CursorPosition.Y+1+$_ss_controller_obj_arr_pos))
+			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 0), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -383,7 +373,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		#
 	}
-	if ($script:_ss_controller_obj_arr.Count -le 0)
+	#if ($script:_ss_controller_obj_arr.Count -le 0)
+	if ($_no_connection_exists -or $script:_ss_controller_obj_arr.Count -le 0)
 	{
 		Write-Host "" -ForegroundColor $_line_spacer_color
 		#
@@ -422,7 +413,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	##
 	# set cursor position to last header location
 	[Console]::SetCursorPosition($_header_controller_CursorPosition.X, $_header_controller_CursorPosition.Y)
-	$_header_title = "      Cache      "
+	$_cache_header_title = "      Cache      "
+	$_header_title = $_cache_header_title
 	$_console_msg = $_header_title
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	$_header_filler_length += $_header_title.Length
@@ -445,7 +437,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	#
 	$_ss_cache_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
-	if ($script:_news_rows_written_to_console -lt $script:_ss_cache_obj_arr.Count) { $script:_news_rows_written_to_console = $script:_ss_cache_obj_arr.Count }
+	[boolean]$_no_connection_exists = $true
+	$_item_sequence_num = -1
+	#if ($script:_new_rows_written_to_console -lt $script:_ss_cache_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_cache_obj_arr.Count }
+	if ($_new_rows_for_console -lt $script:_ss_cache_obj_arr.Count) { $_new_rows_for_console = $script:_ss_cache_obj_arr.Count }
 	for ($_ss_cache_obj_arr_pos = 0; $_ss_cache_obj_arr_pos -lt $script:_ss_cache_obj_arr.Count; $_ss_cache_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
@@ -455,6 +450,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		if ($_ss_cache_obj_arr_item.ServerName -eq $script:_nats_server_name)
 		{
+			$_no_connection_exists = $false
+			$_item_sequence_num += 1
 		#
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
@@ -474,7 +471,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 			}
 			#
 			# set cursor position to first header data location
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1+$_ss_cache_obj_arr_pos))
+			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1+$_ss_cache_obj_arr_pos))
+			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -509,7 +507,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		#			
 	}
-	if ($script:_ss_cache_obj_arr.Count -le 0)
+	#if ($script:_ss_cache_obj_arr.Count -le 0)
+	if ($_no_connection_exists -or $script:_ss_cache_obj_arr.Count -le 0)
 	{
 		#
 		# set cursor position to first header data location
@@ -547,7 +546,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	##
 	# set cursor position to last header location
 	[Console]::SetCursorPosition($_header_cache_CursorPosition.X, $_header_cache_CursorPosition.Y)
-	$_header_title = "      Farmer     "
+	$_farmer_header_title = "      Farmer     "
+	$_header_title = $_farmer_header_title
 	$_console_msg = $_header_title
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	$_header_filler_length += $_header_title.Length
@@ -570,7 +570,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	#
 	$_ss_farmer_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
-	if ($script:_news_rows_written_to_console -lt $script:_ss_farmer_obj_arr.Count) { $script:_news_rows_written_to_console = $script:_ss_farmer_obj_arr.Count }
+	[boolean]$_no_connection_exists = $true
+	$_item_sequence_num = -1
+	#if ($script:_new_rows_written_to_console -lt $script:_ss_farmer_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_farmer_obj_arr.Count }
+	if ($_new_rows_for_console -lt $script:_ss_farmer_obj_arr.Count) { $_new_rows_for_console = $script:_ss_farmer_obj_arr.Count }
 	for ($_ss_farmer_obj_arr_pos = 0; $_ss_farmer_obj_arr_pos -lt $script:_ss_farmer_obj_arr.Count; $_ss_farmer_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
@@ -580,13 +583,15 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		if ($_ss_farmer_obj_arr_item.ServerName -eq $script:_nats_server_name)
 		{
+			$_no_connection_exists = $false
+			$_item_sequence_num += 1
 		#
 		#
-			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
+			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Farmer.Count; $_nats_active_connection_obj_arr_pos++)
 			{
-				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos]
+				$_nats_active_connection_obj_arr_item = $_nats_active_connection_obj_arr.Farmer[$_nats_active_connection_obj_arr_pos]
 				#if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_farmer_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-				if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer.IP)
+				if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP)
 				{
 					$_b_nats_connection_type_match_found = $true
 					$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
@@ -599,7 +604,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 			}
 			#
 			# set cursor position to first header data location
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 2), ($_line_separator_controller_CursorPosition.Y+1+$_ss_farmer_obj_arr_pos))
+			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 2), ($_line_separator_controller_CursorPosition.Y+1+$_ss_farmer_obj_arr_pos))
+			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 2), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -669,7 +675,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		#
 	}
-	if ($script:_ss_farmer_obj_arr.Count -le 0)
+	#if ($script:_ss_farmer_obj_arr.Count -le 0)
+	if ($_no_connection_exists -or $script:_ss_farmer_obj_arr.Count -le 0)
 	{
 		#
 		# set cursor position to first header data location
@@ -708,7 +715,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	##
 	# set cursor position to last header location
 	[Console]::SetCursorPosition($_header_farmer_CursorPosition.X, $_header_farmer_CursorPosition.Y)
-	$_header_title = "     Plotter     "
+	$_plotter_header_title = "     Plotter     "
+	$_header_title = $_plotter_header_title
 	$_console_msg = $_header_title
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	$_header_filler_length += $_header_title.Length
@@ -731,7 +739,10 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	#
 	$_ss_plotter_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
-	if ($script:_news_rows_written_to_console -lt $script:_ss_plotter_obj_arr.Count) { $script:_news_rows_written_to_console = $script:_ss_plotter_obj_arr.Count }
+	[boolean]$_no_connection_exists = $true
+	$_item_sequence_num = -1
+	#if ($script:_new_rows_written_to_console -lt $script:_ss_plotter_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_plotter_obj_arr.Count }
+	if ($_new_rows_for_console -lt $script:_ss_plotter_obj_arr.Count) { $_new_rows_for_console = $script:_ss_plotter_obj_arr.Count }
 	for ($_ss_plotter_obj_arr_pos = 0; $_ss_plotter_obj_arr_pos -lt $script:_ss_plotter_obj_arr.Count; $_ss_plotter_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
@@ -741,6 +752,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		if ($_ss_plotter_obj_arr_item.ServerName -eq $script:_nats_server_name)
 		{
+			$_no_connection_exists = $false
+			$_item_sequence_num += 1
 		#
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
@@ -760,7 +773,8 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 			}
 			#
 			# set cursor position to first header data location
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1+$_ss_plotter_obj_arr_pos))
+			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1+$_ss_plotter_obj_arr_pos))
+			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -799,8 +813,9 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 		#
 		#
 	}
-	if ($script:_ss_plotter_obj_arr.Count -le 0)
-	{
+	#if ($script:_ss_plotter_obj_arr.Count -le 0)
+	if ($_no_connection_exists -or $script:_ss_plotter_obj_arr.Count -le 0)
+ 	{
 		#
 		# set cursor position to first header data location
 		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1))
@@ -841,12 +856,37 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	}
 	#
 	##Write finish line seprator
+	$script:_new_rows_written_to_console += $_new_rows_for_console
+	# set cursor position to first header data location
+	[Console]::SetCursorPosition(($_header_filler_length + 3), ($_line_separator_controller_CursorPosition.Y+$_new_rows_for_console))
+
 	Write-Host "" -ForegroundColor $_line_spacer_color
 	$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + 3) $_label_line_separator_upper
 	$_console_msg = " " + $_label_spacer
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	# get the nats finish line separator cursor position for repositioning later
 	$_finish_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
+	#
+	#
+	for ($_new_rows_for_console_pos = 0; $_new_rows_for_console_pos -lt $_new_rows_for_console; $_new_rows_for_console_pos++)
+	{
+		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*0), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*1), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*2), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*3), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*4), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+	}
+	##
 	##
 	##Write nats server header and wrap-up
 	# set cursor position to last nats header top line separator location
@@ -906,4 +946,28 @@ function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_proce
 	}
 	#
 }
+
+
+
+function fTest {
+[array]$script:_ss_controller_obj_arr = $null
+[array]$script:_ss_cache_obj_arr = $null
+[array]$script:_ss_farmer_obj_arr = $null
+[array]$script:_ss_plotter_obj_arr = $null
+#
+##
+	Clear-Host
+	$_nats_url = "192.168.2.22:18080"
+	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_nats_url
+	##
+	$_nats_url = "192.168.2.46:18080"
+	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_nats_url
+	#Write-Host "_nats_active_connection_obj_arr = " $_nats_active_connection_obj_arr
+	Write-Host "_ss_controller_obj_arr = " $script:_ss_controller_obj_arr
+	Write-Host "_ss_cache_obj_arr      = " $script:_ss_cache_obj_arr
+	Write-Host "_ss_farmer_obj_arr     = " $script:_ss_farmer_obj_arr
+	Write-Host "_ss_plotter_obj_arr    = " $script:_ss_plotter_obj_arr
+}
+
+#fTest
 

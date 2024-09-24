@@ -61,7 +61,7 @@ function main {
 	[array]$script:_ss_farmer_obj_arr = $null
 	[array]$script:_ss_plotter_obj_arr = $null
 	$script:_nats_server_health_status = $null
-	$script:_news_rows_written_to_console = 0
+	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
 	# 9/21/2024 - End Change
 	####
