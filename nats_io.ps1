@@ -247,7 +247,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_process_arr) {
 [array]$_nats_active_connection_obj_arr = $null
 $_new_rows_for_console = 0
-
+[boolean]$_b_cluster_alert_triggered = $false
 	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_io_nats_url
 	$script:_custom_alert_text = "Nats Server Name: $script:_nats_server_name"
 	##
@@ -365,6 +365,7 @@ $_new_rows_for_console = 0
 				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
+				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -407,6 +408,7 @@ $_new_rows_for_console = 0
 			#fGenAlertNotifications $_alert_text
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Controller" + " status: Inactive, Host:" + "None set-up"
+			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -505,6 +507,7 @@ $_new_rows_for_console = 0
 				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
+				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -546,6 +549,7 @@ $_new_rows_for_console = 0
 			#fGenAlertNotifications $_alert_text
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Cache" + " status: Inactive, Host:" + "None set-up"
+			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -679,6 +683,7 @@ $_new_rows_for_console = 0
 				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
+				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -721,6 +726,7 @@ $_new_rows_for_console = 0
 			if ($_nats_farmer_hostname.Length -le 0) { $_nats_farmer_hostname = "None set-up" }
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
+			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -819,6 +825,7 @@ $_new_rows_for_console = 0
 				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
+				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -865,6 +872,7 @@ $_new_rows_for_console = 0
 			#fGenAlertNotifications $_alert_text
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Plotter" + " status: Inactive, Host:" + "None set-up"
+			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -965,7 +973,8 @@ $_new_rows_for_console = 0
 	##NOT USED - above lines
 	#
 	# send alerts
-	if ($script:_nats_server_health_status)
+	#if ($script:_nats_server_health_status )
+	if ($_b_cluster_alert_triggered)
 	{
 		fGenAlertNotifications $script:_custom_alert_text
 	}
