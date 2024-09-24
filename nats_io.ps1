@@ -6,7 +6,7 @@ function fGenAlertNotifications ([string]$_io_alert_text) {
 	try {
 		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
 		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
-			#fSendDiscordNotification $script:_url_discord $_io_alert_text
+			fSendDiscordNotification $script:_url_discord $_io_alert_text
 			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_io_alert_text
 		}
 	}

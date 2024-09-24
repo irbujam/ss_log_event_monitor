@@ -12,7 +12,10 @@ function main {
 	# 5/7/2024 - End Change
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_for_git_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-	$gitVersion = fCheckGitNewVersion
+	$_ss_git_url = "https://api.github.com/repos/subspace/subspace/releases/latest"
+	$_ss_git_version = fCheckGitNewVersion ($_ss_git_url)
+	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
+	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
 	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
@@ -220,6 +223,10 @@ function main {
 					else {
 						Write-Host
 					}
+					##
+					## check monitor git version and display variance in console
+					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					##
 					Write-Host
 					if ($script:_b_write_process_details_to_console)
 					{
@@ -243,9 +250,11 @@ function main {
 				###### Auto refresh
 				$_for_git_HoursElapsed = $_for_git_stopwatch.Elapsed.TotalHours
 				if ($_for_git_HoursElapsed -ge 1) {
-					$gitNewVersion = fCheckGitNewVersion
-					if ($gitNewVersion) {
-						$gitVersion = $gitNewVersion
+					$_ss_git_version_new = fCheckGitNewVersion ($_ss_git_url)
+					$_monitor_git_version_new = fCheckGitNewVersion ($_monitor_git_url)
+					if ($_ss_git_version_new) {
+						$_ss_git_version = $_ss_git_version_new
+						$_monitor_git_version = $_monitor_git_version_new
 					}
 					$_for_git_stopwatch.Restart()
 				}
@@ -302,6 +311,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			else {
 				Write-Host
 			}
+			##
+			## check monitor git version and report on variance
+			fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+			##
 			Write-Host
 			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
@@ -357,6 +370,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
 									#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+									##
+									## check monitor git version and display variance in console
+									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									##
 									Write-Host
 									Write-Host
 									fWriteDetailDataToConsole $_farmers_ip_arr
@@ -376,6 +393,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
 									Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+									##
+									## check monitor git version and display variance in console
+									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									##
 									Write-Host
 									fGetSummaryDataForConsole $_farmers_ip_arr
 								}
@@ -420,6 +441,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 										Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+										##
+										## check monitor git version and display variance in console
+										fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+										##
 										Write-Host
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
@@ -440,6 +465,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+									##
+									## check monitor git version and display variance in console
+									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									##
 									Write-Host
 									$script:_individual_farmer_id_last_pos -= 1
 									if ($script:_individual_farmer_id_last_pos -ge 0)
@@ -468,6 +497,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "] to loop thru single farmer" -ForegroundColor $_html_gray
+									##
+									## check monitor git version and display variance in console
+									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									##
 									Write-Host
 									$script:_individual_farmer_id_last_pos += 1
 									if ($script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
@@ -875,6 +908,10 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
 					#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 					Write-Host
+					##
+					## check monitor git version and display variance in console
+					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					##
 					Write-Host
 					fWriteDetailDataToConsole $_farmers_ip_arr
 					$_resp_last_display_type_request = "detail"
@@ -890,6 +927,10 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
 					Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+					##
+					## check monitor git version and display variance in console
+					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					##
 					Write-Host
 					fGetSummaryDataForConsole $_farmers_ip_arr
 					$_resp_last_display_type_request = "summary"
@@ -932,6 +973,10 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+						##
+						## check monitor git version and display variance in console
+						fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+						##
 						Write-Host
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
@@ -949,6 +994,10 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+					##
+					## check monitor git version and display variance in console
+					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					##
 					Write-Host
 					$script:_individual_farmer_id_last_pos -= 1
 					if ($script:_individual_farmer_id_last_pos -ge 0)
@@ -974,6 +1023,10 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "] to loop thru single farmer" -ForegroundColor $_html_gray
+					##
+					## check monitor git version and display variance in console
+					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					##
 					Write-Host
 					$script:_individual_farmer_id_last_pos += 1
 					if ($script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
@@ -1951,10 +2004,11 @@ function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_h
 	return $_b_resp_ok
 }
 
-function fCheckGitNewVersion {
+function fCheckGitNewVersion ([string]$_io_git_url) {
 	.{
 		$gitVersionArr = [System.Collections.ArrayList]@()
-		$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri "https://api.github.com/repos/subspace/subspace/releases/latest" 2>$null
+		#$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri "https://api.github.com/repos/subspace/subspace/releases/latest" 2>$null
+		$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri $_io_git_url 2>$null
 		if ($gitVersionCurrObj) {
 			$tempArr_1 = $gitVersionArr.add($gitVersionCurrObj.tag_name)
 			$gitNewVersionReleaseDate = (Get-Date $gitVersionCurrObj.published_at).ToLocalTime() 
@@ -1963,5 +2017,47 @@ function fCheckGitNewVersion {
 	}|Out-Null
 	return $gitVersionArr
 }
+
+function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [string]$_io_process_name) {
+[object]$_io_process_release_version_date_diff_obj = $null
+	#$_process_obj = Get-Process | where {$_.ProcessName -like '*subspace_advanced_CLI_monitor*'} -ErrorAction SilentlyContinue
+	$_process_obj = Get-Process | where {$_.ProcessName -like ('*' + $_io_process_name + '*')} -ErrorAction SilentlyContinue
+	if ($_process_obj) 
+	{
+		$_process_path = $_process_obj.path 
+		#$_process_file_create_date = Get-ChildItem -Path  $_monitor_process_path | select CreationTime 
+		$_process_file_create_date = Get-ChildItem -Path  $_monitor_process_path | select LastWriteTime  
+		if ($null -ne $_io_process_git_version) 
+		{
+			$_process_curr_version_release_date = $_io_process_git_version[1]
+			$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_file_create_date.LastWriteTime -end $_process_curr_version_release_date
+		}
+		else 
+		{
+			$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_file_create_date.LastWriteTime -end $_process_file_create_date.LastWriteTime
+		}
+	}
+	return $_io_process_release_version_date_diff_obj
+}
+
+function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_name) {
+	## check monitor git version and report on variance
+	$_process_release_version_date_diff_obj = fCheckGitReleaseVersionDifference $_io_process_git_version $_io_process_name
+	if ($_process_release_version_date_diff_obj)
+	#if ($true)		############## DEBUG only
+	{
+		if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -gt 0) 
+		#if ($true)		############## DEBUG only
+		{ 
+			Write-Host ("New Release available for " + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
+		}
+		else 
+		{ 
+			Write-Host "Running latest " + $_io_process_name + " version" -NoNewline -ForegroundColor $_html_green
+		}
+		Write-Host
+	}
+}
+
 
 main

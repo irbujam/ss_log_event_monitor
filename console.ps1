@@ -1428,9 +1428,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	## display latest github version info
 	$_gitVersionDisp = " - "
 	$_gitVersionDispColor = $_html_red
-	if ($null -ne $gitVersion) {
-		$currentVersion = $gitVersion[0] -replace "[^.0-9]"
-		$_gitVersionDisp = $gitVersion[0]
+	if ($null -ne $_ss_git_version) {
+		$currentVersion = $_ss_git_version[0] -replace "[^.0-9]"
+		$_gitVersionDisp = $_ss_git_version[0]
 		$_gitVersionDispColor = $_html_green
 	}
 	
@@ -2881,9 +2881,9 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	## display latest github version info
 	$_gitVersionDisp = " - "
 	$_gitVersionDispColor = $_html_red
-	if ($null -ne $gitVersion) {
-		$currentVersion = $gitVersion[0] -replace "[^.0-9]"
-		$_gitVersionDisp = $gitVersion[0]
+	if ($null -ne $_ss_git_version) {
+		$currentVersion = $_ss_git_version[0] -replace "[^.0-9]"
+		$_gitVersionDisp = $_ss_git_version[0]
 		$_gitVersionDispColor = $_html_green
 	}
 
@@ -4234,9 +4234,9 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	## display latest github version info
 	$_gitVersionDisp = " - "
 	$_gitVersionDispColor = $_html_red
-	if ($null -ne $gitVersion) {
-		$currentVersion = $gitVersion[0] -replace "[^.0-9]"
-		$_gitVersionDisp = $gitVersion[0]
+	if ($null -ne $_ss_git_version) {
+		$currentVersion = $_ss_git_version[0] -replace "[^.0-9]"
+		$_gitVersionDisp = $_ss_git_version[0]
 		$_gitVersionDispColor = $_html_green
 	}
 
