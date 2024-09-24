@@ -947,27 +947,3 @@ $_new_rows_for_console = 0
 	#
 }
 
-
-
-function fTest {
-[array]$script:_ss_controller_obj_arr = $null
-[array]$script:_ss_cache_obj_arr = $null
-[array]$script:_ss_farmer_obj_arr = $null
-[array]$script:_ss_plotter_obj_arr = $null
-#
-##
-	Clear-Host
-	$_nats_url = "192.168.2.22:18080"
-	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_nats_url
-	##
-	$_nats_url = "192.168.2.46:18080"
-	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_nats_url
-	#Write-Host "_nats_active_connection_obj_arr = " $_nats_active_connection_obj_arr
-	Write-Host "_ss_controller_obj_arr = " $script:_ss_controller_obj_arr
-	Write-Host "_ss_cache_obj_arr      = " $script:_ss_cache_obj_arr
-	Write-Host "_ss_farmer_obj_arr     = " $script:_ss_farmer_obj_arr
-	Write-Host "_ss_plotter_obj_arr    = " $script:_ss_plotter_obj_arr
-}
-
-#fTest
-
