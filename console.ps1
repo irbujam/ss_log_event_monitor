@@ -1584,6 +1584,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_num_rows += $script:_new_rows_written_to_console + 6		##to acccount for headers and line seperator rows
 					##
 					Write-Host
+					Write-Host
 					$_num_rows += 1
 				}
 				else

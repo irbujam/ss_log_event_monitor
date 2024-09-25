@@ -6,16 +6,17 @@
 $host.UI.RawUI.WindowTitle = "Subspace Advanced CLI Process Monitor"
 function main {
 	$_b_allow_refresh = $false
-	# 5/7/2024 - Begin Change
 	$script:_b_enable_new_sector_times_calc = $true
 	$script:_total_time_elpased_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-	# 5/7/2024 - End Change
 	$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_for_git_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$_ss_git_url = "https://api.github.com/repos/subspace/subspace/releases/latest"
 	$_ss_git_version = fCheckGitNewVersion ($_ss_git_url)
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
+	$_monitor_file_curr_local_path = $PSCommandPath
+	$_monitor_file_name = "subspace_advanced_CLI_monitor"
+	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
 	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
@@ -45,9 +46,7 @@ function main {
 	#
 	[array]$script:_replot_sector_count_hold_arr = $null
 	#
-	# 5/7/2024 - Begin Change
 	[array]$script:_incremental_plot_elapsed_time_arr = $null
-	# 5/7/2024 - End Change
 	#
 	[array]$script:_individual_farmer_id_arr = $null
 	$script:_individual_farmer_id_last_pos = -1
@@ -58,15 +57,14 @@ function main {
 	$script:_b_write_process_details_to_console = $false
 	$script:_b_write_process_summary_to_console = $true
 	#
-	# 9/21/2024 - Begin Change
 	[array]$script:_ss_controller_obj_arr = $null
 	[array]$script:_ss_cache_obj_arr = $null
 	[array]$script:_ss_farmer_obj_arr = $null
 	[array]$script:_ss_plotter_obj_arr = $null
 	$script:_nats_server_health_status = $null
+	[object]$script:_cluster_data_row_pos_hold = $null
 	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
-	# 9/21/2024 - End Change
 	####
 	
 	fResizePSWindow 40 125 $true
@@ -81,10 +79,12 @@ function main {
 			}
 			if ($_b_allow_refresh -or $script:_b_user_refresh -eq $true) 
 			{
-				# 5/20/2024 - Begin Change
+				$script:_cluster_data_row_pos_hold = $null
+				$script:_new_rows_written_to_console = 0
+				$script:_custom_alert_text = ""
+				##
 				$script:_all_process_eta = 0
 				$script:_all_process_eta_disp = "-"
-				# 5/20/2024 - End Change
 				#
 				$script:_url_discord = ""
 				$script:_telegram_api_token = ""
@@ -225,7 +225,7 @@ function main {
 					}
 					##
 					## check monitor git version and display variance in console
-					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 					##
 					Write-Host
 					if ($script:_b_write_process_details_to_console)
@@ -277,9 +277,7 @@ function main {
 . "$PSScriptRoot\charts.ps1"
 . "$PSScriptRoot\data.ps1"
 . "$PSScriptRoot\console.ps1"
-# 9/21/2024 - Begin Change
 . "$PSScriptRoot\nats_io.ps1"
-# 9/21/2024 - End Change
 
 function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_context_task) {
 	$_html_full = $null
@@ -290,10 +288,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			
 			# wait for request - async
 			#
-			# 5/20/2024 - Begin Change
 			$script:_all_process_eta = 0
 			$script:_all_process_eta_disp = "-"
-			# 5/20/2024 - End Change
 			#
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
@@ -313,7 +309,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			}
 			##
 			## check monitor git version and report on variance
-			fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+			fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 			##
 			Write-Host
 			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
@@ -358,6 +354,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 								F12 {
 									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
+									##
+									$script:_cluster_data_row_pos_hold = $null
+									$script:_new_rows_written_to_console = 0
+									$script:_custom_alert_text = ""
+									##
 									$script:_b_write_process_details_to_console = $true
 									$script:_b_write_process_summary_to_console = $false
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
@@ -372,7 +373,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
-									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 									##
 									Write-Host
 									Write-Host
@@ -381,6 +382,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 								F10 {
 									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
+									##
+									$script:_cluster_data_row_pos_hold = $null
+									$script:_new_rows_written_to_console = 0
+									$script:_custom_alert_text = ""
+									##
 									$script:_b_write_process_details_to_console = $false
 									$script:_b_write_process_summary_to_console = $true
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
@@ -395,7 +401,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
-									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 									##
 									Write-Host
 									fGetSummaryDataForConsole $_farmers_ip_arr
@@ -443,7 +449,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
 										##
 										## check monitor git version and display variance in console
-										fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+										fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 										##
 										Write-Host
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
@@ -467,7 +473,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
-									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 									##
 									Write-Host
 									$script:_individual_farmer_id_last_pos -= 1
@@ -499,7 +505,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "] to loop thru single farmer" -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
-									fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 									##
 									Write-Host
 									$script:_individual_farmer_id_last_pos += 1
@@ -859,17 +865,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
 		}
 	}
-	#else {
-	#	$_console_log =  "invalid url: " + $_request_url + ", method: " + $_request_method
-	#	#Write-Host $_console_log
-	#	$_response = "<html><body>Invalid url...</body></html>"
-	#	$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
-	#	$_context.Response.OutputStream.Write($_response_bytes, 0, $_response_bytes.Length)
-	#}
 
-	# end response and close listener
-	#Start-Sleep -Milliseconds 200
-	#Start-Sleep -Seconds 1
 	$_context.Response.Close()
 
 	$script:_b_user_refresh = $true
@@ -899,6 +895,11 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				F12 {
 					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
+					##
+					$script:_cluster_data_row_pos_hold = $null
+					$script:_new_rows_written_to_console = 0
+					$script:_custom_alert_text = ""
+					##
 					$script:_b_write_process_details_to_console = $true
 					$script:_b_write_process_summary_to_console = $false
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
@@ -910,7 +911,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host
 					##
 					## check monitor git version and display variance in console
-					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 					##
 					Write-Host
 					fWriteDetailDataToConsole $_farmers_ip_arr
@@ -919,6 +920,11 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				F10 {
 					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
+					##
+					$script:_cluster_data_row_pos_hold = $null
+					$script:_new_rows_written_to_console = 0
+					$script:_custom_alert_text = ""
+					##
 					$script:_b_write_process_details_to_console = $false
 					$script:_b_write_process_summary_to_console = $true
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
@@ -929,7 +935,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
-					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 					##
 					Write-Host
 					fGetSummaryDataForConsole $_farmers_ip_arr
@@ -975,7 +981,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
 						##
 						## check monitor git version and display variance in console
-						fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+						fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 						##
 						Write-Host
 						$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
@@ -996,7 +1002,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
-					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 					##
 					Write-Host
 					$script:_individual_farmer_id_last_pos -= 1
@@ -1025,7 +1031,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "] to loop thru single farmer" -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
-					fDisplayMonitorGitVersionVariance $_monitor_git_version "subspace_advanced_CLI_monitor"
+					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 					##
 					Write-Host
 					$script:_individual_farmer_id_last_pos += 1
@@ -1425,9 +1431,7 @@ function fGetNodeMetrics ([array]$_io_node_metrics_arr) {
 function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_resp_disk_metrics_arr = [System.Collections.ArrayList]@()
 
-	# 5/7/2024 - Begin Change
 	[array]$_most_recent_uptime_by_farmId_arr = $null
-	# 5/7/2024 - End Change
 
 	[array]$_resp_UUId_arr = $null
 	[array]$_resp_sector_perf_arr = $null
@@ -1455,14 +1459,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
-		# 5/7/2024 - Begin Change
 		$_b_incremental_sector_count_changed = $false
-		# 5/7/2024 - End Change
 		##
-		# 7/18/2024 - Begin Change
 		#if ($_metrics_obj.Name.IndexOf("subspace_farmer_sectors_total_sectors") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		if (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sectors_total_sectors") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sectors_total_sectors") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		# 7/18/2024 - End Change
 		##
 		{
 			$_plot_id = ($_metrics_obj.Instance -split ",")[0]
@@ -1534,21 +1534,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 			}
 		}
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		##elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		#{
-		#	$_uptime_seconds = $_metrics_obj.Value
-		#	$_unique_farm_id = $_metrics_obj.Instance
-		#	$_farm_id_info = [PSCustomObject]@{
-		#		Id		= $_unique_farm_id
-		#	}
-		#	$_resp_UUId_arr += $_farm_id_info
-		#}
-		##
-		# 7/18/2024 - Begin Change
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_auditing_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		# 7/18/2024 - End Change
 		##
 		{
 			$_uptime_value_int_ = [int]($_metrics_obj.Value)
@@ -1576,29 +1562,17 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_resp_UUId_arr += $_farm_id_info
 			}
-			# 5/7/2024 - Begin Change
 			$_elapsed_time_info = [PSCustomObject]@{
 				Id							= $_unique_farm_id
 				TotalElapsedTime			= $_uptime_value_int_
 			}
 			#
 			$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
-			# 5/7/2024 - End Change
 		}
 		##
-		# 7/18/2024 - Begin Change
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_downloading_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		# 7/18/2024 - End Change
 		##
 		{
-		# 5/7/2024 - Begin Change
-			#$_uptime_value_int_ = [int]($_metrics_obj.Value)
-			#if ($_uptime_seconds -lt $_uptime_value_int_)
-			#{
-			#	$_uptime_seconds = $_uptime_value_int_
-			#}
-		# 5/7/2024 - End Change
 			$_unique_farm_id = $_metrics_obj.Instance
 			$_farm_id_info = [PSCustomObject]@{
 				Id		= $_unique_farm_id
@@ -1620,12 +1594,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				$_resp_UUId_arr += $_farm_id_info
 			}
 		}
-		# 5/7/2024 - Begin Change
 		##
-		# 7/18/2024 - Begin Change
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_encoding_time_seconds_count") -ge 0)
 		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_encoding_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_encoding_time_seconds_count") -ge 0)
-		# 7/18/2024 - End Change
 		##
 		{
 			$_total_elpased_time = 0
@@ -1688,12 +1658,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 			}
 		}
-		# 5/7/2024 - End Change
 		##
-		# 7/18/2024 - Begin Change
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
 		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_plotting_time_seconds") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_plotting_time_seconds") -ge 0)
-		# 7/18/2024 - End Change
 		##
 		{
 			if ($_metrics_obj.Id.toLower().IndexOf("unit") -ge 0 -or $_metrics_obj.Id.toLower().IndexOf("type") -ge 0)
@@ -1705,17 +1671,14 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_farmer_disk_id = $_metrics_obj.Instance
 				$_completed_sectors = [int]($_metrics_obj.Value)
-				#$_elapsed_time = 0
 				$_delta_elapsed_time = 0
 				$_delta_sectors_completed = 0
 				#
-				# 5/7/2024 - Begin Change
 				for ($_h = 0; $_h -lt $script:_incremental_plot_elapsed_time_arr.count; $_h++)
 				{
 					if ($script:_incremental_plot_elapsed_time_arr[$_h]) {
 						if ($_farmer_disk_id -eq $script:_incremental_plot_elapsed_time_arr[$_h].Id)
 						{
-							#$_elapsed_time = $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
 							if ($_b_incremental_sector_count_changed -and $_metrics_obj.Name.toLower().IndexOf("sum") -ge 0)
 							{
 								if ($script:_incremental_plot_elapsed_time_arr[$_h].PlottingElapsedTime -gt 0)
@@ -1731,18 +1694,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						}
 					}
 				}
-				# 5/7/2024 - End Change
 				#
-				# 5/7/2024 - Begin Change
-				##if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_metrics_obj.Value) }
-				#if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_elapsed_time) }
 				if ($_metrics_obj.Name.toLower().IndexOf("sum") -ge 0) { $_farmer_disk_sector_plot_time = [double]($_delta_elapsed_time) }
-				# 5/7/2024 - End Change
 				
-				# 5/7/2024 - Begin Change
-				#if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_metrics_obj.Value) }
 				if ($_metrics_obj.Name.toLower().IndexOf("count") -ge 0) { $_farmer_disk_sector_plot_count = [int]($_delta_sectors_completed) }
-				# 5/7/2024 - End Change
 				if ($_farmer_disk_sector_plot_time -gt 0 -and $_farmer_disk_sector_plot_count -gt 0) 
 				{
 					$_sectors_per_hour = 0.0
@@ -1782,19 +1737,13 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 		}
 		##
-		# 7/18/2024 - Begin Change
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) 
 		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_plotted_counter_sectors_total") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_plotted_counter_sectors_total") -ge 0) 
-		# 7/18/2024 - End Change
 		##
 		{
 			$_total_sectors_plot_count = [int]($_metrics_obj.Value) 
 		}
 		##
-		# 7/18/2024 - Begin Change
-		#elseif ($_metrics_obj.Name.IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
 		elseif ($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_proving_time_seconds") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_proving_time_seconds") -ge 0)
-		# 7/18/2024 - End Change
 		##
 		{
 			if ($_metrics_obj.Id.toLower().IndexOf("unit") -ge 0 -or $_metrics_obj.Id.toLower().IndexOf("type") -ge 0)
@@ -2007,7 +1956,6 @@ function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_h
 function fCheckGitNewVersion ([string]$_io_git_url) {
 	.{
 		$gitVersionArr = [System.Collections.ArrayList]@()
-		#$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri "https://api.github.com/repos/subspace/subspace/releases/latest" 2>$null
 		$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri $_io_git_url 2>$null
 		if ($gitVersionCurrObj) {
 			$tempArr_1 = $gitVersionArr.add($gitVersionCurrObj.tag_name)
@@ -2018,42 +1966,33 @@ function fCheckGitNewVersion ([string]$_io_git_url) {
 	return $gitVersionArr
 }
 
-function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [string]$_io_process_name) {
+function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [string]$_io_process_path) {
 [object]$_io_process_release_version_date_diff_obj = $null
-	#$_process_obj = Get-Process | where {$_.ProcessName -like '*subspace_advanced_CLI_monitor*'} -ErrorAction SilentlyContinue
-	$_process_obj = Get-Process | where {$_.ProcessName -like ('*' + $_io_process_name + '*')} -ErrorAction SilentlyContinue
-	if ($_process_obj) 
+	$_process_last_modified_date = (Get-Item -Path $_io_process_path).LastWriteTime
+	if ($null -ne $_io_process_git_version) 
 	{
-		$_process_path = $_process_obj.path 
-		#$_process_file_create_date = Get-ChildItem -Path  $_monitor_process_path | select CreationTime 
-		$_process_file_create_date = Get-ChildItem -Path  $_monitor_process_path | select LastWriteTime  
-		if ($null -ne $_io_process_git_version) 
-		{
-			$_process_curr_version_release_date = $_io_process_git_version[1]
-			$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_file_create_date.LastWriteTime -end $_process_curr_version_release_date
-		}
-		else 
-		{
-			$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_file_create_date.LastWriteTime -end $_process_file_create_date.LastWriteTime
-		}
+		$_process_curr_version_release_date = $_io_process_git_version[1]
+		$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_last_modified_date -end $_process_curr_version_release_date
+	}
+	else 
+	{
+		$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_last_modified_date -end $_process_last_modified_date
 	}
 	return $_io_process_release_version_date_diff_obj
 }
 
-function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_name) {
+function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_path, [string]$_io_process_name) {
 	## check monitor git version and report on variance
-	$_process_release_version_date_diff_obj = fCheckGitReleaseVersionDifference $_io_process_git_version $_io_process_name
+	$_process_release_version_date_diff_obj = fCheckGitReleaseVersionDifference $_io_process_git_version $_io_process_path
 	if ($_process_release_version_date_diff_obj)
-	#if ($true)		############## DEBUG only
 	{
-		if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -gt 0) 
-		#if ($true)		############## DEBUG only
+		if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -ne 0) 
 		{ 
 			Write-Host ("New Release available for " + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
 		}
 		else 
 		{ 
-			Write-Host "Running latest " + $_io_process_name + " version" -NoNewline -ForegroundColor $_html_green
+			Write-Host ("Running latest " + $_io_process_name + " version") -NoNewline -ForegroundColor $_html_green
 		}
 		Write-Host
 	}

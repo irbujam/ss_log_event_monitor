@@ -32,13 +32,13 @@ function fPingNatsServer ([string]$_io_nats_url) {
 		}
 		else
 		{
-			$_io_nats_response_obj.ServerName = "No Active Nats Server"
+			$_io_nats_response_obj.ServerName = "Inactive"
 		}
 	}
 	catch {
 		$_alert_text = "Nats Server" + " status: Stopped, Host:" + $_io_nats_url
 		fGenAlertNotifications $_alert_text
-		$_io_nats_response_obj.ServerName = "No Active Nats Server"
+		$_io_nats_response_obj.ServerName = "Inactive"
 	}
 	return $_io_nats_response_obj
 }
@@ -111,11 +111,6 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 		$_io_nats_connections_obj_arr += $_io_nats_connections_obj
 	}
 	catch {}
-	#Write-Host "_io_nats_connections_obj.ServerName = " $_io_nats_connections_obj.ServerName
-	#Write-Host "_io_nats_connections_obj.Controller = " $_io_nats_connections_obj.Controller
-	#Write-Host "_io_nats_connections_obj.Cache      = " $_io_nats_connections_obj.Cache
-	#Write-Host "_io_nats_connections_obj.Farmer     = " $_io_nats_connections_obj.Farmer
-	#Write-Host "_io_nats_connections_obj.Plotter    = " $_io_nats_connections_obj.Plotter
 	return $_io_nats_connections_obj_arr
 }
 
@@ -149,7 +144,6 @@ function fGetNatsServerClosedConnections ([string]$_io_nats_url) {
 		}
 	}
 	catch {}
-	#Write-Host "_io_nats_connections_obj_arr = " $_io_nats_connections_obj_arr
 	return $_io_nats_connections_obj_arr
 }
 
@@ -182,7 +176,6 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					$script:_ss_controller_obj_arr += $_nats_controller_obj_item
 				}
 			}
-			#$script:_ss_cache_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Cache
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Cache
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
@@ -200,7 +193,6 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					$script:_ss_cache_obj_arr += $_nats_controller_obj_item
 				}
 			}
-			#$script:_ss_farmer_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Farmer
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Farmer
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
@@ -219,7 +211,6 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 			}
 			#
-			#$script:_ss_plotter_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Plotter
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Plotter
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
@@ -246,65 +237,134 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 
 function fWriteNatsServerInfoToConsole ([string]$_io_nats_url, [array]$_io_process_arr) {
 [array]$_nats_active_connection_obj_arr = $null
+[object]$_upper_line_separator_nats_server_CursorPosition = $null
+[object]$_header_nats_server_CursorPosition = $null
+[object]$_bottom_line_separator_nats_server_CursorPosition = $null
+[object]$_cluster_data_begin_row_pos = $null
 $_new_rows_for_console = 0
 [boolean]$_b_cluster_alert_triggered = $false
+$_cluster_header_column_num = 5
+$_cluster_header_column_size = 17
+$_b_cluster_information_printed = $true
+#
+	if ($script:_new_rows_written_to_console -eq 0)
+	{
+		$_b_cluster_information_printed = $false
+	}
+	else
+	{
+		$_cluster_data_begin_row_pos = $script:_cluster_data_prev_row_pos_hold
+	}
+	#
 	$_nats_active_connection_obj_arr = fPreserveNatsConnectionsDetails $_io_nats_url
 	$script:_custom_alert_text = "Nats Server Name: $script:_nats_server_name"
 	##
-	#Write-Host "_ss_controller_obj_arr = " $script:_ss_controller_obj_arr
-	#Write-Host "_ss_cache_obj_arr      = " $script:_ss_cache_obj_arr
-	#Write-Host "_ss_farmer_obj_arr     = " $script:_ss_farmer_obj_arr
-	#Write-Host "_ss_plotter_obj_arr    = " $script:_ss_plotter_obj_arr
-	##
 	$_header_filler_length = 0
+	if (!($_b_cluster_information_printed))
+	{
+		$_console_msg = "|" 
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_upper_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
+		#
+		Write-Host "" -ForegroundColor $_line_spacer_color
+		$_console_msg = "|" 
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_header_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
+		#
+		Write-Host "" -ForegroundColor $_line_spacer_color
+		$_console_msg = "|" 
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_bottom_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
+		#
+		Write-Host "" -ForegroundColor $_line_spacer_color
+		#
+		$_nats_server_header_title = "   Server Name   "
+		$_header_title = $_nats_server_header_title
+		$_console_msg = "|" 
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_header_filler_length += $_header_title.Length
+		$_console_msg = $_header_title
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_header_nats_server_header_CursorPosition = $host.UI.RawUI.CursorPosition
+		#
+		Write-Host "" -ForegroundColor $_line_spacer_color
+		#
+		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
+		$_console_msg = "|" + $_label_spacer
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header line separator cursor position for repositioning later
+		$_line_separator_server_CursorPosition = $host.UI.RawUI.CursorPosition
+		$_cluster_data_begin_row_pos = $_line_separator_server_CursorPosition
+		#
+	}
+	#
+	# set cursor position to first header data location
+	[Console]::SetCursorPosition(0, ($_cluster_data_begin_row_pos.Y))
+	Write-Host "" -ForegroundColor $_line_spacer_color
+	#
 	$_console_msg = "|" 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_upper_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
-	#
-	Write-Host "" -ForegroundColor $_line_spacer_color
-	#$_console_msg = "|" + $script:_nats_server_name
-	$_console_msg = "|" 
+	$_console_msg = $script:_nats_server_name + ":"
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_header_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
 	#
-	Write-Host "" -ForegroundColor $_line_spacer_color
-	$_console_msg = "|" 
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_bottom_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
+	$_console_msg = ""
+	$_console_msg_color = ""
+	$_process_state_disp = $_label_line_separator_upper
+	$_console_msg = $_process_state_disp
+	if ($script:_nats_server_name -eq $null -or $script:_nats_server_name.Length -eq 0 -or $script:_nats_server_name.toLower() -eq "inactive")
+	{
+		$_console_msg_color = $_html_red
+	}
+	else {
+		$_console_msg_color = $_html_green
+	}
+	Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 	#
-	Write-Host "" -ForegroundColor $_line_spacer_color
+	$_spacer_length = $_cluster_header_column_size - $script:_nats_server_name.Length - 2    ##column separators
+	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+	Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
+	# get the current header line separator cursor position for repositioning later
+	$_data_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
 	#
 	##
-	$_controller_header_title = "   Controller    "
-	$_header_title = $_controller_header_title
-	$_console_msg = "|" 
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	$_header_filler_length += $_header_title.Length
-	$_console_msg = $_header_title
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	$_console_msg = "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_header_controller_CursorPosition = $host.UI.RawUI.CursorPosition
-	#[object]$_data_controller_CursorPosition = $null
-	#
-	Write-Host "" -ForegroundColor $_line_spacer_color
-	$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
-	$_console_msg = "|" + $_label_spacer
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header line separator cursor position for repositioning later
-	$_line_separator_controller_CursorPosition = $host.UI.RawUI.CursorPosition
+	if (!($_b_cluster_information_printed))
+	{
+		# set cursor position to last header location
+		[Console]::SetCursorPosition($_header_nats_server_header_CursorPosition.X, $_header_nats_server_header_CursorPosition.Y)
+		#
+		$_controller_header_title = "   Controller    "
+		$_header_title = $_controller_header_title
+		$_header_filler_length += $_header_title.Length
+		$_console_msg = $_header_title
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_header_controller_CursorPosition = $host.UI.RawUI.CursorPosition
+		[object]$_data_controller_CursorPosition = $null
+		#
+		# set cursor position to last header location
+		[Console]::SetCursorPosition($_line_separator_server_CursorPosition.X, $_line_separator_server_CursorPosition.Y)
+		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
+		$_console_msg = "|" + $_label_spacer
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header line separator cursor position for repositioning later
+		$_line_separator_controller_CursorPosition = $host.UI.RawUI.CursorPosition
+		$script:_cluster_data_prev_row_pos_hold = $_line_separator_controller_CursorPosition
+		$_cluster_data_begin_row_pos = $script:_cluster_data_prev_row_pos_hold
+	}
 	#
 	#
 	$_ss_controller_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
 	[boolean]$_no_connection_exists = $true
 	$_item_sequence_num = -1
-	#if ($script:_new_rows_written_to_console -lt $script:_ss_controller_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_controller_obj_arr.Count }
-	if ($_new_rows_for_console -lt $script:_ss_controller_obj_arr.Count) { $_new_rows_for_console = $script:_ss_controller_obj_arr.Count }
 	for ($_ss_controller_obj_arr_pos = 0; $_ss_controller_obj_arr_pos -lt $script:_ss_controller_obj_arr.Count; $_ss_controller_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
@@ -316,6 +376,7 @@ $_new_rows_for_console = 0
 		{
 			$_no_connection_exists = $false
 			$_item_sequence_num += 1
+			if ($_new_rows_for_console -lt ($_item_sequence_num + 1)) { $_new_rows_for_console = $_item_sequence_num + 1 }
 		#
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
@@ -325,8 +386,7 @@ $_new_rows_for_console = 0
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Controller.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_controller_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-						if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller.IP)
+						if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].IP)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_controller_disp_name_length = $_ss_controller_obj_arr_item.IP.Length
@@ -340,11 +400,8 @@ $_new_rows_for_console = 0
 				$_ss_controller_disp_name_length = $_ss_controller_obj_arr_item.IP.Length
 			}
 			#
-			Write-Host "" -ForegroundColor $_line_spacer_color
-			#
-			# set cursor position to first header data location
-			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 0), ($_line_separator_controller_CursorPosition.Y+1+$_ss_controller_obj_arr_pos))
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 0), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
+			[Console]::SetCursorPosition($_data_nats_server_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1+$_item_sequence_num))
+
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -361,19 +418,17 @@ $_new_rows_for_console = 0
 			}
 			else {
 				$_console_msg_color = $_html_red
-				#$_alert_text = "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
-				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
 				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
-			$_spacer_length = $_header_title.Length - $_ss_controller_disp_name_length - 2	##column separators
+			$_spacer_length = $_cluster_header_column_size - $_ss_controller_disp_name_length - 2	##column separators
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 			# get the current header data cursor position for repositioning later
-			#$_data_controller_CursorPosition = $host.UI.RawUI.CursorPosition
+			$_data_controller_CursorPosition = $host.UI.RawUI.CursorPosition
 		#
 		#
 		}
@@ -386,7 +441,7 @@ $_new_rows_for_console = 0
 		Write-Host "" -ForegroundColor $_line_spacer_color
 		#
 		# set cursor position to first header data location
-		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 0), ($_line_separator_controller_CursorPosition.Y+1))
+		[Console]::SetCursorPosition($_data_nats_server_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1))
 		#
 		$_console_msg = "|" 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -404,63 +459,59 @@ $_new_rows_for_console = 0
 		}
 		else {
 			$_console_msg_color = $_html_red
-			#$_alert_text = "SS Controller" + " status: Inactive, Host:" + "None set-up"
-			#fGenAlertNotifications $_alert_text
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Controller" + " status: Inactive, Host:" + "None set-up"
 			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
-		$_spacer_length = $_header_title.Length - $_ss_controller_disp_name_length - 2	##column separators
+		$_spacer_length = $_cluster_header_column_size - $_ss_controller_disp_name_length - 2	##column separators
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 		# get the current header data cursor position for repositioning later
-		#$_data_controller_CursorPosition = $host.UI.RawUI.CursorPosition
+		$_data_controller_CursorPosition = $host.UI.RawUI.CursorPosition
 	}
 	##
-	# set cursor position to last header location
-	[Console]::SetCursorPosition($_header_controller_CursorPosition.X, $_header_controller_CursorPosition.Y)
-	$_cache_header_title = "      Cache      "
-	$_header_title = $_cache_header_title
-	$_console_msg = $_header_title
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	$_header_filler_length += $_header_title.Length
-	$_console_msg = "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_header_cache_CursorPosition = $host.UI.RawUI.CursorPosition
-	#[object]$_data_cache_CursorPosition = $null
+	if (!($_b_cluster_information_printed))
+	{
+		# set cursor position to last header location
+		[Console]::SetCursorPosition($_header_controller_CursorPosition.X, $_header_controller_CursorPosition.Y)
+		$_cache_header_title = "      Cache      "
+		$_header_title = $_cache_header_title
+		$_console_msg = $_header_title
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_header_filler_length += $_header_title.Length
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_header_cache_CursorPosition = $host.UI.RawUI.CursorPosition
+		[object]$_data_cache_CursorPosition = $null
+		#
+		# set cursor position to last header line separator location
+		[Console]::SetCursorPosition($_line_separator_controller_CursorPosition.X, $_line_separator_controller_CursorPosition.Y)
+		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
+		$_console_msg = "|" + $_label_spacer
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header line separator cursor position for repositioning later
+		$_line_separator_cache_CursorPosition = $host.UI.RawUI.CursorPosition
 	#
-	# set cursor position to last header line separator location
-	[Console]::SetCursorPosition($_line_separator_controller_CursorPosition.X, $_line_separator_controller_CursorPosition.Y)
-	$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
-	$_console_msg = "|" + $_label_spacer
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header line separator cursor position for repositioning later
-	$_line_separator_cache_CursorPosition = $host.UI.RawUI.CursorPosition
-	#
-	# set cursor position to last header data location
-	#[Console]::SetCursorPosition($_data_controller_CursorPosition.X, $_data_controller_CursorPosition.Y)
+	}
 	#
 	$_ss_cache_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
 	[boolean]$_no_connection_exists = $true
 	$_item_sequence_num = -1
-	#if ($script:_new_rows_written_to_console -lt $script:_ss_cache_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_cache_obj_arr.Count }
-	if ($_new_rows_for_console -lt $script:_ss_cache_obj_arr.Count) { $_new_rows_for_console = $script:_ss_cache_obj_arr.Count }
 	for ($_ss_cache_obj_arr_pos = 0; $_ss_cache_obj_arr_pos -lt $script:_ss_cache_obj_arr.Count; $_ss_cache_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
 		[object]$_nats_active_connection_obj_arr_item = $null
 		$_ss_cache_obj_arr_item = $script:_ss_cache_obj_arr[$_ss_cache_obj_arr_pos]
 		#
-		#
 		if ($_ss_cache_obj_arr_item.ServerName -eq $script:_nats_server_name)
 		{
 			$_no_connection_exists = $false
 			$_item_sequence_num += 1
-		#
+			if ($_new_rows_for_console -lt ($_item_sequence_num + 1)) { $_new_rows_for_console = $_item_sequence_num + 1 }
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 			{
@@ -469,8 +520,7 @@ $_new_rows_for_console = 0
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Cache.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_cache_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-						if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache.IP)
+						if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].IP)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_cache_disp_name_length = $_ss_cache_obj_arr_item.IP.Length
@@ -485,8 +535,7 @@ $_new_rows_for_console = 0
 			}
 			#
 			# set cursor position to first header data location
-			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1+$_ss_cache_obj_arr_pos))
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
+			[Console]::SetCursorPosition($_data_controller_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -503,31 +552,26 @@ $_new_rows_for_console = 0
 			}
 			else {
 				$_console_msg_color = $_html_red
-				#$_alert_text = "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
-				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
 				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
-			$_spacer_length = $_header_title.Length - $_ss_cache_disp_name_length - 2	##column separators
+			$_spacer_length = $_cluster_header_column_size - $_ss_cache_disp_name_length - 2	##column separators
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 			# get the current header data cursor position for repositioning later
-			#$_data_cache_CursorPosition = $host.UI.RawUI.CursorPosition
-		#
+			$_data_cache_CursorPosition = $host.UI.RawUI.CursorPosition
 		#
 		}
-		#
 		#			
 	}
-	#if ($script:_ss_cache_obj_arr.Count -le 0)
 	if ($_no_connection_exists -or $script:_ss_cache_obj_arr.Count -le 0)
 	{
 		#
 		# set cursor position to first header data location
-		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 1), ($_line_separator_controller_CursorPosition.Y+1))
+		[Console]::SetCursorPosition($_data_controller_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1))
 		#
 		$_console_msg = "|" 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -545,51 +589,48 @@ $_new_rows_for_console = 0
 		}
 		else {
 			$_console_msg_color = $_html_red
-			#$_alert_text = "SS Cache" + " status: Inactive, Host:" + "None set-up"
-			#fGenAlertNotifications $_alert_text
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Cache" + " status: Inactive, Host:" + "None set-up"
 			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
-		$_spacer_length = $_header_title.Length - $_ss_cache_disp_name_length - 2	##column separators
+		$_spacer_length = $_cluster_header_column_size - $_ss_cache_disp_name_length - 2	##column separators
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 		# get the current header data cursor position for repositioning later
-		#$_data_cache_CursorPosition = $host.UI.RawUI.CursorPosition
+		$_data_cache_CursorPosition = $host.UI.RawUI.CursorPosition
 	}
 	##
-	# set cursor position to last header location
-	[Console]::SetCursorPosition($_header_cache_CursorPosition.X, $_header_cache_CursorPosition.Y)
-	$_farmer_header_title = "      Farmer     "
-	$_header_title = $_farmer_header_title
-	$_console_msg = $_header_title
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	$_header_filler_length += $_header_title.Length
-	$_console_msg = "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_header_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
-	#[object]$_data_farmer_CursorPosition = $null
+	if (!($_b_cluster_information_printed))
+	{
+		# set cursor position to last header location
+		[Console]::SetCursorPosition($_header_cache_CursorPosition.X, $_header_cache_CursorPosition.Y)
+		$_farmer_header_title = "      Farmer     "
+		$_header_title = $_farmer_header_title
+		$_console_msg = $_header_title
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_header_filler_length += $_header_title.Length
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_header_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
+		[object]$_data_farmer_CursorPosition = $null
+		#
+		# set cursor position to last header line separator location
+		[Console]::SetCursorPosition($_line_separator_cache_CursorPosition.X, $_line_separator_cache_CursorPosition.Y)
+		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
+		$_console_msg = "|" + $_label_spacer
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header line separator cursor position for repositioning later
+		$_line_separator_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
+	}
 	#
-	# set cursor position to last header line separator location
-	[Console]::SetCursorPosition($_line_separator_cache_CursorPosition.X, $_line_separator_cache_CursorPosition.Y)
-	$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
-	$_console_msg = "|" + $_label_spacer
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header line separator cursor position for repositioning later
-	$_line_separator_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
-	#
-	# set cursor position to last header data location
-	#[Console]::SetCursorPosition($_data_cache_CursorPosition.X, $_data_cache_CursorPosition.Y)
 	#
 	$_ss_farmer_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
 	[boolean]$_no_connection_exists = $true
 	$_item_sequence_num = -1
-	#if ($script:_new_rows_written_to_console -lt $script:_ss_farmer_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_farmer_obj_arr.Count }
-	if ($_new_rows_for_console -lt $script:_ss_farmer_obj_arr.Count) { $_new_rows_for_console = $script:_ss_farmer_obj_arr.Count }
 	for ($_ss_farmer_obj_arr_pos = 0; $_ss_farmer_obj_arr_pos -lt $script:_ss_farmer_obj_arr.Count; $_ss_farmer_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
@@ -601,6 +642,7 @@ $_new_rows_for_console = 0
 		{
 			$_no_connection_exists = $false
 			$_item_sequence_num += 1
+			if ($_new_rows_for_console -lt ($_item_sequence_num + 1)) { $_new_rows_for_console = $_item_sequence_num + 1 }
 		#
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
@@ -610,8 +652,7 @@ $_new_rows_for_console = 0
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Farmer.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_farmer_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-						if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer.IP)
+						if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].IP)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
@@ -626,8 +667,7 @@ $_new_rows_for_console = 0
 			}
 			#
 			# set cursor position to first header data location
-			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 2), ($_line_separator_controller_CursorPosition.Y+1+$_ss_farmer_obj_arr_pos))
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 2), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
+			[Console]::SetCursorPosition($_data_cache_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -661,6 +701,7 @@ $_new_rows_for_console = 0
 						if ($_ss_farmer_obj_arr_item.IP.toString() -eq $_host_ip)
 						{
 							$_nats_farmer_hostname = $_hostname
+							$_ss_farmer_disp_name_length = $_nats_farmer_hostname.Length
 							break
 						}
 					}
@@ -679,31 +720,26 @@ $_new_rows_for_console = 0
 			}
 			else {
 				$_console_msg_color = $_html_red
-				#$_alert_text = "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
-				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
 				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
-			$_spacer_length = $_header_title.Length - $_ss_farmer_disp_name_length - 2	##column separators
+			$_spacer_length = $_cluster_header_column_size - $_ss_farmer_disp_name_length - 2	##column separators
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 			# get the current header data cursor position for repositioning later
-			#$_data_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
-		#
+			$_data_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
 		#
 		}
 		#
-		#
 	}
-	#if ($script:_ss_farmer_obj_arr.Count -le 0)
 	if ($_no_connection_exists -or $script:_ss_farmer_obj_arr.Count -le 0)
 	{
 		#
 		# set cursor position to first header data location
-		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 2), ($_line_separator_controller_CursorPosition.Y+1))
+		[Console]::SetCursorPosition($_data_cache_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1))
 		#
 		$_console_msg = "|" 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -721,8 +757,6 @@ $_new_rows_for_console = 0
 		}
 		else {
 			$_console_msg_color = $_html_red
-			#$_alert_text = "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
-			#fGenAlertNotifications $_alert_text
 			if ($_nats_farmer_hostname.Length -le 0) { $_nats_farmer_hostname = "None set-up" }
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
@@ -730,55 +764,52 @@ $_new_rows_for_console = 0
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
-		$_spacer_length = $_header_title.Length - $_ss_farmer_disp_name_length - 2	##column separators
+		$_spacer_length = $_cluster_header_column_size - $_ss_farmer_disp_name_length - 2	##column separators
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 		# get the current header data cursor position for repositioning later
-		#$_data_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
+		$_data_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
 	}
 	##
-	# set cursor position to last header location
-	[Console]::SetCursorPosition($_header_farmer_CursorPosition.X, $_header_farmer_CursorPosition.Y)
-	$_plotter_header_title = "     Plotter     "
-	$_header_title = $_plotter_header_title
-	$_console_msg = $_header_title
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	$_header_filler_length += $_header_title.Length
-	$_console_msg = "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header cursor position for repositioning later
-	$_header_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
-	#[object]$_data_plotter_CursorPosition = $null
-	#
-	# set cursor position to last header line separator location
-	[Console]::SetCursorPosition($_line_separator_farmer_CursorPosition.X, $_line_separator_farmer_CursorPosition.Y)
-	$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
-	$_console_msg = "|" + $_label_spacer + "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# get the current header line separator cursor position for repositioning later
-	$_line_separator_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
-	#
-	# set cursor position to last header data location
-	#[Console]::SetCursorPosition($_data_farmer_CursorPosition.X, $_data_farmer_CursorPosition.Y)
+	if (!($_b_cluster_information_printed))
+	{
+		# set cursor position to last header location
+		[Console]::SetCursorPosition($_header_farmer_CursorPosition.X, $_header_farmer_CursorPosition.Y)
+		$_plotter_header_title = "     Plotter     "
+		$_header_title = $_plotter_header_title
+		$_console_msg = $_header_title
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_header_filler_length += $_header_title.Length
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header cursor position for repositioning later
+		$_header_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
+		[object]$_data_plotter_CursorPosition = $null
+		#
+		# set cursor position to last header line separator location
+		[Console]::SetCursorPosition($_line_separator_farmer_CursorPosition.X, $_line_separator_farmer_CursorPosition.Y)
+		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
+		$_console_msg = "|" + $_label_spacer + "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# get the current header line separator cursor position for repositioning later
+		$_line_separator_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
+	}
 	#
 	$_ss_plotter_disp_name_length = 0
 	$_b_nats_connection_type_match_found = $false
 	[boolean]$_no_connection_exists = $true
 	$_item_sequence_num = -1
-	#if ($script:_new_rows_written_to_console -lt $script:_ss_plotter_obj_arr.Count) { $script:_new_rows_written_to_console = $script:_ss_plotter_obj_arr.Count }
-	if ($_new_rows_for_console -lt $script:_ss_plotter_obj_arr.Count) { $_new_rows_for_console = $script:_ss_plotter_obj_arr.Count }
 	for ($_ss_plotter_obj_arr_pos = 0; $_ss_plotter_obj_arr_pos -lt $script:_ss_plotter_obj_arr.Count; $_ss_plotter_obj_arr_pos++)
 	{
 		$_b_nats_connection_type_match_found = $false
 		[object]$_nats_active_connection_obj_arr_item = $null
 		$_ss_plotter_obj_arr_item = $script:_ss_plotter_obj_arr[$_ss_plotter_obj_arr_pos]
 		#
-		#
 		if ($_ss_plotter_obj_arr_item.ServerName -eq $script:_nats_server_name)
 		{
 			$_no_connection_exists = $false
 			$_item_sequence_num += 1
-		#
+			if ($_new_rows_for_console -lt ($_item_sequence_num + 1)) { $_new_rows_for_console = $_item_sequence_num + 1 }
 		#
 			for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 			{
@@ -787,8 +818,7 @@ $_new_rows_for_console = 0
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Plotter.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.IP -and $_ss_plotter_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Port)
-						if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter.IP)
+						if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].IP)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_plotter_disp_name_length = $_ss_plotter_obj_arr_item.IP.Length
@@ -803,8 +833,7 @@ $_new_rows_for_console = 0
 			}
 			#
 			# set cursor position to first header data location
-			#[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1+$_ss_plotter_obj_arr_pos))
-			[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1+$_item_sequence_num))
+			[Console]::SetCursorPosition($_data_farmer_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1+$_item_sequence_num))
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -821,27 +850,23 @@ $_new_rows_for_console = 0
 			}
 			else {
 				$_console_msg_color = $_html_red
-				#$_alert_text = "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
-				#fGenAlertNotifications $_alert_text
 				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 				$script:_custom_alert_text += "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
 				$_b_cluster_alert_triggered = $true
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
-			$_spacer_length = $_header_title.Length - $_ss_plotter_disp_name_length - 2	##column separators
+			$_spacer_length = $_cluster_header_column_size - $_ss_plotter_disp_name_length - 2	##column separators
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 			# get the current header data cursor position for repositioning later
-			#$_data_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
+			$_data_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
 			#
 			#Finish only if last column
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 		#
-		#
 		}
-		#
 		#
 	}
 	#if ($script:_ss_plotter_obj_arr.Count -le 0)
@@ -849,11 +874,10 @@ $_new_rows_for_console = 0
  	{
 		#
 		# set cursor position to first header data location
-		[Console]::SetCursorPosition(($_header_filler_length - $_header_title.Length + 3), ($_line_separator_controller_CursorPosition.Y+1))
+		[Console]::SetCursorPosition($_data_farmer_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1))
 		#
 		$_console_msg = "|" 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		
 		$_console_msg = "Inactive" + ":"
 		$_ss_plotter_disp_name_length = ("Inactive").Length
 		Write-Host $_console_msg -nonewline -ForegroundColor $_html_red
@@ -868,19 +892,17 @@ $_new_rows_for_console = 0
 		}
 		else {
 			$_console_msg_color = $_html_red
-			#$_alert_text = "SS Plotter" + " status: Inactive, Host:" + "None set-up"
-			#fGenAlertNotifications $_alert_text
 			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
 			$script:_custom_alert_text += "SS Plotter" + " status: Inactive, Host:" + "None set-up"
 			$_b_cluster_alert_triggered = $true
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
-		$_spacer_length = $_header_title.Length - $_ss_plotter_disp_name_length - 2	##column separators
+		$_spacer_length = $_cluster_header_column_size - $_ss_plotter_disp_name_length - 2	##column separators
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_label_spacer -nonewline -ForegroundColor $_line_spacer_color
 		# get the current header data cursor position for repositioning later
-		#$_data_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
+		$_data_plotter_CursorPosition = $host.UI.RawUI.CursorPosition
 		#
 		#Finish only if last column
 		$_console_msg = "|" 
@@ -890,73 +912,77 @@ $_new_rows_for_console = 0
 	##Write finish line seprator
 	if ($_new_rows_for_console -eq 0) { $_new_rows_for_console = 1 }
 	$script:_new_rows_written_to_console += $_new_rows_for_console
+	#
 	# set cursor position to first header data location
-	[Console]::SetCursorPosition(($_header_filler_length + 3), ($_line_separator_controller_CursorPosition.Y+$_new_rows_for_console))
-
+	[Console]::SetCursorPosition($_data_plotter_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+$_new_rows_for_console))
+	##
+	## more than 1 nats server(s) separation line
 	Write-Host "" -ForegroundColor $_line_spacer_color
-	$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + 3) $_label_line_separator_upper
-	$_console_msg = " " + $_label_spacer
+	
+	#$_label_spacer = fBuildDynamicSpacer (($_cluster_header_column_size * $_cluster_header_column_num) + $_cluster_header_column_num - 1) $_label_line_separator_upper
+	$_label_spacer = fBuildDynamicSpacer $_cluster_header_column_size $_label_line_separator
+	$_console_msg = "|" 
+	for ($_cluster_header_column_num_pos = 0; $_cluster_header_column_num_pos -lt $_cluster_header_column_num; $_cluster_header_column_num_pos++)
+	{
+		$_console_msg += $_label_spacer + "|" 
+	}
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+	##
 	# get the nats finish line separator cursor position for repositioning later
 	$_finish_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
-	#
+#
 	#
 	for ($_new_rows_for_console_pos = 0; $_new_rows_for_console_pos -lt $_new_rows_for_console; $_new_rows_for_console_pos++)
 	{
-		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*0), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*0), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*1), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*1), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*2), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*2), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*3), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*3), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_controller_header_title.Length+1)*4), ($_line_separator_controller_CursorPosition.Y+1+$_new_rows_for_console_pos))
+		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*4), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+		$_console_msg = "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*5), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	}
-	##
 	##
 	##Write nats server header and wrap-up
-	# set cursor position to last nats header top line separator location
-	[Console]::SetCursorPosition($_upper_line_separator_nats_server_CursorPosition.X, $_upper_line_separator_nats_server_CursorPosition.Y)
-	$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + 3) $_label_line_separator_upper
-	$_console_msg = $_label_spacer  + "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# set cursor position to last nats header bottom line separator location
-	[Console]::SetCursorPosition($_header_nats_server_CursorPosition.X, $_header_nats_server_CursorPosition.Y)
-	$_label_spacer = fBuildDynamicSpacer (($_header_filler_length + 3 - $script:_nats_server_name.Length - 2)/2) $_spacer
-	$_console_msg = $_label_spacer
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	$_console_msg = $script:_nats_server_name + ":"
-	$_console_msg_color = ""
-	if ($script:_nats_server_health_status)
+	if (!($_b_cluster_information_printed))
 	{
-		$_console_msg_color = $_html_green
+		# set cursor position to last cluster header top line separator location
+		[Console]::SetCursorPosition($_upper_line_separator_nats_server_CursorPosition.X, $_upper_line_separator_nats_server_CursorPosition.Y)
+		$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1) $_label_line_separator_upper
+		$_console_msg = $_label_spacer  + "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# set cursor position to last cluster header location
+		[Console]::SetCursorPosition($_header_nats_server_CursorPosition.X, $_header_nats_server_CursorPosition.Y)
+		$_cluster_header_title = "Cluster:"
+		$_label_spacer = fBuildDynamicSpacer (($_header_filler_length + ($_cluster_header_column_num - 1) - $_cluster_header_title.Length - 2)/2) $_spacer
+		$_console_msg = $_label_spacer
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_console_msg = $_cluster_header_title + " "
 		Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
+		#
+		$_label_spacer = fBuildDynamicSpacer (($_header_filler_length + ($_cluster_header_column_num - 1) - $_cluster_header_title.Length - 2)/2) $_spacer
+		$_console_msg = $_label_spacer + "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		# set cursor position to last cluster header bottom line separator location
+		[Console]::SetCursorPosition($_bottom_line_separator_nats_server_CursorPosition.X, $_bottom_line_separator_nats_server_CursorPosition.Y)
+		$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1) $_label_line_separator
+		$_console_msg = $_label_spacer + "|"
+		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	}
-	else 
-	{
-		$_console_msg_color = $_html_red
-		Write-Host $_console_msg -nonewline -ForegroundColor $_html_red
-	}
-	$_process_state_disp = $_label_line_separator_upper
-	$_console_msg = $_process_state_disp
-	Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
-	$_label_spacer = fBuildDynamicSpacer (($_header_filler_length + 3 - $script:_nats_server_name.Length - 2)/2) $_spacer
-	$_console_msg = $_label_spacer + "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# set cursor position to last nats header bottom line separator location
-	[Console]::SetCursorPosition($_bottom_line_separator_nats_server_CursorPosition.X, $_bottom_line_separator_nats_server_CursorPosition.Y)
-	$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + 3) $_label_line_separator
-	$_console_msg = $_label_spacer + "|"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	# set cursor position to nats finish line separator location
+	# set cursor position to cluster  finish line separator location
 	[Console]::SetCursorPosition($_finish_line_separator_nats_server_CursorPosition.X, $_finish_line_separator_nats_server_CursorPosition.Y)
+	$script:_cluster_data_prev_row_pos_hold = $_finish_line_separator_nats_server_CursorPosition
 	##
 	##NOT USED - below lines
 	[array]$_nats_closed_connection_obj_arr = $null
@@ -973,7 +999,6 @@ $_new_rows_for_console = 0
 	##NOT USED - above lines
 	#
 	# send alerts
-	#if ($script:_nats_server_health_status )
 	if ($_b_cluster_alert_triggered)
 	{
 		fGenAlertNotifications $script:_custom_alert_text
