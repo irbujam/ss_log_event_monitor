@@ -287,6 +287,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	while (!($_context_task.AsyncWaitHandle.WaitOne(200))) { 
 			
 			# wait for request - async
+			##
+			$script:_cluster_data_row_pos_hold = $null
+			$script:_new_rows_written_to_console = 0
+			$script:_custom_alert_text = ""
+			##
 			#
 			$script:_all_process_eta = 0
 			$script:_all_process_eta_disp = "-"
@@ -1983,6 +1988,7 @@ function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [s
 
 function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_path, [string]$_io_process_name) {
 	## check monitor git version and report on variance
+	<#
 	$_process_release_version_date_diff_obj = fCheckGitReleaseVersionDifference $_io_process_git_version $_io_process_path
 	if ($_process_release_version_date_diff_obj)
 	{
@@ -1996,6 +2002,7 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 		}
 		Write-Host
 	}
+	#>
 }
 
 
