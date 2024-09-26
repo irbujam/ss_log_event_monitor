@@ -262,7 +262,9 @@ $_b_cluster_information_printed = $true
 	$_header_filler_length = 0
 	if (!($_b_cluster_information_printed))
 	{
-		$_console_msg = "|" 
+		#$_console_msg = "|" 
+		#Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		$_console_msg = " " 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 		# get the current header cursor position for repositioning later
 		$_upper_line_separator_nats_server_CursorPosition = $host.UI.RawUI.CursorPosition
@@ -959,8 +961,10 @@ $_b_cluster_information_printed = $true
 	{
 		# set cursor position to last cluster header top line separator location
 		[Console]::SetCursorPosition($_upper_line_separator_nats_server_CursorPosition.X, $_upper_line_separator_nats_server_CursorPosition.Y)
-		$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1) $_label_line_separator_upper
-		$_console_msg = $_label_spacer  + "|"
+		#$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1) $_label_line_separator_upper
+		#$_console_msg = $_label_spacer  + "|"
+		$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1) $_label_line_separator
+		$_console_msg = $_label_spacer
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 		# set cursor position to last cluster header location
 		[Console]::SetCursorPosition($_header_nats_server_CursorPosition.X, $_header_nats_server_CursorPosition.Y)

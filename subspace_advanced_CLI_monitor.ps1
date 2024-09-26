@@ -16,6 +16,7 @@ function main {
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
 	$_monitor_file_name = "subspace_advanced_CLI_monitor"
+	$script:_monitor_release_date = "2024-09-26 00:00:00"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -378,9 +379,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
+									Write-Host
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 									##
-									Write-Host
+									#Write-Host
 									Write-Host
 									fWriteDetailDataToConsole $_farmers_ip_arr
 								}
@@ -1973,7 +1975,8 @@ function fCheckGitNewVersion ([string]$_io_git_url) {
 
 function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [string]$_io_process_path) {
 [object]$_io_process_release_version_date_diff_obj = $null
-	$_process_last_modified_date = (Get-Item -Path $_io_process_path).LastWriteTime
+	#$_process_last_modified_date = (Get-Item -Path $_io_process_path).LastWriteTime
+	$_process_last_modified_date = $script:_monitor_release_date
 	if ($null -ne $_io_process_git_version) 
 	{
 		$_process_curr_version_release_date = $_io_process_git_version[1]
@@ -1988,11 +1991,11 @@ function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [s
 
 function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_path, [string]$_io_process_name) {
 	## check monitor git version and report on variance
-	<#
 	$_process_release_version_date_diff_obj = fCheckGitReleaseVersionDifference $_io_process_git_version $_io_process_path
 	if ($_process_release_version_date_diff_obj)
 	{
-		if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -ne 0) 
+		#if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -ne 0) 
+		if ($_process_release_version_date_diff_obj.hours -and [math]::Abs($_process_release_version_date_diff_obj.hours) -gt 1) 
 		{ 
 			Write-Host ("New Release available for " + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
 		}
@@ -2002,7 +2005,6 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 		}
 		Write-Host
 	}
-	#>
 }
 
 
