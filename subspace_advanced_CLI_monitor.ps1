@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
 	$_monitor_file_name = "subspace_advanced_CLI_monitor"
-	$script:_monitor_release_date = "2024-09-26 05:00:00 PM"
+	$script:_monitor_release_date = "2024-09-27 08:00:00 AM"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
