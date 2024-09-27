@@ -313,7 +313,15 @@ $_b_cluster_information_printed = $true
 	$_console_msg = "|" 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	$_console_msg = $script:_nats_server_name + ":"
-	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+	$_console_msg_color = ""
+	if ($script:_nats_server_name -eq $null -or $script:_nats_server_name.Length -eq 0 -or $script:_nats_server_name.toLower() -eq "inactive")
+	{
+		$_console_msg_color = $_html_red
+	}
+	else {
+		$_console_msg_color = $_line_spacer_color
+	}
+	Write-Host $_console_msg -nonewline -ForegroundColor $_console_msg_color
 	#
 	$_console_msg = ""
 	$_console_msg_color = ""
