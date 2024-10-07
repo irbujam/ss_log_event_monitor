@@ -2856,9 +2856,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				
 				# 10/7/2024 - Start changes
 				#$_farm_sectors_per_hour_disp = "-"
-				# 10/7/2024 - End changes
-				
-				# 10/7/2024 - Start changes
 				#if($_farm_sector_times -gt 0)
 				if ($_farm_sectors_per_hour -le 0)
 				# 10/7/2024 - end  changes
@@ -3263,6 +3260,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				}
 			}
 		}
+
+		# 10/7/2024 - Start changes
+		$_farm_sectors_per_hour = 0
+		$_farm_sectors_per_hour_disp = "-"
+		# 10/7/2024 - End changes
+
 		$_farm_sector_times_disp = "-"
 		if ($_actual_plotting_disk_count -gt 0) {
 			#$_avg_minutes_per_sector = [math]::Round($_avg_minutes_per_sector / $_actual_plotting_disk_count, 2)
@@ -3273,10 +3276,22 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_avg_sectors_per_hour = [math]::Round($_avg_sectors_per_hour / $_actual_plotting_disk_count, 2)
 			$_avg_sectors_per_hour_disp = $_avg_sectors_per_hour.toString()
 			
-			$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
+			# 10/7/2024 - Start changes
+			#$_farm_sector_times = [double]($_avg_seconds_per_sector / ($_actual_plotting_disk_count * $_actual_plotting_disk_count))	# average time/farm and then avg time/disk to get net sectors time per farm
+			#$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
+			#$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+			$_farm_sectors_per_hour =  [math]::Round($_avg_sectors_per_hour * $_actual_plotting_disk_count, 1)
+			$_farm_sectors_per_hour_disp = $_farm_sectors_per_hour.toString()
+			#
+			$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
 			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
-
-			$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+			#
+			if ($_farm_sector_times -gt 0)
+			{
+				$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+			}
+			# 10/7/2024 - End changes
+			
 		}
 
 
@@ -3419,7 +3434,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			#$_farm_eta = [double](($_avg_seconds_per_sector * $_process_remaining_sectors) / ($_process_total_disks_disp * $_process_total_disks_disp))
 			#
 			#
-			$_farm_eta = [double](($_avg_seconds_per_sector * $_max_process_remaining_sectors) / $_process_total_disks_disp)
+			
+			# 10/7/2024 - Start changes
+			#$_farm_eta = [double](($_avg_seconds_per_sector * $_max_process_remaining_sectors) / $_process_total_disks_disp)
+			$_farm_eta = ($_farm_sector_times * $_process_remaining_sectors)
+			# 10/7/2024 - End changes
+			
 			#
 			#
 			$_farm_eta_obj = New-TimeSpan -seconds $_farm_eta
@@ -4219,8 +4239,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_label_spacer = "|" + $_farm_replot_sector_count_disp +  $_label_spacer
 			Write-Host $_label_spacer -nonewline 
 			#
-			$_farm_sectors_per_hour_disp = "-"
-			if($_farm_sector_times -gt 0)
+			
+			# 10/7/2024 - Start changes
+			#$_farm_sectors_per_hour_disp = "-"
+			#if($_farm_sector_times -gt 0)
+			if ($_farm_sectors_per_hour -le 0)
+			# 10/7/2024 - end  changes
 			{
 				$_farm_sectors_per_hour = [math]::Round(3600 / $_farm_sector_times, 1)
 				$_farm_sectors_per_hour_disp = $_farm_sectors_per_hour.toString()
