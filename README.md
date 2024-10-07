@@ -13,7 +13,7 @@ To launch the monitor save all files with extension *.ps1 and sample-config.txt 
 - Add --prometheus-listen-on [node-local-ip:port] to node start-up script
 - Add --prometheus-listen-on [farmer-local-ip:port] to farmer start-up script
 - Change node/farmer settings in the config.txt file so that the ip:port are matching to the values set for --prometheus-listen-on your node and farmer
-> If using cluster, additional setting below apply:
+> If using cluster, apply additional settings as below:
 - Add command line options -m <http listener port> and -n <server name> to nats-server start-up script (example: nats-server -n my-nats-server1 -m 18080 -c nats.config)
 - Change nats-server settings in the config.txt file so that the ip matches to the computer running nats-server and port matches to <http listener port> as in nats-server start-up script 
 
