@@ -622,7 +622,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							#	$_all_process_eta = $_process_eta
 							#	$_all_process_eta_disp = $_process_eta_disp
 							#}
-							if ($_process_eta -gt $script:_all_process_eta)
+							if ($_process_eta -ge $script:_all_process_eta)
 							{
 								$script:_all_process_eta = $_process_eta
 								$script:_all_process_eta_disp = $_process_eta_disp
@@ -634,7 +634,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							$_temp_sector_time_per_farm = $_sub_header.SectorTime / $_sub_header.TotalDisksForETA
 							$_all_process_sector_time += $_temp_sector_time_per_farm
 							# 5/11/2024 - Start change
-							$_all_process_sector_PH += [math]::Round(([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA),1)
+							# 10/7/2024 - Start change
+							#$_all_process_sector_PH += [math]::Round(([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA),1)
+							$_all_process_sector_PH += [math]::Round(3600 / $_temp_sector_time_per_farm, 1)
+							# 10/7/2024 - End change
 							# 5/11/2024 - End change
 							$_all_process_sector_time_eligibility_count += 1
 							$_process_sector_time = New-TimeSpan -seconds $_temp_sector_time_per_farm
