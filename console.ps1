@@ -2560,7 +2560,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						Write-Host $_plotting_percent_complete_disp -nonewline
 
 						#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
-						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 						$_total_disk_plotted_TiB_disp = "-"
 						if ($_total_disk_plotted_TiB -gt 0)
 						{
@@ -3928,7 +3928,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					Write-Host $_plotting_percent_complete_disp -nonewline
 
 					#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors / 1000, 1)
-					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 					$_total_disk_plotted_TiB_disp = "-"
 					if ($_total_disk_plotted_TiB -gt 0)
 					{
