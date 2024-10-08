@@ -581,6 +581,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_process_plotted_disks = "-"
 			$_process_remaining_disks = "-"
 			$_process_disks_disp = "-"
+			# 10/7/2024 - Start Change
+			$_all_process_sector_time = 0
+			# 10/7/2024 - End Change
 			foreach ($_sub_header in $_process_sub_header_arr)
 			{
 				if ($_sub_header.UUId -eq $_process_name)
@@ -624,15 +627,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							{
 								$_temp_completed_sectors_per_farm = [double]($_sub_header.CompletedSectors)
 							}
-							$_temp_sector_time_per_farm = [double](3600/ ([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA))
+							
+							$_temp_sector_time_per_farm = 0
+							if ([double]($_sub_header.SectorsPerHourAvg) -gt 0 -and $_sub_header.TotalDisksForETA -gt 0)
+							{
+								$_temp_sector_time_per_farm = [double](3600/ ([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA))
+							}
 							$_process_eta = [double]($_temp_sector_time_per_farm * ($_temp_total_sectors_per_farm - $_temp_completed_sectors_per_farm))
 							# 10/7/2024 - End change
 							
-							$_process_eta_obj = $null
-							if ($_process_eta -gt 0)
-							{
-								$_process_eta_obj = New-TimeSpan -seconds $_process_eta
-							}
+							$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 							#$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 							$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 							
@@ -666,7 +670,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							
 							$_all_process_sector_PH += [math]::Round(([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA),1)
 							# 10/7/2024 - Start change
-							$_all_process_sector_time += [math]::Round(3600/ $_all_process_sector_PH, 1)
+							if ($_all_process_sector_PH -gt 0)
+							{
+								$_all_process_sector_time += [math]::Round(3600/ $_all_process_sector_PH, 1)
+							}
 							# 10/7/2024 - End change
 							
 							# 5/11/2024 - End change
@@ -1893,7 +1900,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_farm_sectors_per_hour =  [math]::Round($_avg_sectors_per_hour * $_actual_plotting_disk_count, 1)
 				$_farm_sectors_per_hour_disp = $_farm_sectors_per_hour.toString()
 				#
-				$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
+				if ($_farm_sectors_per_hour -gt 0)
+				{
+					$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
+				}
 				$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
 				#
 				if ($_farm_sector_times -gt 0)
@@ -2861,7 +2871,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				# 10/7/2024 - Start changes
 				#$_farm_sectors_per_hour_disp = "-"
 				#if($_farm_sector_times -gt 0)
-				if ($_farm_sectors_per_hour -le 0)
+				if ($_farm_sectors_per_hour -le 0 -and $_farm_sector_times -gt 0)
 				# 10/7/2024 - end  changes
 				{
 					$_farm_sectors_per_hour = [math]::Round(3600 / $_farm_sector_times, 1)
@@ -3268,6 +3278,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		# 10/7/2024 - Start changes
 		$_farm_sectors_per_hour = 0
 		$_farm_sectors_per_hour_disp = "-"
+		$_farm_sector_times = 0.0
 		# 10/7/2024 - End changes
 
 		$_farm_sector_times_disp = "-"
@@ -3287,7 +3298,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_farm_sectors_per_hour =  [math]::Round($_avg_sectors_per_hour * $_actual_plotting_disk_count, 1)
 			$_farm_sectors_per_hour_disp = $_farm_sectors_per_hour.toString()
 			#
-			$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
+			if ($_farm_sectors_per_hour -gt 0)
+			{
+				$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
+			}
 			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
 			#
 			if ($_farm_sector_times -gt 0)
@@ -4247,7 +4261,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			# 10/7/2024 - Start changes
 			#$_farm_sectors_per_hour_disp = "-"
 			#if($_farm_sector_times -gt 0)
-			if ($_farm_sectors_per_hour -le 0)
+			if ($_farm_sectors_per_hour -le 0 -and $_farm_sector_times -gt 0)
 			# 10/7/2024 - end  changes
 			{
 				$_farm_sectors_per_hour = [math]::Round(3600 / $_farm_sector_times, 1)
