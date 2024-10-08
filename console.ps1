@@ -628,7 +628,11 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							$_process_eta = [double]($_temp_sector_time_per_farm * ($_temp_total_sectors_per_farm - $_temp_completed_sectors_per_farm))
 							# 10/7/2024 - End change
 							
-							$_process_eta_obj = New-TimeSpan -seconds $_process_eta
+							$_process_eta_obj = $null
+							if ($_process_eta -gt 0)
+							{
+								$_process_eta_obj = New-TimeSpan -seconds $_process_eta
+							}
 							#$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
 							$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 							
