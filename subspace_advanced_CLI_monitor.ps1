@@ -1995,7 +1995,7 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 	if ($_process_release_version_date_diff_obj)
 	{
 		#if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -ne 0) 
-		if ($_process_release_version_date_diff_obj.hours -and [math]::Abs($_process_release_version_date_diff_obj.hours) -gt 1) 
+		if ($_process_release_version_date_diff_obj.days -and [math]::Abs($_process_release_version_date_diff_obj.days) -gt 1) 
 		{ 
 			Write-Host ("New Release available for " + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
 		}
