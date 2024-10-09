@@ -1,6 +1,6 @@
 # Autonomys monitoring powershell script
 A simple to run and lightweight windows powershell script that captures live information using prometheus metrics endpoint.
-To use the monitor:
+> To use the monitor:
 - Save all files from latest monitor release in the a folder on local computer
 - Copy contents of sample-config.txt to a new file and save it in the same folder. Name the new file as config.txt
 - Adjust config to your needs (see reuirements section below)
