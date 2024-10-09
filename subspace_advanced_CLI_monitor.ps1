@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
 	$_monitor_file_name = "subspace_advanced_CLI_monitor"
-	$script:_monitor_release_date = "2024-10-08 07:30:00 AM"
+	$script:_monitor_release_date = "2024-10-09 08:00:00 PM"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -1117,85 +1117,47 @@ function fExtractTextFromString([string]$_io_source_str, [string]$_delimiter) {
 
 function fSortObjArrBySectorRemaining ([array]$_io_source_arr, [int]$_io_incomplete_plots_count) {
 	[array]$_arr_sorted = $null
-	$_sectors_remain_count_hold = 0
-	$_b_first_entry = $true
+	
 	$_incomplete_plots_count_iterator = 0
-
 	foreach ($_tmp_obj in $_io_source_arr)
 	{
 		$_disk_id_obj = $null
+		$_sectors_remain_count_lowest_hold = -1
 		foreach ($_source_arr_obj in $_io_source_arr)
 		{
 			$_plot_id = $_source_arr_obj.Id
 			$_sectors_remain_count = $_source_arr_obj.Sectors
-			#if ($_b_first_entry -eq $true -and $_sectors_remain_count -gt 0)
-			if ($_b_first_entry -eq $true)
+			#
+			$_b_add_to_sorted_arr = $true
+			for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
 			{
-				$_b_add_to_sorted_arr = $true
-				for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
-				{
-					if ($_arr_sorted[$_h]) {
-						if ($_plot_id -eq $_arr_sorted[$_h].Id)
-						{
-							$_b_add_to_sorted_arr = $false
-							break
-						}
+				if ($_arr_sorted[$_h]) {
+					if ($_plot_id -eq $_arr_sorted[$_h].Id)
+					{
+						$_b_add_to_sorted_arr = $false
+						break
 					}
 				}
-				if ($_b_add_to_sorted_arr -eq $true)
-				{
-					$_sectors_remain_count_lowest = $_sectors_remain_count
-					#$_disk_id_obj = $_source_arr_obj
-					#$_disk_id_obj.Sectors = $_sectors_remain_count_lowest
-					#$_disk_id_obj.AdditionalSectorsForETA = 0
-					#$_disk_id_obj.ETA = 0
-					$_disk_obj = [PSCustomObject]@{
-						Id						= $_plot_id
-						PlotState				= $_source_arr_obj.PlotState
-						Sectors					= $_sectors_remain_count_lowest
-						AdditionalSectorsForETA = 0
-						PlotCountMultiplier 	= 0
-						ETA = 0
-					}
-					$_disk_id_obj = $_disk_obj
-				}
-				$_sectors_remain_count_hold = $_sectors_remain_count
-				$_b_first_entry = $false
 			}
-			#elseif ($_sectors_remain_count -gt 0 -and $_sectors_remain_count -lt $_sectors_remain_count_hold)
-			elseif ($_sectors_remain_count -le $_sectors_remain_count_hold)
+			if ($_b_add_to_sorted_arr -eq $true)
 			{
-				$_b_add_to_sorted_arr = $true
-				for ($_h = 0; $_h -lt $_arr_sorted.count; $_h++)
+
+				if ($_sectors_remain_count_lowest_hold -eq -1 -or $_sectors_remain_count -le $_sectors_remain_count_lowest_hold)
 				{
-					if ($_arr_sorted[$_h]) {
-						if ($_plot_id -eq $_arr_sorted[$_h].Id)
-						{
-							$_b_add_to_sorted_arr = $false
-							break
-						}
-					}
-				}
-				if ($_b_add_to_sorted_arr -eq $true)
-				{
-					$_sectors_remain_count_lowest = $_sectors_remain_count
-					#$_disk_id_obj = $_source_arr_obj
-					#$_disk_id_obj.Sectors = $_sectors_remain_count_lowest
-					#$_disk_id_obj.AdditionalSectorsForETA = 0
-					#$_disk_id_obj.ETA = 0
+					$_sectors_remain_count_lowest_hold = $_sectors_remain_count
 					$_disk_obj = [PSCustomObject]@{
 						Id						= $_plot_id
 						PlotState				= $_source_arr_obj.PlotState
-						Sectors					= $_sectors_remain_count_lowest
+						Sectors					= $_sectors_remain_count_lowest_hold
 						AdditionalSectorsForETA = 0
 						PlotCountMultiplier 	= 0
 						ETA = 0
 					}
 					$_disk_id_obj = $_disk_obj
 				}
-				$_sectors_remain_count_hold = $_sectors_remain_count
 			}
 		}
+		#
 		if ($_disk_id_obj)
 		{
 			if ($_disk_id_obj.Sectors -gt 0)
@@ -1213,9 +1175,6 @@ function fSortObjArrBySectorRemaining ([array]$_io_source_arr, [int]$_io_incompl
 	# add the last element of unsorted array to sorted array
 	foreach ($_source_arr_obj in $_io_source_arr)
 	{
-		#$_disk_id_obj = $_source_arr_obj
-		#$_disk_id_obj.AdditionalSectorsForETA = 0
-		#$_disk_id_obj.ETA = 0
 		$_disk_obj = [PSCustomObject]@{
 			Id						= $_source_arr_obj.Id
 			PlotState				= $_source_arr_obj.PlotState

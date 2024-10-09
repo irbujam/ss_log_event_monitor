@@ -2006,7 +2006,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks
 			$_eta_hold_ = 0
-			for ($_h = 0; $_h -lt $_disk_plots_remaining_arr_sorted.count; $_h++)
+			#
+			# 10/9/2024 - Start changes
+			#for ($_h = 0; $_h -lt $_disk_plots_remaining_arr_sorted.count; $_h++)
+			for ($_h = 0; $_h -lt ($_disk_plots_remaining_arr_sorted | Measure-Object).count; $_h++)
+			# 10/9/2024 - End changes
 			{
 				$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_farm_sector_times) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
 				$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
@@ -2556,7 +2560,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 								else {break}
 								$_eta = $_disk_plots_remaining_sorted_obj.ETA
 							}
-							$_eta_obj = New-TimeSpan -seconds $_eta
+							$_eta_obj = $null
+							if ($_eta -ne "-")
+							{
+								$_eta_obj = New-TimeSpan -seconds $_eta
+							}
 							#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
 							$_eta_disp = fConvertTimeSpanToString $_eta_obj
 						}
@@ -3407,7 +3415,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks
 		$_eta_hold_ = 0
-		for ($_h = 0; $_h -lt $_disk_plots_remaining_arr_sorted.count; $_h++)
+		# 10/9/2024 - Start changes
+		#for ($_h = 0; $_h -lt $_disk_plots_remaining_arr_sorted.count; $_h++)
+		for ($_h = 0; $_h -lt ($_disk_plots_remaining_arr_sorted | Measure-Object).count; $_h++)
+		# 10/9/2024 - End changes
 		{
 			$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_farm_sector_times) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
 			$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
@@ -3948,7 +3959,11 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 							else {break}
 							$_eta = $_disk_plots_remaining_sorted_obj.ETA
 						}
-						$_eta_obj = New-TimeSpan -seconds $_eta
+						$_eta_obj = $null
+						if ($_eta -ne "-")
+						{
+							$_eta_obj = New-TimeSpan -seconds $_eta
+						}
 						#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
 						$_eta_disp = fConvertTimeSpanToString $_eta_obj
 					}
