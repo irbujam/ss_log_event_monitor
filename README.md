@@ -4,7 +4,7 @@ A simple to run and lightweight windows powershell script that captures live inf
 To use the monitor:
 - Save all files from latest monitor release in a folder on local computer
 - Copy contents of sample-config.txt to a new file and save it in the same folder. Name the new file as config.txt
-- Adjust config to your needs (see reuirements section below)
+- Adjust config.txt to match your node, farmer and cluster set-up (refer to requirements section below)
 - Run subspace_advanced_CLI_monitor.ps1 file in powershell
 
 <img src="https://github.com/irbujam/images/blob/main/summary.PNG" width="410" height="240" />
