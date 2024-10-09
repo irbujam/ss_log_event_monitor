@@ -1,6 +1,7 @@
 # Autonomys monitoring powershell script
 A simple to run and lightweight windows powershell script that captures live information using prometheus metrics endpoint.
-<n> To use the monitor:</n>
+
+To use the monitor:
 - Save all files from latest monitor release in the a folder on local computer
 - Copy contents of sample-config.txt to a new file and save it in the same folder. Name the new file as config.txt
 - Adjust config to your needs (see reuirements section below)
@@ -17,6 +18,7 @@ A simple to run and lightweight windows powershell script that captures live inf
 - Add --prometheus-listen-on [node-local-ip:port] to node start-up script
 - Add --prometheus-listen-on [farmer-local-ip:port] to farmer start-up script
 - Change node/farmer settings in the config.txt file so that the ip:port are matching to the values set for --prometheus-listen-on your node and farmer
+  
 > If using cluster, apply additional settings as below:
 - Add command line options -m <http listener port> and -n <server name> to nats-server start-up script (example: nats-server -n my-nats-server1 -m 18080 -c nats.config)
 - Change nats-server settings in the config.txt file so that the ip matches to the computer running nats-server and port matches to <http listener port> as in nats-server start-up script 
