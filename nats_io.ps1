@@ -79,27 +79,29 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 					Uptime		= $_nats_connection_item.uptime
 				}
 				[array]$_nats_connection_item_subs_arr = $_nats_connection_item.subscriptions_list
-				if ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.piece") -ge 0)
+
+				for ($_nats_connection_item_subs_arr_pos = 0; $_nats_connection_item_subs_arr_pos -lt $_nats_connection_item_subs_arr.Count; $_nats_connection_item_subs_arr_pos++)
 				{
-					$_controller_obj_arr += $_nats_connection_item_details_obj
-				}
-				elseif ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.default.cache-identify") -ge 0)
-				{
-					$_cache_obj_arr += $_nats_connection_item_details_obj
-				}
-				elseif ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.farmer-identify") -ge 0)
-				{
-					$_farmer_obj_arr += $_nats_connection_item_details_obj
-				}
-				else
-				{
-					for ($_nats_connection_item_subs_arr_pos = 0; $_nats_connection_item_subs_arr_pos -lt $_nats_connection_item_subs_arr.Count; $_nats_connection_item_subs_arr_pos++)
+					if ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.piece") -ge 0)
 					{
-						if ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.plotter") -ge 0)
-						{
-							$_plotter_obj_arr += $_nats_connection_item_details_obj
-							break
-						}
+						$_controller_obj_arr += $_nats_connection_item_details_obj
+						#break
+					}
+					#elseif ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.default.cache-identify") -ge 0)
+					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("cache-identify") -ge 0)
+					{
+						$_cache_obj_arr += $_nats_connection_item_details_obj
+						#break
+					}
+					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.farmer-identify") -ge 0)
+					{
+						$_farmer_obj_arr += $_nats_connection_item_details_obj
+						#break
+					}
+					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.plotter") -ge 0)
+					{
+						$_plotter_obj_arr += $_nats_connection_item_details_obj
+						#break
 					}
 				}
 			}
