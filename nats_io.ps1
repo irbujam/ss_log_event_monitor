@@ -77,6 +77,9 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 					StartTime	= $_nats_connection_item.start
 					LastSeen	= $_nats_connection_item.last_activity
 					Uptime		= $_nats_connection_item.uptime
+					#10/18/2024 - start change
+					Subscriptions = $_nats_connection_item.subscriptions_list
+					#10/18/2024 - end change
 				}
 				[array]$_nats_connection_item_subs_arr = $_nats_connection_item.subscriptions_list
 
@@ -85,23 +88,23 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 					if ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.piece") -ge 0)
 					{
 						$_controller_obj_arr += $_nats_connection_item_details_obj
-						#break
+						break
 					}
 					#elseif ($_nats_connection_item_subs_arr.toLower().IndexOf("subspace.controller.default.cache-identify") -ge 0)
 					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("cache-identify") -ge 0)
 					{
 						$_cache_obj_arr += $_nats_connection_item_details_obj
-						#break
+						break
 					}
 					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.farmer-identify") -ge 0)
 					{
 						$_farmer_obj_arr += $_nats_connection_item_details_obj
-						#break
+						break
 					}
 					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.plotter") -ge 0)
 					{
 						$_plotter_obj_arr += $_nats_connection_item_details_obj
-						#break
+						break
 					}
 				}
 			}
@@ -710,12 +713,42 @@ $_b_cluster_information_printed = $true
 						{	
 							$_hostname = $_host_friendly_name
 						}
-						if ($_ss_farmer_obj_arr_item.IP.toString() -eq $_host_ip)
+						#10/18/2024 - Start change
+						#if ($_ss_farmer_obj_arr_item.IP.toString() -eq $_host_ip)
+						#{
+						#	$_nats_farmer_hostname = $_hostname
+						#	$_ss_farmer_disp_name_length = $_nats_farmer_hostname.Length
+						#	break
+						#}
+						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+						$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
+						$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
+						$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr
+						$_tmp_disk_UUId_arr = $_tmp_disk_metrics_arr[0].Id
+
+
+						$_nats_farmer_subscriptions_arr = $_ss_farmer_obj_arr_item.Subscriptions
+						$_b_disk_plot_id_match_found = $false
+						foreach ($_tmp_disk_UUId_obj in $_tmp_disk_UUId_arr)
 						{
-							$_nats_farmer_hostname = $_hostname
-							$_ss_farmer_disp_name_length = $_nats_farmer_hostname.Length
-							break
+							if ($_tmp_disk_UUId_obj) {
+								for ($_nats_farmer_subscriptions_arr_pos = 0; $_nats_farmer_subscriptions_arr_pos -lt $_nats_farmer_subscriptions_arr.Count; $_nats_farmer_subscriptions_arr_pos++)
+								{
+									if ($_nats_farmer_subscriptions_arr[$_nats_farmer_subscriptions_arr_pos].toLower().IndexOf($_tmp_disk_UUId_obj.Id.toLower()) -ge 0)
+									{
+										$_nats_farmer_hostname = $_hostname
+										$_ss_farmer_disp_name_length = $_nats_farmer_hostname.Length
+										$_b_disk_plot_id_match_found = $true
+										break
+									}
+								}
+							}
+							if ($_b_disk_plot_id_match_found) 
+							{
+								break
+							}
 						}
+						#10/18/2024 - End change
 					}
 				}
 			}
