@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
 	$_monitor_file_name = "subspace_advanced_CLI_monitor"
-	$script:_monitor_release_date = "2024-10-18 11:00:00 PM"
+	$script:_monitor_release_date = "2024-10-21 11:25:00 PM"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -1091,9 +1091,13 @@ function fConvertTimeSpanToString ([object]$_io_ts_obj) {
 		{
 			$_resp_ts_str = $_io_ts_obj.hours.toString() + "h" + $_io_ts_obj.minutes.toString() + "m"
 		}
-		else
+		elseif ($_io_ts_obj.minutes -gt 0 -or $_io_ts_obj.seconds -gt 0)
 		{
 			$_resp_ts_str = $_io_ts_obj.minutes.toString() + "m" + $_io_ts_obj.seconds.toString() + "s"
+		}
+		else
+		{
+			$_resp_ts_str = $_io_ts_obj.seconds.toString() + "s" + $_io_ts_obj.Milliseconds.toString() + "ms"
 		}
 	}
 	
@@ -1957,12 +1961,13 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 		if ($_process_release_version_date_diff_obj.hours -and [math]::Abs($_process_release_version_date_diff_obj.hours) -gt 1) 
 		{ 
 			Write-Host ("New Release available for " + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
+			Write-Host
 		}
 		else 
 		{ 
-			Write-Host ("Running latest " + $_io_process_name + " version") -NoNewline -ForegroundColor $_html_green
+			#Write-Host ("Running latest " + $_io_process_name + " version") -NoNewline -ForegroundColor $_html_green
 		}
-		Write-Host
+		#Write-Host
 	}
 }
 

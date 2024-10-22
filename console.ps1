@@ -582,7 +582,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_process_remaining_disks = "-"
 			$_process_disks_disp = "-"
 			# 10/7/2024 - Start Change
-			$_all_process_sector_time = 0
+			$_all_process_sector_time = 0.0
 			# 10/7/2024 - End Change
 			foreach ($_sub_header in $_process_sub_header_arr)
 			{
@@ -672,14 +672,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							# 10/7/2024 - Start change
 							if ($_all_process_sector_PH -gt 0)
 							{
-								$_all_process_sector_time += [math]::Round(3600/ $_all_process_sector_PH, 1)
+								########$_all_process_sector_time += [math]::Round(3600/ $_all_process_sector_PH, 2)
+								$_all_process_sector_time += [double](3600/ $_all_process_sector_PH)
 							}
 							# 10/7/2024 - End change
 							
 							# 5/11/2024 - End change
 							$_all_process_sector_time_eligibility_count += 1
 							$_process_sector_time = New-TimeSpan -seconds $_temp_sector_time_per_farm
-							$_process_sector_time_disp =  $_process_sector_time.minutes.ToString() + "m" + $_process_sector_time.seconds.ToString() + "s"
+							########$_process_sector_time_disp =  $_process_sector_time.minutes.ToString() + "m" + $_process_sector_time.seconds.ToString() + "s"
+							$_process_sector_time_disp = fConvertTimeSpanToString $_process_sector_time
 							#$_process_total_sectors_per_hour = [math]::Round(3600 / ($_sub_header.SectorTime / $_sub_header.TotalDisksForETA), 1)
 							if ($_temp_sector_time_per_farm -gt 0)
 							{
@@ -1246,13 +1248,15 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		#$_all_process_sector_time = $_all_process_sector_time / ($_all_process_sector_time_eligibility_count * $_all_process_sector_time_eligibility_count)
 		if ($_all_process_sector_PH -gt 0)
 		{
-			$_all_process_sector_time = [math]::Round(3600 / $_all_process_sector_PH, 1)
+			################$_all_process_sector_time = [math]::Round(3600 / $_all_process_sector_PH, 2)
+			$_all_process_sector_time = [double](3600 / $_all_process_sector_PH)
 		}
 		# 5/11/2024 - End change
 		if ($_all_process_sector_time -gt 0)
 		{
 			$_all_process_sector_time_obj = New-TimeSpan -seconds $_all_process_sector_time
-			$_all_process_sector_time_disp = $_all_process_sector_time_obj.minutes.ToString() + "m" + $_all_process_sector_time_obj.seconds.ToString() + "s"
+			#$_all_process_sector_time_disp = $_all_process_sector_time_obj.minutes.ToString() + "m" + $_all_process_sector_time_obj.seconds.ToString() + "s"
+			$_all_process_sector_time_disp = fConvertTimeSpanToString $_all_process_sector_time_obj
 		}
 	}
 	## farm aggregate sectors per hour
@@ -1902,13 +1906,15 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				#
 				if ($_farm_sectors_per_hour -gt 0)
 				{
-					$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
+					########$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 2)
+					$_farm_sector_times = [double](3600 / $_farm_sectors_per_hour)
 				}
 				$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
 				#
 				if ($_farm_sector_times -gt 0)
 				{
-					$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+					########$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+					$_farm_sector_times_disp = fConvertTimeSpanToString $_farm_sector_times_obj
 				}
 				# 10/7/2024 - End changes
 			}
@@ -3308,13 +3314,15 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			#
 			if ($_farm_sectors_per_hour -gt 0)
 			{
-				$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 1)
+				########$_farm_sector_times = [math]::Round(3600 / $_farm_sectors_per_hour, 2)
+				$_farm_sector_times = [double](3600 / $_farm_sectors_per_hour)
 			}
 			$_farm_sector_times_obj = New-TimeSpan -seconds $_farm_sector_times
 			#
 			if ($_farm_sector_times -gt 0)
 			{
-				$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+				########$_farm_sector_times_disp = $_farm_sector_times_obj.minutes.ToString() + "m" + $_farm_sector_times_obj.seconds.ToString() + "s"
+				$_farm_sector_times_disp = fConvertTimeSpanToString $_farm_sector_times_obj
 			}
 			# 10/7/2024 - End changes
 			
