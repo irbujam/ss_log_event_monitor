@@ -68,7 +68,7 @@ function main {
 	$script:_custom_alert_text = ""
 	####
 	
-	fResizePSWindow 40 125 $true
+	#fResizePSWindow 40 125 $true
 	Clear-Host
 	
 	try {
@@ -1231,6 +1231,7 @@ function fSortObjArrBySectorRemaining ([array]$_io_source_arr, [int]$_io_incompl
 	return $_arr_sorted
 }
 
+<#
 function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
 	$_height = $_io_ps_window_height + 8
 	$_width = $_io_ps_window_width + 2
@@ -1252,6 +1253,7 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width)
 	$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.size($_width,3000)
 	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_width,$_height)
 }
+#>
 
 function fPingMetricsUrl ([string]$ioUrl) {
 	.{

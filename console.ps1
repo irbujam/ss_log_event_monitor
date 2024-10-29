@@ -1482,7 +1482,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#echo `n
 	#
 	#$_last_cursor_position = $host.UI.RawUI.CursorPosition
-	fResizePSWindow $_num_rows $_num_cols
+	#fResizePSWindow $_num_rows $_num_cols
 	#[Console]::SetCursorPosition(0, 0)
 	#[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
@@ -2974,7 +2974,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	#echo `n
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
-	fResizePSWindow $_num_rows $_num_cols
+	#fResizePSWindow $_num_rows $_num_cols
 	[Console]::SetCursorPosition(0, 0)
 	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
@@ -4367,7 +4367,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	#echo `n
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
-	fResizePSWindow $_num_rows $_num_cols
+	#fResizePSWindow $_num_rows $_num_cols
 	[Console]::SetCursorPosition(0, 0)
 	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
