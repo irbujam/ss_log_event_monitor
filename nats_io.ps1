@@ -979,6 +979,7 @@ $_b_cluster_information_printed = $true
 	#
 	for ($_new_rows_for_console_pos = 0; $_new_rows_for_console_pos -lt $_new_rows_for_console; $_new_rows_for_console_pos++)
 	{
+		try {
 		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*0), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -997,6 +998,8 @@ $_b_cluster_information_printed = $true
 		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*5), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 		$_console_msg = "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+		}
+		catch {}
 	}
 	##
 	##Write nats server header and wrap-up

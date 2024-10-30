@@ -18,6 +18,13 @@ API-host: 127.0.0.1:5004
 #API-host: 192.168.2.251:5004
 
 #-------------------------------------------------------------------------------------------------------------------------
+## experimental: Enable PS window dynamic resize 
+# set this flag to N if you are face issues with dynamic window resize based on contents, default is N if no value is set
+#-------------------------------------------------------------------------------------------------------------------------
+
+PSWindowResizeEnabled : Y
+
+#-------------------------------------------------------------------------------------------------------------------------
 # discord webhook / Telegram bot api-token - change to use your own
 # Set alert repeat frequency, the value will default to auto-refresh time if not set or a lower value is provided
 #-------------------------------------------------------------------------------------------------------------------------

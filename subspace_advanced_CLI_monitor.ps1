@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
 	$_monitor_file_name = "subspace_advanced_CLI_monitor"
-	$script:_monitor_release_date = "2024-10-22 10:00:00 PM"
+	$script:_monitor_release_date = "2024-10-30 04:30:00 PM"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -66,6 +66,8 @@ function main {
 	[object]$script:_cluster_data_row_pos_hold = $null
 	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
+	$script:_b_ps_window_resize_enabled = "N"
+	$script:_process_alt_name_max_length = 0
 	####
 	
 	#fResizePSWindow 40 125 $true
@@ -112,7 +114,7 @@ function main {
 				$_configFile = "./config.txt"
 				$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
 
-				$_process_alt_name_max_length = 0
+				$script:_process_alt_name_max_length = 0
 				for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
 				{
 					if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
@@ -124,6 +126,7 @@ function main {
 							$refreshTimeScaleInSeconds = [int]$_config[1].toString()
 							if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = $_refresh_duration_default}
 						}
+						elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
 						elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 						elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 						elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
@@ -157,7 +160,10 @@ function main {
 							{
 								$_process_hostname = $_process_hostname_alt
 							}
-							if ($_process_hostname.Length -gt $_process_alt_name_max_length) { $_process_alt_name_max_length = $_process_hostname.Length }
+							if ($_process_hostname.Length -gt $script:_process_alt_name_max_length) 
+							{
+								$script:_process_alt_name_max_length = $_process_hostname.Length
+							}
 						}
 					}
 				}
@@ -1231,8 +1237,11 @@ function fSortObjArrBySectorRemaining ([array]$_io_source_arr, [int]$_io_incompl
 	return $_arr_sorted
 }
 
-<#
 function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
+# 10/30 start
+if ($_b_ps_window_resize_enabled.toLower() -eq 'y')
+{
+# 10/30 end
 	$_height = $_io_ps_window_height + 8
 	$_width = $_io_ps_window_width + 2
 	#
@@ -1252,8 +1261,10 @@ function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width)
 	# buffer resize, follwed by window resize 
 	$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.size($_width,3000)
 	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_width,$_height)
+# 10/30 start
 }
-#>
+# 10/30 end
+}
 
 function fPingMetricsUrl ([string]$ioUrl) {
 	.{
