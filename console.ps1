@@ -105,7 +105,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	## farmer label sizing assessment
 	$_label_count = 13
-	$_label_total_length =  $_label_serial_num.Length + $script:_process_alt_name_max_length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
+	$_label_total_length =  $_label_serial_num.Length + $script:_process_farmer_alt_name_max_length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
 							$_label_process_eta.Length + $_label_process_sector_time.Length + $_label_process_total_sectors_per_hour.Length + $_label_process_total_TiB_per_day.Length + $_label_process_disks.Length + 
 							$_label_process_replot_disks.Length + $_label_process_rewards.Length + $_label_process_misses.Length
 	$_label_separator_count = 14
@@ -457,7 +457,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_console_header_row2_log += $_label_spacer + $_label_process_alt_name_row2
 			$_console_header_row3_log += $_label_spacer + $_label_process_alt_name_row3
 			####
-			$_spacer_length = [int]($script:_process_alt_name_max_length)
+			$_spacer_length = [int]($script:_process_farmer_alt_name_max_length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 			$_label_spacer = "|" + $_label_spacer
 			$_console_header_log_finish_line += $_label_spacer
@@ -470,12 +470,12 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_process_bkg_color = $_bkg_color_red
 			}
 			#
-			$_spacer_length = [int]($script:_process_alt_name_max_length - $_process_alt_name.Length)
+			$_spacer_length = [int]($script:_process_farmer_alt_name_max_length - $_process_alt_name.Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + ":"
 			$_console_data_log_process_state_filler += $_label_spacer #+ $_spacer
 			#
-			$_spacer_length = [int]($script:_process_alt_name_max_length - $_label_process_alt_name.Length + 1 + 1)
+			$_spacer_length = [int]($script:_process_farmer_alt_name_max_length - $_label_process_alt_name.Length + 1 + 1)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_console_header_log += $_label_spacer
 			$_console_header_row2_log += $_label_spacer
@@ -966,7 +966,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	## write finish line
 	## write farm aggregates
-	$_spacer_length = [int]($_label_serial_num.Length + $script:_process_alt_name_max_length + $_label_process_uptime.Length + 4)
+	$_spacer_length = [int]($_label_serial_num.Length + $script:_process_farmer_alt_name_max_length + $_label_process_uptime.Length + 4)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 	$_label_spacer = " " + $_label_spacer
 	$_console_header_log_finish_line = $_label_spacer
@@ -1092,7 +1092,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = " " + $_label_spacer
 	$_console_header_log_finish_line = $_label_spacer
 
-	$_spacer_length = [int]($script:_process_alt_name_max_length)
+	$_spacer_length = [int]($script:_process_farmer_alt_name_max_length)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 	$_label_spacer = " " + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
@@ -1194,10 +1194,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_spacer_length = 2
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 	Write-Host $_label_spacer -nonewline -Foregroundcolor $_header_color
-	$_spacer_length = [int]($_label_serial_num.Length + $script:_process_alt_name_max_length + $_label_process_uptime.Length + 3)
+	$_spacer_length = [int]($_label_serial_num.Length + $script:_process_farmer_alt_name_max_length + $_label_process_uptime.Length + 3)
 	$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_spacer
 	Write-Host $_line_separator_upper -nonewline -Foregroundcolor $_header_color
-	$_spacer_length = $_label_line_separator_length - ($_label_serial_num.Length + $script:_process_alt_name_max_length + $_label_process_uptime.Length + 3) - 2
+	$_spacer_length = $_label_line_separator_length - ($_label_serial_num.Length + $script:_process_farmer_alt_name_max_length + $_label_process_uptime.Length + 3) - 2
 	$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 	Write-Host ($_spacer + $_line_separator_upper) -Foregroundcolor $_header_color
 	$_num_rows += 1
