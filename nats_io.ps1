@@ -971,6 +971,9 @@ $_b_cluster_information_printed = $true
 	{
 		$_console_msg += $_label_spacer + "|" 
 	}
+	#$_console_msg = " " 
+	#$_label_spacer = fBuildDynamicSpacer ($_cluster_header_column_size * $_cluster_header_column_num + ($_cluster_header_column_num - 1)) $_label_line_separator_upper
+	#$_console_msg += $_label_spacer 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	##
 	# get the nats finish line separator cursor position for repositioning later

@@ -15,8 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.1.5"
-	$script:_monitor_release_date = "2024-10-30 00:00:00 AM"
+	$_monitor_file_name = "v0.1.6"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -1454,6 +1453,9 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_farmer_disk_id_rewards = ""
 	$_farmer_disk_proving_success_count = 0
 	$_farmer_disk_proving_misses_count = 0
+	$_farmer_disk_proving_misses_timeout_count = 0
+	$_farmer_disk_proving_misses_rejected_count = 0
+	$_farmer_disk_proving_misses_failed_count = 0
 	$_total_rewards_per_farmer = 0
 	#
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
@@ -1466,7 +1468,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		{
 			$_plot_id = ($_metrics_obj.Instance -split ",")[0]
 			$_plot_state = $_metrics_obj.Criteria.ToString().Trim('"')
-			$_sectors = $_metrics_obj.Value
+			$_sectors = [int]($_metrics_obj.Value)
 			
 			$_plots_info = [PSCustomObject]@{
 				Id			= $_plot_id
@@ -1481,7 +1483,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 			elseif ($_plot_state.toLower() -eq "abouttoexpire") {
 				$_resp_plots_expiring_arr += $_plots_info
-				if ($script:_b_first_time -eq $true)				#no need to reset first time sqitch after the fact as the same is done in parent function
+				if ($script:_b_first_time)				#no need to reset first time sqitch after the fact as the same is done in parent function
 				{
 					$_expiring_plots_info = [PSCustomObject]@{
 						Id				= $_plot_id
@@ -1493,7 +1495,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						if ($script:_replot_sector_count_hold_arr[$_h]) {
 							if ($_plot_id -eq $script:_replot_sector_count_hold_arr[$_h].Id)
 							{
-								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors += [int]($_sectors)
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = [int]($_sectors)
 								$_b_add_exp_arr_id = $false
 								break
 							}
@@ -1520,7 +1522,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						if ($script:_replot_sector_count_hold_arr[$_h]) {
 							if ($_plot_id -eq $script:_replot_sector_count_hold_arr[$_h].Id)
 							{
-								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors += [int]($_sectors)
+								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = [int]($_sectors)
 								$_b_add_exp_arr_id = $false
 								break
 							}
@@ -1753,45 +1755,71 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_farmer_id = $_metrics_obj.Instance -split ","
 				$_farmer_disk_id_rewards = $_farmer_id[0]
-				if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {
-					$_farmer_disk_proving_success_count = [int]($_metrics_obj.Value)
-					
-					$_disk_rewards_metric = [PSCustomObject]@{
-						Id		= $_farmer_disk_id_rewards
-						Rewards	= $_farmer_disk_proving_success_count
-						#Misses	= $_farmer_disk_proving_misses_count
-					}
-					$_resp_rewards_arr += $_disk_rewards_metric
-				}
-				#elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
-				elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("rejected") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("failed") -ge 0) {
-					$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)
-					
-					#$_disk_misses_metric = [PSCustomObject]@{
-					#	Id		= $_farmer_disk_id_rewards
-					#	#Rewards	= $_farmer_disk_proving_success_count
-					#	Misses	= $_farmer_disk_proving_misses_count
-					#}
-					#$_resp_misses_arr += $_disk_misses_metric
-					$_b_miss_captured_prev = $false
-					for ($_m = 0; $_m -lt $_resp_misses_arr.Count; $_m++)
+				#if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {
+				switch ($true) {
+					($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) 
 					{
-						$_miss_obj = $_resp_misses_arr[$_m]
-						if($_miss_obj.Id -eq $_farmer_disk_id_rewards)
-						{
-							$_resp_misses_arr[$_m].Misses += $_farmer_disk_proving_misses_count
-							$_b_miss_captured_prev = $true
-							break
-						}
-					}
-					if ($_b_miss_captured_prev -eq $false)
-					{
-						$_disk_misses_metric = [PSCustomObject]@{
+						$_farmer_disk_proving_success_count = [int]($_metrics_obj.Value)
+						
+						$_disk_rewards_metric = [PSCustomObject]@{
 							Id		= $_farmer_disk_id_rewards
-							#Rewards	= $_farmer_disk_proving_success_count
-							Misses	= $_farmer_disk_proving_misses_count
+							Rewards	= $_farmer_disk_proving_success_count
+							#Misses	= $_farmer_disk_proving_misses_count
 						}
-						$_resp_misses_arr += $_disk_misses_metric
+						$_resp_rewards_arr += $_disk_rewards_metric
+					}
+				#elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
+				#elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("rejected") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("failed") -ge 0) {
+					default  
+					{
+						$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)
+						$_farmer_disk_proving_misses_timeout_count = 0
+						$_farmer_disk_proving_misses_rejected_count = 0
+						$_farmer_disk_proving_misses_failed_count = 0
+						switch ($true) {
+							($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
+								$_farmer_disk_proving_misses_timeout_count = [int]($_metrics_obj.Value)
+							}
+							($_metrics_obj.Criteria.toLower().IndexOf("rejected") -ge 0) {
+								$_farmer_disk_proving_misses_rejected_count = [int]($_metrics_obj.Value)
+							}
+							($_metrics_obj.Criteria.toLower().IndexOf("failed") -ge 0) {
+								$_farmer_disk_proving_misses_failed_count = [int]($_metrics_obj.Value)
+							}
+						}
+								
+						#$_disk_misses_metric = [PSCustomObject]@{
+						#	Id		= $_farmer_disk_id_rewards
+						#	#Rewards	= $_farmer_disk_proving_success_count
+						#	Misses	= $_farmer_disk_proving_misses_count
+						#}
+						#$_resp_misses_arr += $_disk_misses_metric
+						$_b_miss_captured_prev = $false
+						for ($_m = 0; $_m -lt $_resp_misses_arr.Count; $_m++)
+						{
+							$_miss_obj = $_resp_misses_arr[$_m]
+							if($_miss_obj.Id -eq $_farmer_disk_id_rewards)
+							{
+								$_resp_misses_arr[$_m].Misses += $_farmer_disk_proving_misses_count
+								$_resp_misses_arr[$_m].Timeout = $_farmer_disk_proving_misses_timeout_count
+								$_resp_misses_arr[$_m].Rejected = $_farmer_disk_proving_misses_rejected_count
+								$_resp_misses_arr[$_m].Failed = $_farmer_disk_proving_misses_failed_count
+								$_b_miss_captured_prev = $true
+								break
+							}
+						}
+						if ($_b_miss_captured_prev -eq $false)
+						{
+							$_disk_misses_metric = [PSCustomObject]@{
+								Id			= $_farmer_disk_id_rewards
+								#Rewards	= $_farmer_disk_proving_success_count
+								Misses		= $_farmer_disk_proving_misses_count
+								Timeout		= $_farmer_disk_proving_misses_timeout_count
+								Rejected	= $_farmer_disk_proving_misses_rejected_count
+								Failed		= $_farmer_disk_proving_misses_failed_count
+							}
+							$_resp_misses_arr += $_disk_misses_metric
+						}
 					}
 				}
 				$_total_rewards_per_farmer += $_farmer_disk_proving_success_count
@@ -1965,47 +1993,16 @@ function fCheckGitNewVersion ([string]$_io_git_url) {
 	return $gitVersionArr
 }
 
-#function fCheckGitReleaseVersionDifference ([object]$_io_process_git_version, [string]$_io_process_path) {
-#[object]$_io_process_release_version_date_diff_obj = $null
-#	#$_process_last_modified_date = (Get-Item -Path $_io_process_path).LastWriteTime
-#	$_process_last_modified_date = $script:_monitor_release_date
-#	if ($null -ne $_io_process_git_version) 
-#	{
-#		$_process_curr_version_release_date = $_io_process_git_version[1]
-#		$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_last_modified_date -end $_process_curr_version_release_date
-#	}
-#	else 
-#	{
-#		$_io_process_release_version_date_diff_obj = New-TimeSpan -start $_process_last_modified_date -end $_process_last_modified_date
-#	}
-#	return $_io_process_release_version_date_diff_obj
-#}
-
 function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_path, [string]$_io_process_name) {
 	## check monitor git version and report on variance
-	#$_process_release_version_date_diff_obj = fCheckGitReleaseVersionDifference $_io_process_git_version $_io_process_path
-	#if ($_process_release_version_date_diff_obj)
-	#{
-	#	#if ($_process_release_version_date_diff_obj.days -and $_process_release_version_date_diff_obj.days -ne 0) 
-	#	if ($_process_release_version_date_diff_obj.days -and [math]::Abs($_process_release_version_date_diff_obj.days) -gt 1) 
-	#	{ 
-	#		Write-Host ("New Release available for " + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
-	#		Write-Host
-	#	}
-	#	else 
-	#	{ 
-	#		#Write-Host ("Running latest " + $_io_process_name + " version") -NoNewline -ForegroundColor $_html_green
-	#	}
-	#	#Write-Host
-	#}
 	if ($_monitor_file_name -ne $_io_process_git_version[0])
 	{
-		Write-Host ("New Release available for Autonomys_monitor_" + $_io_process_name + " dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
+		Write-Host ("New monitor release available: Autonomys_monitor_" + $_io_process_git_version[0].toString() + ", dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
 		Write-Host
 	}
 	else 
 	{ 
-		#Write-Host ("Running latest " + $_io_process_name + " version") -NoNewline -ForegroundColor $_html_green
+		#do nothing
 	}
 }
 

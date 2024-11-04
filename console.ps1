@@ -39,16 +39,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#$_label_process_state = "P"
 	# 10/30 end
 	$_label_process_uptime = "Uptime"
-	$_label_process_size = "Size "
+	$_label_process_size = "Size  "
 	$_label_process_progress = "%     "
 	$_label_process_eta = "ETA   "
 	$_label_process_sector_time = "SCT   "
 	$_label_process_total_sectors_per_hour = "SCT   "
-	$_label_process_total_TiB_per_day = "  PL TiB  "
+	$_label_process_total_TiB_per_day = "   PL TiB   "
 	$_label_process_disks = "  Plots   "
-	$_label_process_replot_disks = "   Replots  "
+	$_label_process_replot_disks = "   Replots    "
 	$_label_process_rewards = "           Rewards          "
-	$_label_process_misses = "Miss"
+	$_label_process_misses = "  Miss  "
 	# node extra columns
 	$_label_process_sync_status = "Synced"
 	$_label_process_peers = "Peers"
@@ -61,16 +61,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#$_label_process_state_row2 = "W"
 	# 10/30 end
 	$_label_process_uptime_row2 = "      "
-	$_label_process_size_row2 = "(TiB)"
+	$_label_process_size_row2 = "(TiB) "
 	$_label_process_progress_row2 = "Cmpl  "
 	$_label_process_eta_row2 = "      "
 	$_label_process_sector_time_row2 = "Time  "
 	$_label_process_total_sectors_per_hour_row2 = "PH    "
-	$_label_process_total_TiB_per_day_row2 = "----------"
+	$_label_process_total_TiB_per_day_row2 = "------------"
 	$_label_process_disks_row2 = "----------"
-	$_label_process_replot_disks_row2 = "------------"
+	$_label_process_replot_disks_row2 = "--------------"
 	$_label_process_rewards_row2 = "----------------------------"
-	$_label_process_misses_row2 = "    "
+	$_label_process_misses_row2 = "--------"
 	# node extra columns
 	$_label_process_sync_status_row2 = "      "
 	$_label_process_peers_row2 = "     "
@@ -83,16 +83,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#$_label_process_state_row3 = "R"
 	# 10/30 end
 	$_label_process_uptime_row3 = "      "
-	$_label_process_size_row3 = "     "
+	$_label_process_size_row3 = "      "
 	$_label_process_progress_row3 = "      "
 	$_label_process_eta_row3 = "      "
 	$_label_process_sector_time_row3 = "      "
 	$_label_process_total_sectors_per_hour_row3 = "      "
-	$_label_process_total_TiB_per_day_row3 = "Tot/PD    "
+	$_label_process_total_TiB_per_day_row3 = "Tot/PD      "
 	$_label_process_disks_row3 = "#/Cmpl/RM "
-	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl"
+	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl  "
 	$_label_process_rewards_row3 = "Tot/PPTiB/PH/Est PD/PPTiB PD"
-	$_label_process_misses_row3 = "    "
+	$_label_process_misses_row3 = "TO/RJ/FL"
 	# node extra columns
 	$_label_process_sync_status_row3 = "      "
 	$_label_process_peers_row3 = "     "
@@ -376,6 +376,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_all_process_rewards = 0
 	$_all_process_rewards_per_hour = 0
 	$_all_process_misses = 0
+	$_all_process_misses_timeout = 0
+	$_all_process_misses_rejected = 0
+	$_all_process_misses_failed = 0
+	$_all_process_misses_disp = "-"
 	#
 	$_all_process_total_disks = 0
 	$_all_process_plotted_disks = 0
@@ -516,8 +520,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 					#
 					if ($_sub_header.TotalSectors -ne "-")
 					{
-						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)).ToString()
-						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)).ToString()
+						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
 						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
 						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
 						#
@@ -565,7 +569,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							{
 								$_process_total_sectors_per_hour = [math]::Round([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA, 1)
 								$_process_total_sectors_per_hour_disp = $_process_total_sectors_per_hour.toString()
-								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 1)
+								$_process_total_TiB_per_day = [math]::Round(($_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 2)
 								$_process_total_TiB_per_day_disp = $_process_total_TiB_per_day.toString()
 							}
 						}
@@ -739,11 +743,18 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_about_to_expire_sectors_count = 0
 			$_rewards_ = 0
 			$_misses_ = 0
+			$_misses_timeout_ = 0
+			$_misses_rejected_ = 0
+			$_misses_failed_ = 0
 			$_process_replot_disks = 0
 			$_process_replot_disks_hold = 0
 			$_process_expiring_sectors_count = 0
 			$_process_rewards = "-"
 			$_process_misses = "-"
+			$_process_misses_disp = "-"
+			$_process_misses_timeout = "-"
+			$_process_misses_rejected = "-"
+			$_process_misses_failed = "-"
 			foreach ($_data in $_process_disk_data_arr)
 			{
 				if ($_process_name -ne $_data.UUId) {
@@ -777,8 +788,43 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				if ($_data.Misses -ne "-")
 				{
 					$_misses_ += [int]($_data.Misses)
+					$_misses_timeout_ += [int]($_data.Timeout)
+					$_misses_rejected_ += [int]($_data.Rejected)
+					$_misses_failed_ += [int]($_data.Failed)
 					$_process_misses = $_misses_.ToString()
+					if ($_misses_timeout_ -gt 0)
+					{
+						$_process_misses_timeout = $_misses_timeout_.ToString()
+					}
+					if ($_misses_rejected_ -gt 0)
+					{
+						$_process_misses_rejected = $_misses_rejected_.ToString()
+					}
+					if ($_misses_failed_ -gt 0)
+					{
+						$_process_misses_failed = $_misses_failed_.ToString()
+					}
+					$_process_misses_disp = $_process_misses_timeout + "/" + $_process_misses_rejected + "/" + $_process_misses_failed
 					$_all_process_misses += [int]($_data.Misses)
+					$_all_process_misses_timeout += [int]($_data.Timeout)
+					$_all_process_misses_rejected += [int]($_data.Rejected)
+					$_all_process_misses_failed += [int]($_data.Failed)
+					$_all_process_misses_timeout_disp = "-"
+					if ($_all_process_misses_timeout -gt 0)
+					{
+						$_all_process_misses_timeout_disp = $_all_process_misses_timeout.ToString()
+					}
+					$_all_process_misses_rejected_disp = "-"
+					if ($_all_process_misses_rejected -gt 0)
+					{
+						$_all_process_misses_rejected_disp = $_all_process_misses_rejected.ToString()
+					}
+					$_all_process_misses_failed_disp = "-"
+					if ($_all_process_misses_failed -gt 0)
+					{
+						$_all_process_misses_failed_disp = $_all_process_misses_failed.ToString()
+					}
+					$_all_process_misses_disp = $_all_process_misses_timeout_disp + "/" + $_all_process_misses_rejected_disp + "/" + $_all_process_misses_failed_disp
 				}
 			}
 			$_daily_avg_process_rewards_per_TiB = 0
@@ -882,7 +928,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			#
 			#
 			# last column delimiter only
-			$_spacer_length = [int]($_label_process_misses.Length - $_process_misses.Length)
+			#$_spacer_length = [int]($_label_process_misses.Length - $_process_misses.Length)
+			$_spacer_length = [int]($_label_process_misses.Length - $_process_misses_disp.Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			$_console_data_log_end += $_label_spacer
@@ -946,7 +993,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_process_state_disp -nonewline -ForegroundColor $_fg_color_black -backgroundcolor $_process_bkg_color
 				Write-Host $_console_data_log -nonewline
 				Write-Host $_console_data_log_process_misses_filler -nonewline 
-				Write-Host $_process_misses -nonewline -ForegroundColor $_process_fg_color
+				#Write-Host $_process_misses -nonewline -ForegroundColor $_process_fg_color
+				Write-Host $_process_misses_disp -nonewline -ForegroundColor $_process_fg_color
 				Write-Host $_console_data_log_end
 				$_num_rows += 1
 				$_b_process_header_printed = $true
@@ -958,7 +1006,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_process_state_disp -nonewline -ForegroundColor $_fg_color_black -backgroundcolor $_process_bkg_color
 				Write-Host $_console_data_log -nonewline
 				Write-Host $_console_data_log_process_misses_filler -nonewline 
-				Write-Host $_process_misses -nonewline -ForegroundColor $_process_fg_color
+				#Write-Host $_process_misses -nonewline -ForegroundColor $_process_fg_color
+				Write-Host $_process_misses_disp -nonewline -ForegroundColor $_process_fg_color
 				Write-Host $_console_data_log_end
 				$_num_rows += 1
 			}
@@ -1016,7 +1065,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = "|" + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 
-	$_label_process_misses = "Miss"
+	#$_label_process_misses = "Miss"
 	$_spacer_length = [int]($_label_process_misses.Length)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 	$_label_spacer = "|" + $_label_spacer
@@ -1032,12 +1081,12 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 
 	##
 	### write overall farm process summary line at previously reserved spot
-	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1))
-	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1))
+	$_all_process_size_TiB_disp = ([math]::Round($_all_process_size_TiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2))
+	$_all_process_plotted_size_TiB_disp = ([math]::Round($_all_process_plotted_size_TiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2))
 
 	if ($_all_process_total_sectors -gt 0)
 	{
-		$_all_process_progress_disp = ([math]::Round(($_all_process_completed_sectors / $_all_process_total_sectors) * 100, 1)).toString() + "%"
+		$_all_process_progress_disp = ([math]::Round(($_all_process_completed_sectors / $_all_process_total_sectors) * 100, 2)).toString() + "%"
 	}
 	## farm aggregate sector times
 	$_all_process_sector_time_disp = "-"
@@ -1062,7 +1111,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	{
 		$_all_process_total_sectors_per_hour = $_all_process_sector_PH
 		$_all_process_total_sectors_per_hour_disp = $_all_process_total_sectors_per_hour.toString()
-		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 1)
+		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 2)
 		$_all_process_total_TiB_per_day_disp = $_all_process_total_tiB_per_day.toString()
 	}
 	## farm aggregate rewards
@@ -1177,11 +1226,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = "|" + $_aggregate_rewards_disp + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 
-	$_label_process_misses = "Miss"
-	$_spacer_length = [int]($_label_process_misses.Length - $_all_process_misses.toString().Length)
+	#$_label_process_misses = "Miss"
+	#$_spacer_length = [int]($_label_process_misses.Length - $_all_process_misses.toString().Length)
+	$_spacer_length = [int]($_label_process_misses.Length - $_all_process_misses_disp.Length)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 	Write-Host ($_console_header_log_finish_line + "|")-nonewline
-	Write-Host $_all_process_misses.toString() -nonewline -ForegroundColor $_process_fg_color
+	#Write-Host $_all_process_misses.toString() -nonewline -ForegroundColor $_process_fg_color
+	Write-Host $_all_process_misses_disp -nonewline -ForegroundColor $_process_fg_color
 	Write-Host $_label_spacer -nonewline
 
 	$_spacer_length = [int]($_label_process_misses.Length - $_label_process_misses.Length)
@@ -1261,27 +1312,27 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	## header lables
 	$_label_hostname = "Hostname"
 	$_label_diskid = "Plot Id"
-	$_label_size = "Size "
+	$_label_size = "Size  "
 	$_label_percent_complete = "%     "
 	$_label_size_plotted = "PL TiB"
 	$_label_eta = "ETA   "
-	$_label_replot = "  Replots  "
+	$_label_replot = "   Replots    "
 	$_label_sectors_per_hour = "SCT   "
 	$_label_minutes_per_sectors = "SCT   "
 	$_label_rewards = "Rewards"
-	$_label_misses = "Miss"
+	$_label_misses = "  Miss  "
 	#
 	$_label_hostname_row2 = "        "
 	$_label_diskid_row2 = "       "
-	$_label_size_row2 = "(TiB)"
+	$_label_size_row2 = "(TiB) "
 	$_label_percent_complete_row2 = "Cmpl  "
 	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
-	$_label_replot_row2 = "EX/RM/%Cmpl"
+	$_label_replot_row2 = "EX/RM/% Cmpl  "
 	$_label_sectors_per_hour_row2 = "PH    "
 	$_label_minutes_per_sectors_row2 = "Time  "
 	$_label_rewards_row2 = "       "
-	$_label_misses_row2 = "    "
+	$_label_misses_row2 = "TO/RJ/FL"
 	#
 	$_spacer = " "
 	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_size_plotted.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
@@ -1344,7 +1395,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				else
 				{
 				if ($_process_type.toLower() -eq "farmer") {
-					$_total_spacer_length = ("-----------------------------------------------------------------------------------------------").Length
+					$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length     #Change here if header length changes
 					$_num_cols = $_total_spacer_length + 2		# extra seperators at start & end of line
 					$_spacer_length = $_total_spacer_length - 2
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
@@ -1671,7 +1722,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
 			if ($_label_disk_id_length -eq 0)
 			{
-				$_spacer_length = ("-----------------------------------------------------------------------------------------------").Length - $_process_header_filler_length
+				$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length - $_process_header_filler_length
 			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
@@ -1709,10 +1760,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_farm_size_disp = "-"
 			if ($_process_total_sectors_disp -ne "-") {
 				$_farm_plotted_size = [int]($_process_completed_sectors)
-				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 				#
 				$_farm_size = [int]($_process_total_sectors)
-				$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+				$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 				$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 			}
 			#
@@ -1739,7 +1790,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			if ($_label_disk_id_length -eq 0)
 			{
-				$_spacer_length = ("-----------------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+				$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
@@ -1753,7 +1804,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#
 			## display break-up (disk level) information for a given farm
 			#
-			$_total_spacer_length = ("-----------------------------------------------------------------------------------------------").Length
+			$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 			$_spacer_length = $_total_spacer_length - 2
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 			Write-Host ("|" + $_label_spacer + "|") -ForegroundColor $_line_spacer_color
@@ -1763,6 +1814,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_farm_replot_sector_count_hold = 0
 			$_farm_expiring_sector_count = 0
 			$_farm_misses_count = 0
+			$_farm_misses_timeout_count = 0
+			$_farm_misses_rejected_count = 0
+			$_farm_misses_failed_count = 0
+			$_farm_misses_count_disp = "-"
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				# write header if not already done
@@ -1772,7 +1827,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					if ($_disk_UUId_obj -ne $null) {
 						$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 					}
-					else {$_total_spacer_length = ("--------------------------------------------------------------------------------").Length}
+					else {$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 					$_spacer_length = $_total_spacer_length
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 					 
@@ -1789,7 +1844,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					if ($_disk_UUId_obj -ne $null) {
 						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
 					}
-					else {$_spacer_length = ("--------------------------------------------------------------------------------").Length}
+					else {$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
@@ -1858,7 +1913,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					if ($_disk_UUId_obj -ne $null) {
 						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
 					}
-					else {$_spacer_length = ("--------------------------------------------------------------------------------").Length}
+					else {$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
@@ -1923,7 +1978,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					if ($_disk_UUId_obj -ne $null) {
 						$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + 1
 					}
-					else {$_spacer_length = ("--------------------------------------------------------------------------------").Length}
+					else {$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 					$_label_spacer = "|" + $_label_spacer
@@ -2122,10 +2177,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 						if ($_total_sectors_GiB -ne 0) {
-							$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
+							$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 						}
 						if ($_minutes_per_sector_data_disp -ne "-") {
@@ -2298,6 +2353,25 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					if ($_disk_misses_obj.Misses -gt 0) {
 						$_missed_rewards_color = $_html_red
 						$_farm_misses_count += [int]($_disk_misses_obj.Misses)
+						$_farm_misses_timeout_count += [int]($_disk_misses_obj.Timeout)
+						$_farm_misses_rejected_count += [int]($_disk_misses_obj.Rejected)
+						$_farm_misses_failed_count += [int]($_disk_misses_obj.Failed)
+						$_farm_misses_timeout_count_disp = "-"
+						if ($_farm_misses_timeout_count -gt 0)
+						{
+							$_farm_misses_timeout_count_disp = $_farm_misses_timeout_count.toString()
+						}
+						$_farm_misses_rejected_count_disp = "-"
+						if ($_farm_misses_rejected_count -gt 0)
+						{
+							$_farm_misses_rejected_count_disp = $_farm_misses_rejected_count.toString()
+						}
+						$_farm_misses_failed_count_disp = "-"
+						if ($_farm_misses_failed_count -gt 0)
+						{
+							$_farm_misses_failed_count_disp = $_farm_misses_failed_count.toString()
+						}
+						$_farm_misses_count_disp = $_farm_misses_timeout_count_disp + "/" + $_farm_misses_rejected_count_disp + "/" + $_farm_misses_failed_count_disp
 					}
 					
 					$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
@@ -2305,9 +2379,31 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					
 					Write-Host $_label_spacer -nonewline
-					Write-Host $_disk_misses_obj.Misses -nonewline -ForegroundColor $_missed_rewards_color
+					#Write-Host $_disk_misses_obj.Misses -nonewline -ForegroundColor $_missed_rewards_color
+					$_disk_miss_disp = "-"
+					$_disk_miss_timeout_disp = "-"
+					if ($_disk_misses_obj.Timeout -gt 0) 
+					{
+						$_disk_miss_timeout_disp = $_disk_misses_obj.Timeout.ToString()
+					}
+					$_disk_miss_rejected_disp = "-"
+					if ($_disk_misses_obj.Rejected -gt 0) 
+					{
+						$_disk_miss_rejected_disp = $_disk_misses_obj.Rejected.ToString()
+					}
+					$_disk_miss_failed_disp = "-"
+					if ($_disk_misses_obj.Failed -gt 0) 
+					{
+						$_disk_miss_failed_disp = $_disk_misses_obj.Failed.ToString()
+					}
+					if ($_disk_misses_obj.Misses -gt 0) 
+					{
+						$_disk_miss_disp = $_disk_miss_timeout_disp + "/" + $_disk_miss_rejected_disp + "/" + $_disk_miss_failed_disp
+					}
+					Write-Host $_disk_miss_disp -nonewline -ForegroundColor $_missed_rewards_color
 
-					$_spacer_length = [int]($_label_misses.Length - $_disk_misses_obj.Misses.toString().Length)
+					#$_spacer_length = [int]($_label_misses.Length - $_disk_misses_obj.Misses.toString().Length)
+					$_spacer_length = [int]($_label_misses.Length - $_disk_miss_disp.Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 					$_label_spacer = $_label_spacer + "|"
 					
@@ -2326,7 +2422,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_label_spacer = $_label_spacer + "|"
 					
 					Write-Host $_label_spacer -nonewline
-					Write-Host 0 -nonewline		#no rewards data (only misses data) populated in endpoint
+					Write-Host "-" -nonewline		#no misses data populated in endpoint
 
 					$_spacer_length = [int]($_label_misses.Length - ("-").toString().Length)
 					$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -2466,10 +2562,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				{
 					$_farm_misses_count_data_color = $_fg_color_red
 				}
-				$_spacer_length = $_label_misses.Length - $_farm_misses_count.toString().Length
+				#$_spacer_length = $_label_misses.Length - $_farm_misses_count.toString().Length
+				$_spacer_length = $_label_misses.Length - $_farm_misses_count_disp.Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				Write-Host "|" -nonewline 
-				Write-Host $_farm_misses_count.toString() -nonewline -ForegroundColor $_farm_misses_count_data_color
+				#Write-Host $_farm_misses_count.toString() -nonewline -ForegroundColor $_farm_misses_count_data_color
+				Write-Host $_farm_misses_count_disp -nonewline -ForegroundColor $_farm_misses_count_data_color
 				Write-Host $_label_spacer -nonewline 
 				$_spacer_length = 0
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -2556,27 +2654,27 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	# header lables
 	$_label_hostname = "Hostname"
 	$_label_diskid = "Plot Id"
-	$_label_size = "Size "
+	$_label_size = "Size  "
 	$_label_percent_complete = "%     "
 	$_label_size_plotted = "PL TiB"
 	$_label_eta = "ETA   "
-	$_label_replot = "  Replots  "
+	$_label_replot = "   Replots    "
 	$_label_sectors_per_hour = "SCT   "
 	$_label_minutes_per_sectors = "Time/ "
 	$_label_rewards = "Rewards"
-	$_label_misses = "Miss"
+	$_label_misses = "  Miss  "
 	#
 	$_label_hostname_row2 = "        "
 	$_label_diskid_row2 = "       "
-	$_label_size_row2 = "(TiB)"
+	$_label_size_row2 = "(TiB) "
 	$_label_percent_complete_row2 = "Cmpl  "
 	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
-	$_label_replot_row2 = "EX/RM/%cmpl"
+	$_label_replot_row2 = "EX/RM/% Cmpl  "
 	$_label_sectors_per_hour_row2 = "PH    "
 	$_label_minutes_per_sectors_row2 = "SCT   "
 	$_label_rewards_row2 = "       "
-	$_label_misses_row2 = "    "
+	$_label_misses_row2 = "TO/RJ/FL"
 	#
 	$_spacer = " "
 	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_size_plotted.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
@@ -2608,7 +2706,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
 		$_b_process_running_ok = $_individual_farmer_state_arr[1]
 		
-		$_total_spacer_length = ("-----------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 		$_num_cols = $_total_spacer_length + 2		# extra seperators at start & end of line
 		$_spacer_length = $_total_spacer_length - 2
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
@@ -2889,7 +2987,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels + 2 - $_process_header_filler_length
 		if ($_label_disk_id_length -eq 0)
 		{
-			$_spacer_length = ("----------------------------------------------------------------------------------------------").Length - $_process_header_filler_length
+			$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length - $_process_header_filler_length
 		}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_label_spacer = $_label_spacer + "|"
@@ -2927,10 +3025,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_farm_size_disp = "-"
 		if ($_process_total_sectors_disp -ne "-") {
 			$_farm_plotted_size = [int]($_process_completed_sectors)
-			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 			#
 			$_farm_size = [int]($_process_total_sectors)
-			$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+			$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 			$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 		}
 		#
@@ -2957,7 +3055,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 		if ($_label_disk_id_length -eq 0)
 		{
-			$_spacer_length = ("---------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+			$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 		}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
@@ -2971,7 +3069,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#
 		## display break-up (disk level) information for a given farm
 		#
-		$_total_spacer_length = ("-----------------------------------------------------------------------------------------------").Length
+		$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length
 		$_spacer_length = $_total_spacer_length - 2
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator
 		Write-Host ("|" + $_label_spacer + "|") -ForegroundColor $_line_spacer_color
@@ -2981,6 +3079,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_farm_replot_sector_count_hold = 0
 		$_farm_expiring_sector_count = 0
 		$_farm_misses_count = 0
+		$_farm_misses_timeout_count = 0
+		$_farm_misses_rejected_count = 0
+		$_farm_misses_failed_count = 0
+		$_farm_misses_count_disp = "-"
 		foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 		{
 			# write header if not already done
@@ -2990,7 +3092,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				if ($_disk_UUId_obj -ne $null) {
 					$_total_spacer_length = $_disk_UUId_obj.Id.toString().Length + $_total_header_length + $_total_header_labels + 2 	# 1 for leading and 1 for trailing
 				}
-				else {$_total_spacer_length = ("--------------------------------------------------------------------------------").Length}
+				else {$_total_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 				$_spacer_length = $_total_spacer_length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length "-"
 				 
@@ -3007,7 +3109,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				if ($_disk_UUId_obj -ne $null) {
 					$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
 				}
-				else {$_spacer_length = ("--------------------------------------------------------------------------------").Length}
+				else {$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
@@ -3076,7 +3178,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				if ($_disk_UUId_obj -ne $null) {
 					$_spacer_length =  $_disk_UUId_obj.Id.toString().Length - $_label_diskid.Length + 1
 				}
-				else {$_spacer_length = ("--------------------------------------------------------------------------------").Length}
+				else {$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
@@ -3142,7 +3244,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				if ($_disk_UUId_obj -ne $null) {
 					$_spacer_length =  $_disk_UUId_obj.Id.toString().Length + 1
 				}
-				else {$_spacer_length = ("--------------------------------------------------------------------------------").Length}
+				else {$_spacer_length = ("-------------------------------------------------------------------------------------------------------").Length}
 
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
 				$_label_spacer = "|" + $_label_spacer
@@ -3339,10 +3441,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 					if ($_total_sectors_GiB -ne 0) {
-						$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
+						$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
 						$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 					}
 					if ($_minutes_per_sector_data_disp -ne "-") {
@@ -3515,6 +3617,25 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				if ($_disk_misses_obj.Misses -gt 0) {
 					$_missed_rewards_color = $_html_red
 					$_farm_misses_count += [int]($_disk_misses_obj.Misses)
+					$_farm_misses_timeout_count += [int]($_disk_misses_obj.Timeout)
+					$_farm_misses_rejected_count += [int]($_disk_misses_obj.Rejected)
+					$_farm_misses_failed_count += [int]($_disk_misses_obj.Failed)
+					$_farm_misses_timeout_count_disp = "-"
+					if ($_farm_misses_timeout_count -gt 0)
+					{
+						$_farm_misses_timeout_count_disp = $_farm_misses_timeout_count.toString()
+					}
+					$_farm_misses_rejected_count_disp = "-"
+					if ($_farm_misses_rejected_count -gt 0)
+					{
+						$_farm_misses_rejected_count_disp = $_farm_misses_rejected_count.toString()
+					}
+					$_farm_misses_failed_count_disp = "-"
+					if ($_farm_misses_failed_count -gt 0)
+					{
+						$_farm_misses_failed_count_disp = $_farm_misses_failed_count.toString()
+					}
+					$_farm_misses_count_disp = $_farm_misses_timeout_count_disp + "/" + $_farm_misses_rejected_count_disp + "/" + $_farm_misses_failed_count_disp
 				}
 				
 				$_spacer_length = [int]($_label_rewards.Length - $_rewards_data_disp.Length)
@@ -3522,9 +3643,31 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = $_label_spacer + "|"
 				
 				Write-Host $_label_spacer -nonewline
-				Write-Host $_disk_misses_obj.Misses -nonewline -ForegroundColor $_missed_rewards_color
-
-				$_spacer_length = [int]($_label_misses.Length - $_disk_misses_obj.Misses.toString().Length)
+				#Write-Host $_disk_misses_obj.Misses -nonewline -ForegroundColor $_missed_rewards_color
+				$_disk_miss_disp = "-"
+				$_disk_miss_timeout_disp = "-"
+				if ($_disk_misses_obj.Timeout -gt 0) 
+				{
+					$_disk_miss_timeout_disp = $_disk_misses_obj.Timeout.ToString()
+				}
+				$_disk_miss_rejected_disp = "-"
+				if ($_disk_misses_obj.Rejected -gt 0) 
+				{
+					$_disk_miss_rejected_disp = $_disk_misses_obj.Rejected.ToString()
+				}
+				$_disk_miss_failed_disp = "-"
+				if ($_disk_misses_obj.Failed -gt 0) 
+				{
+					$_disk_miss_failed_disp = $_disk_misses_obj.Failed.ToString()
+				}
+				if ($_disk_misses_obj.Misses -gt 0)
+				{
+					$_disk_miss_disp = $_disk_miss_timeout_disp + "/" + $_disk_miss_rejected_disp + "/" + $_disk_miss_failed_disp
+				}
+				Write-Host $_disk_miss_disp -nonewline -ForegroundColor $_missed_rewards_color
+				
+				#$_spacer_length = [int]($_label_misses.Length - $_disk_misses_obj.Misses.toString().Length)
+				$_spacer_length = [int]($_label_misses.Length - $_disk_miss_disp.Length)
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_label_spacer = $_label_spacer + "|"
 				
@@ -3543,7 +3686,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_label_spacer = $_label_spacer + "|"
 				
 				Write-Host $_label_spacer -nonewline
-				Write-Host 0 -nonewline		#no rewards data (only misses data) populated in endpoint
+				Write-Host "-" -nonewline		#no misses data populated in endpoint
 
 				$_spacer_length = [int]($_label_misses.Length - ("-").toString().Length)
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -3681,10 +3824,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			{
 				$_farm_misses_count_data_color = $_fg_color_red
 			}
-			$_spacer_length = $_label_misses.Length - $_farm_misses_count.toString().Length
+			#$_spacer_length = $_label_misses.Length - $_farm_misses_count.toString().Length
+			$_spacer_length = $_label_misses.Length - $_farm_misses_count_disp.Length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host "|" -nonewline 
-			Write-Host $_farm_misses_count.toString() -nonewline -ForegroundColor $_farm_misses_count_data_color
+			#Write-Host $_farm_misses_count.toString() -nonewline -ForegroundColor $_farm_misses_count_data_color
+			Write-Host $_farm_misses_count_disp -nonewline -ForegroundColor $_farm_misses_count_data_color
 			Write-Host $_label_spacer -nonewline 
 			$_spacer_length = 0
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -3738,14 +3883,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 
 function fDisplayHelpSummary() {
 	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,EX=Expired,"
-	$_help_text_2 = "RM=Remaining,Est=Estimated"
+	$_help_text_2 = "RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }
 
 function fDisplayHelp() {
 	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,"
-	$_help_text_2 = "PL=Plotted,EX=Expired,RM=Remaining,Est=Estimated"
+	$_help_text_2 = "PL=Plotted,EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }

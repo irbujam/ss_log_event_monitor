@@ -197,22 +197,24 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						}
 						## rebuild storage for replot if more sectors expired or expiring in the meantime as needed
 						$_b_add_exp_arr_id = $true
+						$_replot_sector_count_hold = 0
 						for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
 						{
 							if ($script:_replot_sector_count_hold_arr[$_h]) {
 								if ($_disk_UUId_obj.Id -ne $script:_replot_sector_count_hold_arr[$_h].Id) { continue }
+								
+								if ($script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count)) 
+								{
+									$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
+								}
+								elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
+								{
+									$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
+								}
+								$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
+								$_b_add_exp_arr_id = $false
+								break
 							}
-							if ($script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -eq 0 -or $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors -lt ($_replot_sector_count + $_expiring_sector_count)) 
-							{
-								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = $_replot_sector_count + $_expiring_sector_count
-							}
-							elseif ($_replot_sector_count -eq 0 -and $_expiring_sector_count -eq 0)
-							{
-								$script:_replot_sector_count_hold_arr[$_h].ExpiredSectors = 0
-							}
-							$_replot_sector_count_hold = $script:_replot_sector_count_hold_arr[$_h].ExpiredSectors
-							$_b_add_exp_arr_id = $false
-							break
 						}
 						if ($_b_add_exp_arr_id -eq $true)
 						{
@@ -306,12 +308,18 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				}
 
 				$_misses_data_disp = "-"
+				$_misses_data_timeout_disp = "-"
+				$_misses_data_rejected_disp = "-"
+				$_misses_data_failed_disp = "-"
 				foreach ($_disk_misses_obj in $_disk_misses_arr)
 				{
 					if ($_disk_UUId_obj.Id -ne $_disk_misses_obj.Id) {
 							continue
 					}
 					$_misses_data_disp = $_disk_misses_obj.Misses.ToString()
+					$_misses_data_timeout_disp = $_disk_misses_obj.Timeout.ToString()
+					$_misses_data_rejected_disp = $_disk_misses_obj.Rejected.ToString()
+					$_misses_data_failed_disp = $_disk_misses_obj.Failed.ToString()
 				}
 				#
 				# build process data
@@ -332,6 +340,9 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					MinutesPerSector		= $_time_per_sector_data_obj.TotalSeconds
 					Rewards					= $_rewards_data_disp
 					Misses					= $_misses_data_disp
+					Timeout					= $_misses_data_timeout_disp
+					Rejected				= $_misses_data_rejected_disp
+					Failed					= $_misses_data_failed_disp
 				}
 				$_process_data_arr += $_process_data
 			}
