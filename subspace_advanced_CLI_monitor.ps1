@@ -230,7 +230,7 @@ function main {
 					##fWriteDetailDataToConsole $_farmers_ip_arr
 					#fGetSummaryDataForConsole $_farmers_ip_arr
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -319,7 +319,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			#Write-Host
 			Write-Host
 			Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-			Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+			Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 			Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -389,7 +389,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									#Write-Host
 									Write-Host
 									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -403,7 +403,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host
 									fWriteDetailDataToConsole $_farmers_ip_arr
 								}
-								F10 {
+								F9 {
 									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
 									##
@@ -418,7 +418,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									#Write-Host
 									Write-Host
 									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -462,7 +462,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 										Write-Host
 										Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+										Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 										Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 										Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -486,7 +486,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
 									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -518,7 +518,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
 									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -927,7 +927,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					$script:_b_write_process_details_to_console = $true
 					$script:_b_write_process_summary_to_console = $false
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -941,7 +941,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					fWriteDetailDataToConsole $_farmers_ip_arr
 					$_resp_last_display_type_request = "detail"
 				}
-				F10 {
+				F9 {
 					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
 					##
@@ -952,7 +952,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					$script:_b_write_process_details_to_console = $false
 					$script:_b_write_process_summary_to_console = $true
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -994,7 +994,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					{
 						Clear-Host
 						Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+						Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 						Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -1015,7 +1015,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				LeftArrow {
 					Clear-Host
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -1044,7 +1044,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				RightArrow {
 					Clear-Host
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F10" -NoNewLine -ForegroundColor $_html_yellow 
+					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
@@ -1248,33 +1248,49 @@ function fSortObjArrBySectorRemaining ([array]$_io_source_arr, [int]$_io_incompl
 	return $_arr_sorted
 }
 
-function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
-# 10/30 start
-if ($_b_ps_window_resize_enabled.toLower() -eq 'y')
-{
-# 10/30 end
-	$_height = $_io_ps_window_height + 8
-	$_width = $_io_ps_window_width + 2
-	#
-	$_pswindow = $host.ui.rawui
-	# check user supplied height & width are less than max allowed size, resize to max allowed if needed
-	if ($_height -gt $_pswindow.MaxPhysicalWindowSize.Height) { $_height = $_pswindow.MaxPhysicalWindowSize.Height }
-	if ($_width -gt $_pswindow.MaxPhysicalWindowSize.Width)	{ $_width = $_pswindow.MaxPhysicalWindowSize.Width }
-
-	# Set window dimensions if smaller than buffer, if not then this step will be skipped so we need to set window dimensions later also to cover all scenarios
-	$_window  = $_pswindow.WindowSize
-	$_buffer  = $_pswindow.BufferSize
-	If ($_buffer.Width -gt $_width ) { $_window.Width = $_width }
-	If ($_buffer.Height -gt $_height ) { $_window.Height = $_height }
-
-	# if window is smaller than buffer, resize window
-	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_window.Width,$_window.Height)
-	# buffer resize, follwed by window resize 
-	$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.size($_width,3000)
-	$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_width,$_height)
-# 10/30 start
+function fCheckPlatformType () {
+	$_b_windows_os = $true
+	$_env = [System.Environment]::OSVersion.Platform
+	Switch ($_env) {
+		Win32NT {
+			$_b_windows_os = $true
+		}
+		Unix {
+			$_b_windows_os = $false
+		}
+		#default {
+		#	$_b_windows_os = $false
+		#}
+	}
+	
+	return $_b_windows_os
 }
-# 10/30 end
+
+function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
+	#if ($_b_ps_window_resize_enabled.toLower() -eq 'y')
+	$_b_windows_host = fCheckPlatformType
+	if ($_b_windows_host)
+	{
+		$_height = $_io_ps_window_height + 8
+		$_width = $_io_ps_window_width + 2
+		#
+		$_pswindow = $host.ui.rawui
+		# check user supplied height & width are less than max allowed size, resize to max allowed if needed
+		if ($_height -gt $_pswindow.MaxPhysicalWindowSize.Height) { $_height = $_pswindow.MaxPhysicalWindowSize.Height }
+		if ($_width -gt $_pswindow.MaxPhysicalWindowSize.Width)	{ $_width = $_pswindow.MaxPhysicalWindowSize.Width }
+
+		# Set window dimensions if smaller than buffer, if not then this step will be skipped so we need to set window dimensions later also to cover all scenarios
+		$_window  = $_pswindow.WindowSize
+		$_buffer  = $_pswindow.BufferSize
+		If ($_buffer.Width -gt $_width ) { $_window.Width = $_width }
+		If ($_buffer.Height -gt $_height ) { $_window.Height = $_height }
+
+		# if window is smaller than buffer, resize window
+		$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_window.Width,$_window.Height)
+		# buffer resize, follwed by window resize 
+		$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.size($_width,3000)
+		$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.size($_width,$_height)
+	}
 }
 
 function fPingMetricsUrl ([string]$ioUrl) {
