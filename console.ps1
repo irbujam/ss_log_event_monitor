@@ -391,7 +391,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_all_process_expiring_sectors_count = 0
 	#
 	##
-	$_individual_farmer_count = 0
+	#$_individual_farmer_count = 0
+	$_individual_farmer_count = -1
 	$_individual_farmer_count_disp = "0"
 	#
 	$script:_individual_farmer_id_arr = $null
@@ -421,7 +422,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_individual_farmer_count_disp = $_individual_farmer_count.toString()
 			if ($_individual_farmer_count -gt 9)
 			{
-				$_individual_farmer_count_disp = $script:_char_arr[$_individual_farmer_count - 10]
+				#$_individual_farmer_count_disp = $script:_char_arr[$_individual_farmer_count - 10]
+				$_individual_farmer_count_disp = $script:_char_arr[($_individual_farmer_count + 1) - 10]
 			}
 			$_individual_farmer_id = [PSCustomObject]@{
 				SN					= $_individual_farmer_count_disp
@@ -1110,7 +1112,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	if ($_all_process_sector_time -gt 0)
 	{
 		$_all_process_total_sectors_per_hour = $_all_process_sector_PH
-		$_all_process_total_sectors_per_hour_disp = $_all_process_total_sectors_per_hour.toString()
+		$_all_process_total_sectors_per_hour_disp = ([math]::Round($_all_process_total_sectors_per_hour, 1)).toString()
 		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 2)
 		$_all_process_total_TiB_per_day_disp = $_all_process_total_tiB_per_day.toString()
 	}
@@ -1300,7 +1302,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_line_separator = "_"
 	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
 	###
-	$_individual_farmer_count = 0
+	#$_individual_farmer_count = 0
+	$_individual_farmer_count = -1
 	$_individual_farmer_count_disp = "0"
 	$script:_individual_farmer_id_arr = $null
 	###
@@ -1459,7 +1462,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_individual_farmer_count_disp = $_individual_farmer_count.toString()
 					if ($_individual_farmer_count -gt 9)
 					{
-						$_individual_farmer_count_disp = $script:_char_arr[$_individual_farmer_count - 10]
+						#$_individual_farmer_count_disp = $script:_char_arr[$_individual_farmer_count - 10]
+						$_individual_farmer_count_disp = $script:_char_arr[($_individual_farmer_count + 1) - 10]
 					}
 					###
 					$_console_msg = "Farm #" + $_individual_farmer_count_disp + ":"
@@ -2643,7 +2647,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_line_separator = "_"
 	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
 	###
-	$_individual_farmer_count = 0
+	#$_individual_farmer_count = 0
+	$_individual_farmer_count = -1
 	$_individual_farmer_count_disp = "0"
 	###
 	$_b_first_farm_process = $true
@@ -2755,11 +2760,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		if ($_process_type.toLower() -eq "farmer")
 		{
 			###
-			$_individual_farmer_count = $_io_farmer_serial_num + 1
+			#$_individual_farmer_count = $_io_farmer_serial_num + 1
+			$_individual_farmer_count = $_io_farmer_serial_num
 			$_individual_farmer_count_disp = $_individual_farmer_count.toString()
 			if ($_individual_farmer_count -gt 9)
 			{
-				$_individual_farmer_count_disp = $script:_char_arr[$_individual_farmer_count - 10]
+				#$_individual_farmer_count_disp = $script:_char_arr[$_individual_farmer_count - 10]
+				$_individual_farmer_count_disp = $script:_char_arr[($_individual_farmer_count + 1) - 10]
 			}
 			###
 			$_console_msg = "Farm #" + $_individual_farmer_count_disp + ":"
