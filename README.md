@@ -1,5 +1,5 @@
 # Autonomys monitoring powershell script
-A simple to run and lightweight windows powershell script that captures live information using prometheus metrics endpoint.
+A simple to run and lightweight powershell script that captures live information using prometheus metrics endpoint.
 
 To use the monitor:
 - Save all files from latest monitor release in a folder on local computer
@@ -13,8 +13,8 @@ To use the monitor:
 > - Tip: To validate prometheus-listen-on endpoints defined in node & farmer start-up files are working correctly, use a web browser and check data is populated at endpoints - http://node-local-ip:port/metrics & http://farmer-local-ip:port/metrics
 
 **Requirements:**
-- Must use latest advanced CLI release
-- Powershell version 5.1 is installed
+- Must use latest CLI release (see https://github.com/autonomys/subspace/releases)
+- Powershell is installed (Windows should have powershell pre-installed. For installing powershell on linux see https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4)
 - Add --prometheus-listen-on [node-local-ip:port] to node start-up script
 - Add --prometheus-listen-on [farmer-local-ip:port] to farmer start-up script
 - Change node/farmer settings in the config.txt file so that the ip:port are matching to the values set for --prometheus-listen-on your node and farmer
