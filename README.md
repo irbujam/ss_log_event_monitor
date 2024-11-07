@@ -21,7 +21,7 @@ To use the monitor:
   
 > If using cluster, apply additional settings as below:
 - Add command line options -m <http listener port> and -n <server name> to nats-server start-up script (example: nats-server -n my-nats-server1 -m 18080 -c nats.config)
-- Change nats-server settings in the config.txt file so that the ip matches to the computer running nats-server and port matches to <http listener port> as in nats-server start-up script 
+- Change nats-server settings in the config.txt file so that the ip matches to the computer running nats-server and port matches to 'http listener port' as in option scpecified for -m in the nats-server start-up script 
 
 > To enable web access, do the following:
 > - Ensure to create an inbound rule under windows defender firewall for http listening port as specified in the config file. This must be done on the computer that hosts ps1 script
