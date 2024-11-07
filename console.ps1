@@ -1112,7 +1112,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	if ($_all_process_sector_time -gt 0)
 	{
 		$_all_process_total_sectors_per_hour = $_all_process_sector_PH
-		$_all_process_total_sectors_per_hour_disp = $_all_process_total_sectors_per_hour.toString()
+		$_all_process_total_sectors_per_hour_disp = ([math]::Round($_all_process_total_sectors_per_hour, 1)).toString()
 		$_all_process_total_TiB_per_day = [math]::Round(($_all_process_total_sectors_per_hour * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter) * 24, 2)
 		$_all_process_total_TiB_per_day_disp = $_all_process_total_tiB_per_day.toString()
 	}
@@ -1221,8 +1221,12 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_spacer = "|" + $_all_process_replot_sector_count_disp + $_label_spacer
 	$_console_header_log_finish_line += $_label_spacer
 	#
-	$_aggregate_rewards_disp = $_all_process_rewards.toString() + "/" + $_all_process_rewards_per_TiB.toString() + "/" + $_all_process_rewards_per_hour.toString() + "/" + 
-								$_all_process_rewards_per_day_estimated.toString() + "/" + $_all_process_daily_avg_rewards_per_TiB.ToString()
+	$_aggregate_rewards_disp = "-"
+	if ($_all_process_rewards -gt 0)
+	{
+		$_aggregate_rewards_disp = $_all_process_rewards.toString() + "/" + $_all_process_rewards_per_TiB.toString() + "/" + $_all_process_rewards_per_hour.toString() + "/" + 
+									$_all_process_rewards_per_day_estimated.toString() + "/" + $_all_process_daily_avg_rewards_per_TiB.ToString()
+	}
 	$_spacer_length = [int]($_label_process_rewards.Length - $_aggregate_rewards_disp.Length)
 	$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 	$_label_spacer = "|" + $_aggregate_rewards_disp + $_label_spacer
@@ -2556,9 +2560,14 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_label_spacer = "|" + $_farm_sector_times_disp + $_label_spacer
 				Write-Host $_label_spacer -nonewline 
 
-				$_spacer_length = $_label_rewards.Length - $_rewards_total.toString().Length
+				$_rewards_total_disp = "-"
+				if ($_rewards_total -gt 0)
+				{
+					$_rewards_total_disp = $_rewards_total.toString()
+				}
+				$_spacer_length = $_label_rewards.Length - $_rewards_total_disp.Length
 				$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-				$_label_spacer = "|" + $_rewards_total.toString() + $_label_spacer
+				$_label_spacer = "|" + $_rewards_total_disp + $_label_spacer
 				Write-Host $_label_spacer -nonewline 
 				#
 				$_farm_misses_count_data_color = $_fg_color_white
@@ -3821,9 +3830,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_label_spacer = "|" + $_farm_sector_times_disp + $_label_spacer
 			Write-Host $_label_spacer -nonewline 
 
-			$_spacer_length = $_label_rewards.Length - $_rewards_total.toString().Length
+			$_rewards_total_disp = "-"
+			if ($_rewards_total -gt 0)
+			{
+				$_rewards_total_disp = $_rewards_total.toString()
+			}
+			$_spacer_length = $_label_rewards.Length - $_rewards_total_disp.Length
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-			$_label_spacer = "|" + $_rewards_total.toString() + $_label_spacer
+			$_label_spacer = "|" + $_rewards_total_disp + $_label_spacer
 			Write-Host $_label_spacer -nonewline 
 			#
 			$_farm_misses_count_data_color = $_fg_color_white
