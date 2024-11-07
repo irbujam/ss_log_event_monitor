@@ -31,15 +31,13 @@ To use the monitor:
 
 
 **Key features:**
-  - monitoring support for cluster set-up
-  - Multi component (remote or local) location and multi OS supported for monitoring
-  - Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
-  
+  - monitoring support for multi component (remote or local) nodes, farmer and cluster set-up, using prometheus metrics endpoints
   - Monitor script can run independently on a pc separate from cluster/farms/nodes hosted pc 
-  - Run-time changes to config.txt reflected in minitor (only works with web ui disabled in config)
-  - No need for log files as monitoring is now using metrics endpoints
-  - discord and telegram alert notifications
-  - Summary and detail stats view configurable (and sticks) at start-up
+  - multi OS (Windows and Linux) support for running the monitoring tool
+  - Web service enabled to view stats using a web browser on phone/ pc or as a second screen to legacy monitor console display
+  - Run-time changes to config.txt reflected in minitor (currently only works with API/web ui disabled in config.txt)
+  - customizable alerts enabled for discord and telegram 
+  - Summary and detail stats view that is user configurable (and sticks) at start-up
   - Local Time Zone display
   
 >*** For questions and feedback please contact (rs_00) in autonomys discord channel.
