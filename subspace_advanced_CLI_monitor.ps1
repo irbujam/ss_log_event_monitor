@@ -3,7 +3,7 @@
 	--------------------------------------------------------------------------------------------- #>
 
 ##header
-$host.UI.RawUI.WindowTitle = "Subspace Advanced CLI Process Monitor"
+$host.UI.RawUI.WindowTitle = "Autonomys Network Monitor"
 function main {
 	$_b_allow_refresh = $false
 	$script:_b_enable_new_sector_times_calc = $true
@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.1.6"
+	$_monitor_file_name = "v0.1.7"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -52,7 +52,7 @@ function main {
 	$script:_individual_farmer_id_last_pos = -1
 	#
 	[array]$script:_char_arr = @("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")
-	[array]$script:_num_key_arr = @("D1","D2","D3","D4","D5","D6","D7","D8","D9","NumPad1","NumPad2","NumPad3","NumPad4","NumPad5","NumPad6","NumPad7","NumPad8","NumPad9")
+	[array]$script:_num_key_arr = @("D0","D1","D2","D3","D4","D5","D6","D7","D8","D9","NumPad0","NumPad1","NumPad2","NumPad3","NumPad4","NumPad5","NumPad6","NumPad7","NumPad8","NumPad9")
 	#
 	$script:_b_write_process_details_to_console = $false
 	$script:_b_write_process_summary_to_console = $true
@@ -1474,6 +1474,118 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_farmer_disk_proving_misses_failed_count = 0
 	$_total_rewards_per_farmer = 0
 	#
+	##
+	## 11/6 start
+	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
+	{
+		if (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_auditing_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		##
+		{
+			$_uptime_value_int_ = [int]($_metrics_obj.Value)
+			if ($_uptime_seconds -lt $_uptime_value_int_)
+			{
+				$_uptime_seconds = $_uptime_value_int_
+			}
+			$_unique_farm_id = $_metrics_obj.Instance
+			$_farm_id_info = [PSCustomObject]@{
+				Id		= $_unique_farm_id
+			}
+			#
+			$_b_add_UUId_arr_id = $true
+			for ($_h = 0; $_h -lt $_resp_UUId_arr.count; $_h++)
+			{
+				if ($_resp_UUId_arr[$_h]) {
+					if ($_unique_farm_id -eq $_resp_UUId_arr[$_h].Id)
+					{
+						$_b_add_UUId_arr_id = $false
+						break
+					}
+				}
+			}
+			if ($_uptime_value_int_ -gt 0)
+			{
+				if ($_b_add_UUId_arr_id)
+				{
+					$_resp_UUId_arr += $_farm_id_info
+				}
+				$_elapsed_time_info = [PSCustomObject]@{
+					Id							= $_unique_farm_id
+					TotalElapsedTime			= $_uptime_value_int_
+				}
+				#
+				#$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
+				$_b_add_item_to_arr = $true
+				for ($_h = 0; $_h -lt $_most_recent_uptime_by_farmId_arr.count; $_h++)
+				{
+					if ($_most_recent_uptime_by_farmId_arr[$_h]) {
+						if ($_unique_farm_id -eq $_most_recent_uptime_by_farmId_arr[$_h].Id)
+						{
+							$_b_add_item_to_arr = $false
+							break
+						}
+					}
+				}
+				if ($_b_add_item_to_arr)
+				{
+					$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
+				}
+			}
+		}
+		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_plotting_time_seconds_sum") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_plotting_time_seconds_sum") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
+		##
+		{
+			$_uptime_value_int_ = [int]($_metrics_obj.Value)
+			if ($_uptime_seconds -lt $_uptime_value_int_)
+			{
+				$_uptime_seconds = $_uptime_value_int_
+			}
+			$_unique_farm_id = $_metrics_obj.Instance
+			$_farm_id_info = [PSCustomObject]@{
+				Id		= $_unique_farm_id
+			}
+			#
+			$_b_add_UUId_arr_id = $true
+			for ($_h = 0; $_h -lt $_resp_UUId_arr.count; $_h++)
+			{
+				if ($_resp_UUId_arr[$_h]) {
+					if ($_unique_farm_id -eq $_resp_UUId_arr[$_h].Id)
+					{
+						$_b_add_UUId_arr_id = $false
+						break
+					}
+				}
+			}
+			if ($_uptime_value_int_ -gt 0)
+			{
+				if ($_b_add_UUId_arr_id)
+				{
+					$_resp_UUId_arr += $_farm_id_info
+				}
+				$_elapsed_time_info = [PSCustomObject]@{
+					Id							= $_unique_farm_id
+					TotalElapsedTime			= $_uptime_value_int_
+				}
+				#
+				$_b_add_item_to_arr = $true
+				for ($_h = 0; $_h -lt $_most_recent_uptime_by_farmId_arr.count; $_h++)
+				{
+					if ($_most_recent_uptime_by_farmId_arr[$_h]) {
+						if ($_unique_farm_id -eq $_most_recent_uptime_by_farmId_arr[$_h].Id)
+						{
+							$_b_add_item_to_arr = $false
+							break
+						}
+					}
+				}
+				if ($_b_add_item_to_arr)
+				{
+					$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
+				}
+			}
+		}
+	}
+	## 11/6 end
+	##
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
 		$_b_incremental_sector_count_changed = $false
@@ -1551,6 +1663,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 			}
 		}
+<#
 		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_auditing_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		##
 		{
@@ -1586,6 +1699,7 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			#
 			$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
 		}
+#>
 		##
 		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_downloading_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		##
