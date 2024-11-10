@@ -303,7 +303,7 @@ function fBuildNetPerformanceChart ([string]$_io_chart_farm_labels, [string]$_ch
 	var _ce_disk_data_arr = ' + $_io_chart_farm_disk_data_arr + ';
 
 	var _total_sectors_per_hour_label = ["Sectors/", "Hour (Total)"];
-	var _sector_time_label = ["Sector", "Time"];
+	var _sector_time_label = ["Sector", "Time (Sec)"];
 
 	var _label_values = [_total_sectors_per_hour_label, _sector_time_label];
 

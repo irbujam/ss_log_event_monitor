@@ -35,9 +35,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_serial_num = "#"
 	$_label_process_alt_name = "Id"
 	#$_label_process_state = "Status "
-	# 10/30 start
 	#$_label_process_state = "P"
-	# 10/30 end
 	$_label_process_uptime = "Uptime"
 	$_label_process_size = "Size  "
 	$_label_process_progress = "%     "
@@ -50,16 +48,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_rewards = "           Rewards          "
 	$_label_process_misses = "  Miss  "
 	# node extra columns
-	$_label_process_sync_status = "Synced"
-	$_label_process_peers = "Peers"
+	#$_label_process_sync_status = "Synced"
+	#$_label_process_peers = "Peers"
+	$_label_process_sync_status = "Synced:    "
+	$_label_process_peers = "Peers:   "
 	## define process header labels - set 2 of 3
 	#$_label_process_type_row2 = "Type   "
 	$_label_serial_num_row2 = " "
 	$_label_process_alt_name_row2 = "  "
 	#$_label_process_state_row2 = "       "
-	# 10/30 start
 	#$_label_process_state_row2 = "W"
-	# 10/30 end
 	$_label_process_uptime_row2 = "      "
 	$_label_process_size_row2 = "(TiB) "
 	$_label_process_progress_row2 = "Cmpl  "
@@ -79,9 +77,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_serial_num_row3 = " "
 	$_label_process_alt_name_row3 = "  "
 	#$_label_process_state_row3 = "       "
-	# 10/30 start
 	#$_label_process_state_row3 = "R"
-	# 10/30 end
 	$_label_process_uptime_row3 = "      "
 	$_label_process_size_row3 = "      "
 	$_label_process_progress_row3 = "      "
@@ -224,7 +220,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			#
 			#
 			if ($_process_sync_state.toLower() -eq "yes") {
-				$_process_fg_color = $_fg_color_white
+				#$_process_fg_color = $_fg_color_white
+				$_process_fg_color = $_fg_color_green
 			}
 			else{
 				$_process_fg_color = $_fg_color_red
@@ -234,7 +231,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			#
 			$_spacer_length = 0
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-			$_label_spacer = $_label_spacer + "|"
+			$_label_spacer = $_label_spacer + "|" + "Synced: "
 			$_console_data_log_process_sync_state_filler = $_label_spacer
 			#
 			$_spacer_length = 0
@@ -250,9 +247,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_console_header_log_finish_line += $_label_spacer
 			#
 			#
-			$_spacer_length = [int]($_label_process_sync_status.Length - $_process_sync_state.Length)
+			$_spacer_length = [int]($_label_process_sync_status.Length - $_process_sync_state.Length - ("Synced: ").Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
-			$_label_spacer = $_label_spacer + "|"
+			$_label_spacer = $_label_spacer + "|" + "Peers: "
 			$_console_data_log_end += $_label_spacer + $_process_peers
 			#
 			$_spacer_length = [int]($_label_process_sync_status.Length - $_label_process_sync_status.Length)
@@ -269,7 +266,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			#
 			#
 			# last column delimiter only
-			$_spacer_length = [int]($_label_process_peers.Length - $_process_peers.Length)
+			$_spacer_length = [int]($_label_process_peers.Length - $_process_peers.Length - ("Peers: ").Length)
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
 			$_label_spacer = $_label_spacer + "|"
 			$_console_data_log_end += $_label_spacer
@@ -313,13 +310,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host ("|" + $_line_separator + "|") -Foregroundcolor $_header_color
 				$_num_rows += 1
 				#
-				Write-Host $_console_header_log -Foregroundcolor $_header_color
-				$_num_rows += 1
+				#Write-Host $_console_header_log -Foregroundcolor $_header_color
+				#$_num_rows += 1
 				#
-				$_spacer_length = $_label_line_separator_length_node
-				$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
-				Write-Host $_console_header_log_finish_line -Foregroundcolor $_header_color
-				$_num_rows += 1
+				#$_spacer_length = $_label_line_separator_length_node
+				#$_line_separator_upper = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+				#Write-Host $_console_header_log_finish_line -Foregroundcolor $_header_color
+				#$_num_rows += 1
 				#
 				Write-Host $_console_data_log_begin -nonewline
 				Write-Host $_console_data_log_process_state_filler -nonewline
@@ -519,14 +516,28 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 						$_process_uptime_seconds = $_sub_header.UptimeTSObj.TotalSeconds
 						$_process_uptime_disp = fConvertTimeSpanToString $_sub_header.UptimeTSObj
 					}
-					#
+					####
+					$_tmp_disk_replot_sctors = 0
+					foreach ($_disk_data_obj in $_process_disk_data_arr)
+					{
+						if ($_sub_header.UUId -eq $_disk_data_obj.UUId)
+						{
+							$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatusHold
+						}
+					}
+					####
 					if ($_sub_header.TotalSectors -ne "-")
 					{
-						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
-						$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
-						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
-						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
+						#$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						$_process_size_TiB = ([math]::Round(([int]($_sub_header.TotalSectors) + $_tmp_disk_replot_sctors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						#$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						$_plotted_size_TiB = ([math]::Round(([int]($_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						#$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
+						$_all_process_size_TiB += [int]($_sub_header.TotalSectors) + $_tmp_disk_replot_sctors
+						#$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
+						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors
 						#
+						#$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 2)).toString() + "%"
 						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 2)).toString() + "%"
 						$_all_process_completed_sectors += [int]($_sub_header.CompletedSectors)
 						$_all_process_total_sectors += [int]($_sub_header.TotalSectors)
@@ -1271,15 +1282,18 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	}
 	
 	fDisplayHelpSummary
-	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
-	$_num_rows += 1
-
+	#Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
+	#Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	#$_num_rows += 1
 
 	## display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	#$_num_rows += 1
+	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	fResizePSWindow $_num_rows $_num_cols
@@ -1663,6 +1677,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_process_total_disks = 0
 			$_process_total_disks_disp = "-"
 			#$_process_total_disks_for_eta = 0
+			$_tmp_farm_expired_sector_count = 0
+			$_tmp_farm_expiring_sector_count = 0
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				$_label_disk_id_length = $_disk_UUId_obj.Id.Length
@@ -1683,6 +1699,38 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 						}
 						else {break}
+
+
+
+
+						$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
+						if ($_disk_plots_remaining -eq 0) # means plotting is at 100% and replotting may be ongoing depending on plotcount > 0
+						{									
+							# expired sectors info
+							foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
+							{
+								if ($_disk_plots_expired_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
+								}
+								$_tmp_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+								$_tmp_farm_expired_sector_count += $_tmp_replot_sector_count
+								break
+							}
+							#
+							## expiring sectors info
+							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+							{
+								if ($_disk_plots_expiring_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+								}
+								$_tmp_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+								$_tmp_farm_expiring_sector_count += $_tmp_expiring_sector_count
+								break
+							}
+						}
+
+
+
 						
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
@@ -1767,10 +1815,12 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_farm_size_TiB = 0.0
 			$_farm_size_disp = "-"
 			if ($_process_total_sectors_disp -ne "-") {
-				$_farm_plotted_size = [int]($_process_completed_sectors)
+				#$_farm_plotted_size = [int]($_process_completed_sectors)
+				$_farm_plotted_size = [int]($_process_completed_sectors) + $_tmp_farm_expired_sector_count + $_tmp_farm_expiring_sector_count
 				$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 				#
-				$_farm_size = [int]($_process_total_sectors)
+				#$_farm_size = [int]($_process_total_sectors)
+				$_farm_size = [int]($_process_total_sectors) + $_tmp_farm_expired_sector_count + $_tmp_farm_expiring_sector_count
 				$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 				$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 			}
@@ -2184,11 +2234,13 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
-						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
+						#$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
+						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors + $_replot_sector_count_hold
 						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 						if ($_total_sectors_GiB -ne 0) {
-							$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
+							#$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
+							$_plotting_percent_complete = [math]::Round(($_completed_sectors / ($_total_sectors_GiB - $_replot_sector_count_hold)) * 100, 2)
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 						}
 						if ($_minutes_per_sector_data_disp -ne "-") {
@@ -2220,7 +2272,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						Write-Host $_label_spacer -nonewline
 						Write-Host $_plotting_percent_complete_disp -nonewline
 
-						$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
+						#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
+						$_total_disk_plotted_TiB = [math]::Round(($_completed_sectors + $_replot_sector_count_hold) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 						$_total_disk_plotted_TiB_disp = "-"
 						if ($_total_disk_plotted_TiB -gt 0)
 						{
@@ -2616,15 +2669,19 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	}
 
 	fDisplayHelp
-	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
-	$_num_rows += 1
+	#Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
+	#Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	#$_num_rows += 1
 
 	##
 	# display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	#$_num_rows += 1
+	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
@@ -2937,6 +2994,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_process_total_sectors_disp = "-"
 		$_process_total_disks = 0
 		$_process_total_disks_disp = "-"
+		$_tmp_farm_expired_sector_count = 0
+		$_tmp_farm_expiring_sector_count = 0
 		foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 		{
 			$_label_disk_id_length = $_disk_UUId_obj.Id.Length
@@ -2957,6 +3016,38 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 						if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 					}
 					else {break}
+
+
+
+
+						$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
+						if ($_disk_plots_remaining -eq 0) # means plotting is at 100% and replotting may be ongoing depending on plotcount > 0
+						{									
+							# expired sectors info
+							foreach ($_disk_plots_expired_obj in $_disk_plots_expired_arr)
+							{
+								if ($_disk_plots_expired_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expired_obj.Id) { continue }
+								}
+								$_tmp_replot_sector_count = [int]($_disk_plots_expired_obj.Sectors)
+								$_tmp_farm_expired_sector_count += $_tmp_replot_sector_count
+								break
+							}
+							#
+							## expiring sectors info
+							foreach ($_disk_plots_expiring_obj in $_disk_plots_expiring_arr)
+							{
+								if ($_disk_plots_expiring_obj) {
+									if ($_disk_UUId_obj.Id -ne $_disk_plots_expiring_obj.Id) { continue }
+								}
+								$_tmp_expiring_sector_count = [int]($_disk_plots_expiring_obj.Sectors)
+								$_tmp_farm_expiring_sector_count += $_tmp_expiring_sector_count
+								break
+							}
+						}
+
+
+
 					
 					$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
@@ -3040,10 +3131,12 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_farm_size_TiB = 0.0
 		$_farm_size_disp = "-"
 		if ($_process_total_sectors_disp -ne "-") {
-			$_farm_plotted_size = [int]($_process_completed_sectors)
+			#$_farm_plotted_size = [int]($_process_completed_sectors)
+			$_farm_plotted_size = [int]($_process_completed_sectors) + $_tmp_farm_expired_sector_count + $_tmp_farm_expiring_sector_count
 			$_farm_plotted_size_TiB = [math]::Round($_farm_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 			#
-			$_farm_size = [int]($_process_total_sectors)
+			#$_farm_size = [int]($_process_total_sectors)
+			$_farm_size = [int]($_process_total_sectors) + $_tmp_farm_expired_sector_count + $_tmp_farm_expiring_sector_count
 			$_farm_size_TiB = [math]::Round($_farm_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 			$_farm_size_disp = $_farm_size_TiB.ToString() + "TiB"
 		}
@@ -3456,11 +3549,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					
 					$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 					$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
-					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
+					#$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
+					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors + $_replot_sector_count_hold
 					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 					if ($_total_sectors_GiB -ne 0) {
-						$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
+						#$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
+						$_plotting_percent_complete = [math]::Round(($_completed_sectors / ($_total_sectors_GiB - $_replot_sector_count_hold)) * 100, 2)
 						$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 					}
 					if ($_minutes_per_sector_data_disp -ne "-") {
@@ -3492,7 +3587,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					Write-Host $_label_spacer -nonewline
 					Write-Host $_plotting_percent_complete_disp -nonewline
 
-					$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
+					#$_total_disk_plotted_TiB = [math]::Round($_completed_sectors * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
+					$_total_disk_plotted_TiB = [math]::Round(($_completed_sectors + $_replot_sector_count_hold) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 					$_total_disk_plotted_TiB_disp = "-"
 					if ($_total_disk_plotted_TiB -gt 0)
 					{
@@ -3884,15 +3980,19 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	}
 
 	fDisplayHelp
-	Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
-	$_num_rows += 1
+	#Write-Host "Latest github version : " -nonewline -ForegroundColor $_info_label_color
+	#Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	#$_num_rows += 1
 
 
 	## display last refresh time 
 	$currentDate = (Get-Date).ToLocalTime().toString()
 	# Refresh
-	Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
+	#$_num_rows += 1
+	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition

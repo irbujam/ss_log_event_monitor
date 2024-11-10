@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.2.0"
+	$_monitor_file_name = "v0.2.1"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -606,14 +606,30 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			#
 			#if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
-				$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
+				#$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
+				$_tmp_sectors_per_hour_farm =  [math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA, 1)
+				$_tmp_sector_time_farm = 0
+				if ($_tmp_sectors_per_hour_farm -gt 0)
+				{
+					$_tmp_sector_time_farm = [double](3600 / $_tmp_sectors_per_hour_farm)
+				}
+				#
+				if ($_tmp_sector_time_farm -gt 0)
+				{
+					$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
+				}
+
 				$_b_i_was_here = $true
-				##$_process_eta = [math]::Round((([double]($_process_farm_sub_header.MinutesPerSectorAvg) * $_process_farm_sub_header.RemainingSectors)) / ($_process_farm_sub_header.TotalDisksForETA * 60 * 24), 2)
-				##$_process_eta_disp = $_process_eta.toString() + " days"
-				#$_process_eta = [double](($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors) / $_process_farm_sub_header.TotalDisksForETA)
-				$_process_eta = [double]($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors)
+				##$_process_eta = [double]($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors)
+				#$_temp_sector_time_per_farm = 0.0
+				#if ([double]($_process_farm_sub_header.SectorsPerHourAvg) -gt 0)
+				#{
+				#	$_temp_sector_time_per_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
+				#}
+				#$_process_eta = [double]($_temp_sector_time_per_farm * $_process_farm_sub_header.RemainingSectors)
+				$_process_eta = [double]($_tmp_sector_time_farm * $_process_farm_sub_header.RemainingSectors)
 				$_process_eta_obj = New-TimeSpan -seconds $_process_eta
-				$_process_eta_disp = $_process_eta_obj.days.toString() + "d " + $_process_eta_obj.hours.toString() + "h " + $_process_eta_obj.minutes.toString() + "m" 
+				$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
 			#$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
@@ -628,12 +644,14 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_alt_labels += '"' + $_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += '"' + $_overall_progress + '"'
 			if ($_b_i_was_here) {
-				$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+				#$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+				$_chart_sector_time_data += '"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
 			}
 			else {
 				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
 			}
-			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
+			#$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
+			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds, 1) + '"' 
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
@@ -650,8 +668,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_eta_data += '"' + $_process_eta_disp + '"'
 			$_chart_size_data += '"' + $_process_size_disp + '"'
 			$_chart_uptime_data += '"' + $_process_farm_sub_header.Uptime + '"'
-			$_chart_perf_sectorsPerHour_data += '"' + $_process_farm_sub_header.SectorsPerHourAvg + '"'
-			$_chart_perf_minutesPerSector_data += '"' + $_process_farm_sub_header.MinutesPerSectorAvg + '"'
+			$_chart_perf_sectorsPerHour_data += '"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 2)).ToString() + '"'
+			$_chart_perf_minutesPerSector_data += '"' + ([math]::Round([double]($_process_farm_sub_header.MinutesPerSectorAvg), 2)).ToString() + '"'
 			$_chart_rewards_data += '"' + $_process_farm_sub_header.TotalRewards + '"'
 			$_b_initial_entry = $false
 		}
@@ -660,12 +678,13 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_alt_labels += ',"' +$_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += ',"' + $_overall_progress + '"'
 			if ($_b_i_was_here) {
-				$_chart_sector_time_data += ',"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
+				$_chart_sector_time_data += ',"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
 			}
 			else {
 				$_chart_sector_time_data += ',"' + 0 + "m " + 0 + "s" + '"' 
 			}
-			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
+			#$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
+			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds, 1) + '"' 
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
@@ -709,7 +728,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 
 				<head>
+				<title>Autonomys Network Monitor</title>
 				<meta name="viewport" content="width=device-width, initial-scale=1">
+				<meta http-equiv="refresh" content="' + $refreshTimeScaleInSeconds + '">
 				<style>
 				body {
 					#padding: 25px;
