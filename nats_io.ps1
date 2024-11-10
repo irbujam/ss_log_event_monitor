@@ -174,6 +174,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					if ($script:_ss_controller_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
 						$_b_new_cluster_component = $false
+						break
 					}
 				}
 				if ($_b_new_cluster_component)
@@ -191,6 +192,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					if ($script:_ss_cache_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
 						$_b_new_cluster_component = $false
+						break
 					}
 				}
 				if ($_b_new_cluster_component)
@@ -208,6 +210,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					if ($script:_ss_farmer_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
 						$_b_new_cluster_component = $false
+						break
 					}
 				}
 				if ($_b_new_cluster_component)
@@ -226,6 +229,8 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					if ($script:_ss_plotter_obj_arr.IP -eq $_nats_controller_obj_item.IP)
 					{
 						$_b_new_cluster_component = $false
+						
+						break
 					}
 				}
 				if ($_b_new_cluster_component)
@@ -409,6 +414,7 @@ $_b_cluster_information_printed = $true
 						}
 					}
 				}
+				if ($_b_nats_connection_type_match_found) { break }
 			}
 			if ($_ss_controller_disp_name_length -eq 0)
 			{
@@ -543,6 +549,7 @@ $_b_cluster_information_printed = $true
 						}
 					}
 				}
+				if ($_b_nats_connection_type_match_found) { break }
 			}
 			if ($_ss_cache_disp_name_length -eq 0)
 			{
@@ -675,6 +682,7 @@ $_b_cluster_information_printed = $true
 						}
 					}
 				}
+				if ($_b_nats_connection_type_match_found) { break }
 			}
 			if ($_ss_farmer_disp_name_length -eq 0)
 			{
@@ -871,6 +879,7 @@ $_b_cluster_information_printed = $true
 						}
 					}
 				}
+				if ($_b_nats_connection_type_match_found) { break }
 			}
 			if ($_ss_plotter_disp_name_length -eq 0)
 			{

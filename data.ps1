@@ -293,7 +293,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 							#$_eta_disp = $_eta.toString() + " days"
 							$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
 							$_eta_obj = New-TimeSpan -seconds $_eta
-							$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
+							#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
+							$_eta_disp = fConvertTimeSpanToString $_eta_obj
 						}
 					}
 				}
@@ -353,7 +354,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			$_avg_seconds_per_sector = 0.0
 			$_farm_sector_times = 0.0
 			$_uptime = $null
-			$_uptime_disp = "0d 0h 0m 0a"
+			#$_uptime_disp = "0d 0h 0m 0a"
+			$_uptime_disp = "-"
 			foreach ($_disk_sector_performance_obj in $_disk_sector_performance_arr)
 			{
 				# get process sub header information
@@ -368,7 +370,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						#	$_avg_minutes_per_sector = [math]::Round($_disk_sector_performance_obj.TotalSeconds / ($_disk_sector_performance_obj.TotalSectors * 60), 1)
 						#}
 						$_uptime = fGetElapsedTime $_disk_sector_performance_obj
-						$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
+						#$_uptime_disp = $_uptime.days.ToString()+"d "+$_uptime.hours.ToString()+"h "+$_uptime.minutes.ToString()+"m "+$_uptime.seconds.ToString()+"s"
+						$_uptime_disp = fConvertTimeSpanToString $_uptime
 						#
 						## build process sub header
 						#$_process_sub_header = [PSCustomObject]@{
