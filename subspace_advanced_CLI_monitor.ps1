@@ -68,6 +68,7 @@ function main {
 	$script:_b_ps_window_resize_enabled = "N"
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
+	$script:_label_all_dash = "--------------------------------------------------------------------------------------------------------"
 	####
 	
 	#fResizePSWindow 40 125 $true
@@ -651,11 +652,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
 			}
 			#$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
-			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds, 1) + '"' 
+			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds, 2) + '"' 
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
-					$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+					$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds, 1)).ToString() + '"'
 				}
 				else {
 					$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
@@ -668,7 +669,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_eta_data += '"' + $_process_eta_disp + '"'
 			$_chart_size_data += '"' + $_process_size_disp + '"'
 			$_chart_uptime_data += '"' + $_process_farm_sub_header.Uptime + '"'
-			$_chart_perf_sectorsPerHour_data += '"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 2)).ToString() + '"'
+			$_chart_perf_sectorsPerHour_data += '"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 1)).ToString() + '"'
 			$_chart_perf_minutesPerSector_data += '"' + ([math]::Round([double]($_process_farm_sub_header.MinutesPerSectorAvg), 2)).ToString() + '"'
 			$_chart_rewards_data += '"' + $_process_farm_sub_header.TotalRewards + '"'
 			$_b_initial_entry = $false
@@ -688,7 +689,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
-					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds), 1).ToString() + '"'
 				}
 				else {
 					$_chart_total_sectors_per_hour_data += ',"' + 0 + '"'
@@ -701,8 +702,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_eta_data += ',"' + $_process_eta_disp + '"'
 			$_chart_size_data += ',"' + $_process_size_disp + '"'
 			$_chart_uptime_data += ',"' + $_process_farm_sub_header.Uptime + '"'
-			$_chart_perf_sectorsPerHour_data += ',"' + $_process_farm_sub_header.SectorsPerHourAvg + '"'
-			$_chart_perf_minutesPerSector_data += ',"' + $_process_farm_sub_header.MinutesPerSectorAvg + '"'
+			$_chart_perf_sectorsPerHour_data += ',"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 1)).ToString() + '"'
+			$_chart_perf_minutesPerSector_data += ',"' + ([math]::Round([double]($_process_farm_sub_header.MinutesPerSectorAvg), 2)).ToString() + '"'
 			$_chart_rewards_data += ',"' + $_process_farm_sub_header.TotalRewards + '"'
 		}
 	}
