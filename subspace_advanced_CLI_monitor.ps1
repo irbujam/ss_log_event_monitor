@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.2.1"
+	$_monitor_file_name = "v0.2.2"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -40,6 +40,7 @@ function main {
 	$_b_request_processed = $false
 	#
 	$script:_b_user_refresh = $false
+	[array]$script:_global_process_metrics_arr = $null
 	#
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$script:_b_first_time = $true
@@ -68,7 +69,7 @@ function main {
 	$script:_b_ps_window_resize_enabled = "N"
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
-	$script:_label_all_dash = "--------------------------------------------------------------------------------------------------------"
+	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
 	####
 	
 	#fResizePSWindow 40 125 $true
@@ -568,7 +569,15 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	#
 	## build html for web ui
 	#
-	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
+	[array]$_process_metrics_arr = $null
+	if ($script:_global_process_metrics_arr)
+	{
+		$_process_metrics_arr = $script:_global_process_metrics_arr
+	}
+	else
+	{
+		$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
+	}
 	$_process_header_arr = $_process_metrics_arr[0].ProcessHeader
 	$_process_sub_header_arr = $_process_metrics_arr[0].ProcessSubHeader
 	$_process_disk_data_arr = $_process_metrics_arr[0].ProcessData
@@ -577,6 +586,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_b_initial_entry = $true
 	#
 	##
+	####11/11 change start
+	####$_html_bar_chart_arr = [System.Collections.ArrayList]@()
+	####$_ind_chart_seq_num = 0
+	####11/11 change start
+	#
 	$_chart_labels = '['
 	$_chart_alt_labels = '['
 	$_chart_progess_data = '['
@@ -591,6 +605,16 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_chart_rewards_data = '['
 	foreach ($_process_farm_sub_header in $_process_sub_header_arr)
 	{
+		####11/11 change start
+		####$_ind_chart_label = '"' + '' + '"'
+		####$_ind_chart_alt_label = '"' + '' + '"'
+		####$_ind_chart_progess_data = '"' + '' + '"'
+		####$_ind_chart_eta_data = '"' + '' + '"'
+		####$_ind_chart_size_data = '"' + '' + '"'
+		####$_ind_chart_uptime_data = '"' + '' + '"'
+		####$_ind_chart_sector_time_data = '"' + '' + '"' 
+		####$_ind_chart_total_sectors_per_hour_data = '"' + '' + '"'
+		####11/11 change end
 		$_overall_progress = "-"
 		$_overall_progress_disp = "-"
 		$_process_eta = 0.0
@@ -608,17 +632,19 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			#if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 				#$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
-				$_tmp_sectors_per_hour_farm =  [math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA, 1)
-				$_tmp_sector_time_farm = 0
-				if ($_tmp_sectors_per_hour_farm -gt 0)
-				{
-					$_tmp_sector_time_farm = [double](3600 / $_tmp_sectors_per_hour_farm)
-				}
-				#
-				if ($_tmp_sector_time_farm -gt 0)
-				{
-					$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
-				}
+				$_tmp_sector_time_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
+				$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
+				$_tmp_sectors_per_hour_farm = [math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA, 1)
+				#$_tmp_sector_time_farm = 0
+				#if ($_tmp_sectors_per_hour_farm -gt 0)
+				#{
+				#	$_tmp_sector_time_farm = [double](3600 / $_tmp_sectors_per_hour_farm)
+				#}
+				##
+				#if ($_tmp_sector_time_farm -gt 0)
+				#{
+				#	$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
+				#}
 
 				$_b_i_was_here = $true
 				##$_process_eta = [double]($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors)
@@ -628,7 +654,17 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				#	$_temp_sector_time_per_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
 				#}
 				#$_process_eta = [double]($_temp_sector_time_per_farm * $_process_farm_sub_header.RemainingSectors)
-				$_process_eta = [double]($_tmp_sector_time_farm * $_process_farm_sub_header.RemainingSectors)
+				$_temp_total_sectors_per_farm = 0
+				if ($_process_farm_sub_header.TotalSectors -ne "-")
+				{
+					$_temp_total_sectors_per_farm = [double]($_process_farm_sub_header.TotalSectors)
+				}
+				$_temp_completed_sectors_per_farm = 0
+				if ($_process_farm_sub_header.CompletedSectors -ne "-")
+				{
+					$_temp_completed_sectors_per_farm = [double]($_process_farm_sub_header.CompletedSectors)
+				}
+				$_process_eta = [double]($_tmp_sector_time_farm * ($_temp_total_sectors_per_farm - $_temp_completed_sectors_per_farm))
 				$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 				$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 			}
@@ -639,6 +675,19 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_process_size_disp = $_process_size_TiB.ToString()
 		}
 
+		####11/11 change start
+		####$_ind_chart_label = '"' + $_process_farm_sub_header.UUId + '"'
+		####$_ind_chart_alt_label = '"' + $_process_farm_sub_header.Hostname + '"'
+		####$_ind_chart_progess_data = '"' + $_overall_progress + '"'
+		####$_ind_chart_eta_data = '"' + $_process_eta_disp + '"'
+		####$_ind_chart_size_data = '"' + $_process_size_disp + '"'
+		####$_ind_chart_uptime_data = '"' + $_process_farm_sub_header.Uptime + '"'
+		####$_ind_chart_sector_time_data = '"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
+		####if ($_process_sector_time.TotalSeconds -gt 0)
+		####{
+		####	$_ind_chart_total_sectors_per_hour_data = '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds, 1)).ToString() + '"'
+		####}		
+		####11/11 change end
 		if ($_b_initial_entry)
 		{
 			$_chart_labels += '"' + $_process_farm_sub_header.UUId + '"'
@@ -689,7 +738,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
-					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds), 1).ToString() + '"'
+					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds, 1)).ToString() + '"'
 				}
 				else {
 					$_chart_total_sectors_per_hour_data += ',"' + 0 + '"'
@@ -706,6 +755,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_perf_minutesPerSector_data += ',"' + ([math]::Round([double]($_process_farm_sub_header.MinutesPerSectorAvg), 2)).ToString() + '"'
 			$_chart_rewards_data += ',"' + $_process_farm_sub_header.TotalRewards + '"'
 		}
+		####11/11 change start
+		####$_tmp_html_bar_chart = fBuildDonutProgressBarChart $_ind_chart_seq_num $_ind_chart_label $_ind_chart_alt_label $_ind_chart_progess_data $_ind_chart_sector_time_data $_ind_chart_eta_data $_ind_chart_size_data $_ind_chart_uptime_data $_ind_chart_total_sectors_per_hour_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+		####[void]$_html_bar_chart_arr.add($_tmp_html_bar_chart)
+		####$_ind_chart_seq_num += 1
+		####11/11 change end
 	}
 	$_chart_labels += ']'
 	$_chart_alt_labels += ']'
@@ -810,12 +864,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				}
 				</script>'
 
-	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
-	$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance (Avg)'
-	
+	#$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_total_sectors_per_hour_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+	#$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance (Avg)'
 	
 	$_html_net_performance_chart = fBuildNetPerformanceChart $_chart_labels $_chart_alt_labels $_chart_total_sectors_per_hour_data $_chart_total_sector_time_data $_process_disk_data_js_arr 'Farm Performance (Net)'
-	
 	
 	$_html_pie_chart = fBuildPieChart $_chart_labels $_chart_alt_labels $_chart_rewards_data $_process_disk_data_js_arr 'Farm Rewards'
 
@@ -865,13 +918,29 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_html_full += "<br>"
 	#$_html_full += "<Table>"
 	#$_html_full += "<tr><td>"
+
 	$_html_full += $_html_bar_chart
+	####11/11 change start
+	####if ($_html_bar_chart_arr) {
+	####	$_html_full += "<Table border=1>"
+	####	$_html_full += "<tr>"
+	####	for ($_i = 0; $_i -lt $_html_bar_chart_arr.Count; $_i++)
+	####	{
+	####		$_html_full += "<td>"
+	####		$_html_full += $_html_bar_chart_arr[$_i]
+	####		$_html_full += "</td>"
+	####	}
+	####	$_html_full += "</tr>"
+	####	$_html_full += "</Table>"
+	####}
+	####11/11 change end
+
 	#$_html_full += "</td></tr>"
 	#$_html_full += "<tr><td>"
 	$_html_full += '<div id=progress onclick="fClearBarChartDetails()"></div>'
 	#$_html_full += "</td></tr>"
 	#$_html_full += "<tr><td>"
-	$_html_full += $_html_radar_chart
+	#$_html_full += $_html_radar_chart
 	
 	
 	$_html_full += $_html_net_performance_chart

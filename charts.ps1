@@ -1,5 +1,6 @@
 
-function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_minutesPerSector_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
+#function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_minutesPerSector_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
+function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 {
 	$_io_html_bar_chart = ""
 
@@ -19,8 +20,7 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 	var ce_eta = ' + $_io_chart_eta_data + ';
 	var ce_size = ' + $_io_chart_size_data + ';
 	var ce_uptime = ' + $_io_chart_uptime_data + ';
-	var ce_sectorsPerHourAvg = ' + $_io_chart_sectorsPerHour_data + ';
-	var ce_minutesPerSectorAvg = ' + $_io_chart_minutesPerSector_data + ';
+	var ce_sectorsPerHour = ' + $_io_chart_sectorsPerHour_data + ';
 	var _ce_disk_data_arr = ' + $_io_chart_disk_data_arr + ';
 	
 	bkgrd.addColorStop(0, "yellow");
@@ -88,13 +88,11 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 					bFoundUUIdMatch = true;
 					_el_uptime = ce_uptime[i];
 					_el_sector_time = ce_sector_time[i];
-					_el_sectorsPerHourAvg = ce_sectorsPerHourAvg[i];
-					_el_minutesPerSectorAvg = ce_minutesPerSectorAvg[i];
+					_el_sectorsPerHour = ce_sectorsPerHour[i];
 					//disk header
 					_div_html += "<Table>";
 					_div_html += "<tr>";
-					//_div_html += "<td>Farmer: " + x_value + ", Uptime: " + _el_uptime + ", Sectors/Hour (Avg): " + _el_sectorsPerHourAvg + ", Minutes/Sector (Avg): " + _el_minutesPerSectorAvg + "</td>";
-					_div_html += "<td>Farmer: " + x_value + ", Uptime: " + _el_uptime + ", Sector Time: " + _el_sector_time + ", Sectors/Hour (Avg): " + _el_sectorsPerHourAvg + ", Minutes/Sector (Avg): " + _el_minutesPerSectorAvg + "</td>";
+					_div_html += "<td>Farmer: " + x_value + ", Uptime: " + _el_uptime + ", Sector Time: " + _el_sector_time + ", Sectors/Hour (Avg): " + _el_sectorsPerHour + "</td>";
 					_div_html += "</tr>";
 					_div_html += "</Table>";
 					//disk header
@@ -496,5 +494,179 @@ function fBuildPieChart ([string]$_io_chart_labels, [string]$_chart_alt_labels, 
 	</script>'
 
 	return $_io_html_pie_chart
+}
+
+#function fBuildDonutProgressBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_SectorTimes_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
+function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_chart_label, [string]$_io_chart_alt_label, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
+{
+	$_io_html_bar_chart = ""
+	$_ind_chart_id = "barChart" + $_io_ind_chart_seq_num.toString()
+	$_chart_onclick_fn_name = "fBarChartClick" + $_io_ind_chart_seq_num.toString() + "()"
+
+#		<canvas id="barChart" onclick="fBarChartClick()" style="width:100%;max-width:500px"></canvas>
+#	var ce_SectorTime = ' + $_io_chart_SectorTimes_data + ';
+	$_io_html_bar_chart += 
+	'
+		<canvas id="' + $_ind_chart_id + '" onclick="' + $_chart_onclick_fn_name + '" style="width:100%;max-width:500px"></canvas>
+
+	<script>
+
+	var chart_id = "' + $_ind_chart_id + '";
+	//alert("chart_id = " + chart_id);
+	
+	var xValues = ' + $_io_chart_label + ';
+	var xValues_alt = ' + $_io_chart_alt_label + ';
+	var yValues = ' + $_io_chart_progress_data + ';
+	var ce_sector_time = ' + $_chart_sector_time_data + ';
+	var ce_eta = ' + $_io_chart_eta_data + ';
+	var ce_size = ' + $_io_chart_size_data + ';
+	var ce_uptime = ' + $_io_chart_uptime_data + ';
+	var ce_sectorsPerHour = ' + $_io_chart_sectorsPerHour_data + ';
+	var _ce_disk_data_arr = ' + $_io_chart_disk_data_arr + ';
+	
+	var xValues_alt_labels = [];
+	//for (var i=0; i<xValues.length; i++)
+	//{
+	//	if (xValues_alt[i].length > 0) {
+	//			xValues_alt_labels.push(xValues_alt[i].toString());
+	//	}
+	//	else {
+	//			xValues_alt_labels.push(xValues[i].toString());
+	//	}
+	//	
+	//}
+	xValues_alt_labels.push(xValues_alt);
+	var yValues_incomplete = 100;
+	if (yValues != "") {
+		yValues_incomplete = Math.round((100 - Number(yValues)) * 10) / 10;
+	}
+	var yValues_incomplete_disp = yValues_incomplete.toString();
+
+	const originalDoughnutDraw = Chart.controllers.doughnut.prototype.draw;
+
+	Chart.helpers.extend(Chart.controllers.doughnut.prototype, {
+	  draw: function() {
+		const chart = this.chart;
+		const {
+		  width,
+		  height,
+		  ctx,
+		  config
+		} = chart.chart;
+
+		const {
+		  datasets
+		} = config.data;
+
+		const dataset = datasets[0];
+		const datasetData = dataset.data;
+		const completed = datasetData[0];
+		const text = `${completed}% completed`;
+		let x, y, mid;
+
+		originalDoughnutDraw.apply(this, arguments);
+
+		const fontSize = (height / 350).toFixed(2);
+		ctx.font = fontSize + "em Lato, sans-serif";
+		ctx.textBaseline = "top";
+
+
+		x = Math.round((width - ctx.measureText(text).width) / 2);
+		y = (height / 1.8) - fontSize;
+		//ctx.fillStyle = "#000000"
+		ctx.fillText(text, x, y);
+		mid = x + ctx.measureText(text).width / 2;
+	  }
+	});
+
+	//var context = document.getElementById("barChart").getContext("2d");
+	var context = document.getElementById(chart_id).getContext("2d");
+	//var percent_value = 3;
+	var chart = new Chart(context, {
+	  type: "doughnut",
+	  data: {
+			labels: [xValues_alt_labels,xValues_alt_labels],
+		datasets: [{
+		  label: "First dataset",
+		  data: [yValues, yValues_incomplete_disp],
+		  backgroundColor: ["#00baa6", "#ededed"]
+		}]
+	  },
+	  options: {
+			legend: { display: false },
+			title: {
+				display: true,
+				text: "' + $_io_chart_title + ' "
+			},
+			onClick: function(c,i){
+				e = i[0];
+				var x_value = this.data.labels[e._index];
+				var y_value = this.data.datasets[0].data[e._index];
+
+				var bFoundUUIdMatch = false;
+				var _div_html = "";
+				for (var i=0; i<xValues_alt_labels.length; i++)
+				{
+					if (xValues_alt_labels[i].toString() == x_value) {
+						bFoundUUIdMatch = true;
+						//_el_uptime = ce_uptime[i];
+						//_el_sector_time = ce_sector_time[i];
+						//_el_sectorsPerHour = ce_sectorsPerHour[i];
+						_el_uptime = ce_uptime;
+						_el_sector_time = ce_sector_time;
+						_el_sectorsPerHour = ce_sectorsPerHour;
+						//_el_SectorTime = ce_SectorTime[i];
+						//disk header
+						_div_html += "<Table>";
+						_div_html += "<tr>";
+						//_div_html += "<td>Farmer: " + x_value + ", Uptime: " + _el_uptime + ", Sector Time: " + _el_sector_time + ", Sectors PH: " + _el_sectorsPerHour + ", Sector Time: " + _el_SectorTime + "</td>";
+						_div_html += "<td>Farmer: " + x_value + ", Uptime: " + _el_uptime + ", Sector Time: " + _el_sector_time + ", Sectors PH: " + _el_sectorsPerHour + "</td>";
+						_div_html += "</tr>";
+						_div_html += "</Table>";
+						//disk header
+						_div_html += "<Table border=1>";
+						_div_html += "<tr>";
+						_div_html += "<td>Disk Id</td>";
+						_div_html += "<td>Size</td>";
+						_div_html += "<td>% Complete</td>";
+						_div_html += "<td>ETA</td>";
+						_div_html += "<td>Replots</td>";
+						_div_html += "<td>Sectors/Hour</td>";
+						_div_html += "<td>Time/Sector</td>";
+						_div_html += "<td>Rewards</td>";
+						_div_html += "<td>Misses</td>";
+						_div_html += "</tr>";
+						//data
+						for (var j=0; j<_ce_disk_data_arr.length; j++)
+						{
+							if (_ce_disk_data_arr[j].UUId == x_value || _ce_disk_data_arr[j].Hostname == x_value) {
+								_div_html += "<tr>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].DiskId + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].Size + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].PercentComplete + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].ETA + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].ReplotStatus + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].SectorsPerHour + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].MinutesPerSector + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].Rewards + "</td>";
+								_div_html += "<td>" + _ce_disk_data_arr[j].Misses + "</td>";
+								_div_html += "</tr>";
+							}
+						}
+						_div_html += "</Table>";
+						document.getElementById("progress").innerHTML = _div_html;
+						break;
+					}
+				}
+				if (bFoundUUIdMatch == false) {
+					document.getElementById("progress").innerHTML = "something off, xValues_alt_labels length:" + xValues_alt_labels.length;
+				}
+			}
+	  },
+	});
+
+	</script>'
+
+	return $_io_html_bar_chart
 }
 

@@ -8,6 +8,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	## get process header and disk data
 	$_process_metrics_arr = fGetDataForHtml $_io_process_arr
+	$script:_global_process_metrics_arr = $_process_metrics_arr
 	$_process_header_arr = $_process_metrics_arr[0].ProcessHeader
 	$_process_sub_header_arr = $_process_metrics_arr[0].ProcessSubHeader
 	$_process_disk_data_arr = $_process_metrics_arr[0].ProcessData
@@ -41,7 +42,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_progress = "%     "
 	$_label_process_eta = "ETA   "
 	$_label_process_sector_time = "SCT   "
-	$_label_process_total_sectors_per_hour = "SCT   "
+	$_label_process_total_sectors_per_hour = "SCT    "
 	$_label_process_total_TiB_per_day = "   PL TiB   "
 	$_label_process_disks = "  Plots   "
 	$_label_process_replot_disks = "    Replots    "
@@ -63,7 +64,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_progress_row2 = "Cmpl  "
 	$_label_process_eta_row2 = "      "
 	$_label_process_sector_time_row2 = "Time  "
-	$_label_process_total_sectors_per_hour_row2 = "PH    "
+	$_label_process_total_sectors_per_hour_row2 = "PH     "
 	$_label_process_total_TiB_per_day_row2 = "------------"
 	$_label_process_disks_row2 = "----------"
 	$_label_process_replot_disks_row2 = "---------------"
@@ -83,7 +84,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_progress_row3 = "      "
 	$_label_process_eta_row3 = "      "
 	$_label_process_sector_time_row3 = "      "
-	$_label_process_total_sectors_per_hour_row3 = "      "
+	$_label_process_total_sectors_per_hour_row3 = "       "
 	$_label_process_total_TiB_per_day_row3 = "Tot/PD      "
 	$_label_process_disks_row3 = "#/Cmpl/RM "
 	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl   "
@@ -149,6 +150,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				##
 				Write-Host
 				$_num_rows += 1
+				break
 			}
 		}
 	}
@@ -523,7 +525,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 					{
 						if ($_sub_header.UUId -eq $_disk_data_obj.UUId)
 						{
-							$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatusHold
+							#$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatusHold
+							$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatus + $_disk_data_obj.ExpiringSectors
 						}
 					}
 					####
@@ -1341,7 +1344,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_size_plotted = "PL TiB"
 	$_label_eta = "ETA   "
 	$_label_replot = "    Replots    "
-	$_label_sectors_per_hour = "SCT   "
+	$_label_sectors_per_hour = "SCT    "
 	$_label_minutes_per_sectors = "SCT   "
 	$_label_rewards = "Rewards"
 	$_label_misses = "  Miss  "
@@ -1353,7 +1356,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
 	$_label_replot_row2 = "EX/RM/% Cmpl   "
-	$_label_sectors_per_hour_row2 = "PH    "
+	$_label_sectors_per_hour_row2 = "PH     "
 	$_label_minutes_per_sectors_row2 = "Time  "
 	$_label_rewards_row2 = "       "
 	$_label_misses_row2 = "TO/RJ/FL"
@@ -1702,10 +1705,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 							if ($_disk_UUId_obj.Id -ne $_disk_plots_remaining_obj.Id) { continue }
 						}
 						else {break}
-
-
-
-
+						
 						$_disk_plots_remaining = [int]($_disk_plots_remaining_obj.Sectors)
 						if ($_disk_plots_remaining -eq 0) # means plotting is at 100% and replotting may be ongoing depending on plotcount > 0
 						{									
@@ -1731,9 +1731,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 								break
 							}
 						}
-
-
-
 						
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
@@ -2741,7 +2738,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_size_plotted = "PL TiB"
 	$_label_eta = "ETA   "
 	$_label_replot = "    Replots    "
-	$_label_sectors_per_hour = "SCT   "
+	$_label_sectors_per_hour = "SCT    "
 	$_label_minutes_per_sectors = "Time/ "
 	$_label_rewards = "Rewards"
 	$_label_misses = "  Miss  "
@@ -2753,7 +2750,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
 	$_label_replot_row2 = "EX/RM/% Cmpl   "
-	$_label_sectors_per_hour_row2 = "PH    "
+	$_label_sectors_per_hour_row2 = "PH     "
 	$_label_minutes_per_sectors_row2 = "SCT   "
 	$_label_rewards_row2 = "       "
 	$_label_misses_row2 = "TO/RJ/FL"

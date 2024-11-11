@@ -443,7 +443,37 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				$_avg_sectors_per_hour = $_avg_sectors_per_hour / $_actual_plotting_disk_count
 				$_farm_sector_times = $_avg_seconds_per_sector / $_actual_plotting_disk_count
 			}
-
+			$_tmp_sector_time_farm = [double](3600/ ([double]($_avg_sectors_per_hour) * $_process_total_disks_for_eta))
+			$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks_for_eta
+			$_eta_hold_ = 0
+			for ($_h = 0; $_h -lt ($_disk_plots_remaining_arr_sorted | Measure-Object).count; $_h++)
+			{
+				$_disk_plots_remaining_arr_sorted[$_h].ETA = $_eta_hold_ + [double]($_tmp_sector_time_farm) * $_disk_plots_remaining_arr_sorted[$_h].AdditionalSectorsForETA * $_disk_plots_remaining_arr_sorted[$_h].PlotCountMultiplier
+				$_eta_hold_ = $_disk_plots_remaining_arr_sorted[$_h].ETA
+			}
+			for ($_i = 0; $_i -lt $_process_data_arr.Count; $_i++)
+			{
+				$_tmp_eta = "-"
+				$_process_data_arr_obj = $_process_data_arr[$_i]
+				if ($_process_data_arr_obj) {
+					foreach ($_disk_plots_remaining_sorted_obj in $_disk_plots_remaining_arr_sorted)
+					{
+						if ($_disk_plots_remaining_sorted_obj) {
+							if ($_process_data_arr_obj.DiskId -ne $_disk_plots_remaining_sorted_obj.Id) { continue }
+						}
+						else {break}
+						$_tmp_eta = $_disk_plots_remaining_sorted_obj.ETA
+						$_tmp_eta_obj = $null
+						if ($_tmp_eta -ne "-")
+						{
+							$_tmp_eta_obj = New-TimeSpan -seconds $_tmp_eta
+						}
+						$_process_data_arr[$_i].ETA = fConvertTimeSpanToString $_tmp_eta_obj
+						break
+					}
+				}
+			}
+			
 			# build process sub header
 			$_process_sub_header = [PSCustomObject]@{
 				UUId				= $_host_url
