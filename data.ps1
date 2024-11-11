@@ -147,15 +147,17 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						if ($_disk_plots_remaining -gt 0) {									# determine if actually plotting and not replotting
 							$_minutes_per_sector_data_disp = $_disk_sector_performance_obj.MinutesPerSector.ToString()
 							$_sectors_per_hour_data_disp = $_disk_sector_performance_obj.SectorsPerHour.ToString()
-							switch ($_disk_sector_performance_obj.PlotTimeUnit) {
-								"seconds" 	{
-									$_time_per_sector_data_obj = New-TimeSpan -seconds ($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount)
-								}
-								"minutes" 	{
-									$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount)
-								}
-								"hours" 	{
-									$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 3600) / $_disk_sector_performance_obj.DiskSectorPlotCount)
+							if ($_disk_sector_performance_obj.DiskSectorPlotCount -gt 0) {
+								switch ($_disk_sector_performance_obj.PlotTimeUnit) {
+									"seconds" 	{
+										$_time_per_sector_data_obj = New-TimeSpan -seconds ($_disk_sector_performance_obj.DiskSectorPlotTime / $_disk_sector_performance_obj.DiskSectorPlotCount)
+									}
+									"minutes" 	{
+										$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 60) / $_disk_sector_performance_obj.DiskSectorPlotCount)
+									}
+									"hours" 	{
+										$_time_per_sector_data_obj = New-TimeSpan -seconds (($_disk_sector_performance_obj.DiskSectorPlotTime * 3600) / $_disk_sector_performance_obj.DiskSectorPlotCount)
+									}
 								}
 							}
 
@@ -443,7 +445,11 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				$_avg_sectors_per_hour = $_avg_sectors_per_hour / $_actual_plotting_disk_count
 				$_farm_sector_times = $_avg_seconds_per_sector / $_actual_plotting_disk_count
 			}
-			$_tmp_sector_time_farm = [double](3600/ ([double]($_avg_sectors_per_hour) * $_process_total_disks_for_eta))
+			$_tmp_sector_time_farm = 0
+			if ($_process_total_disks_for_eta -gt 0 -and $_avg_sectors_per_hour -gt 0)
+			{
+				$_tmp_sector_time_farm = [double](3600/ ([double]($_avg_sectors_per_hour) * $_process_total_disks_for_eta))
+			}
 			$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks_for_eta
 			$_eta_hold_ = 0
 			for ($_h = 0; $_h -lt ($_disk_plots_remaining_arr_sorted | Measure-Object).count; $_h++)
@@ -453,7 +459,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			}
 			for ($_i = 0; $_i -lt $_process_data_arr.Count; $_i++)
 			{
-				$_tmp_eta = "-"
+				$_tmp_eta = 0
 				$_process_data_arr_obj = $_process_data_arr[$_i]
 				if ($_process_data_arr_obj) {
 					foreach ($_disk_plots_remaining_sorted_obj in $_disk_plots_remaining_arr_sorted)
@@ -463,11 +469,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						}
 						else {break}
 						$_tmp_eta = $_disk_plots_remaining_sorted_obj.ETA
-						$_tmp_eta_obj = $null
-						if ($_tmp_eta -ne "-")
-						{
-							$_tmp_eta_obj = New-TimeSpan -seconds $_tmp_eta
-						}
+						$_tmp_eta_obj = New-TimeSpan -seconds $_tmp_eta
 						$_process_data_arr[$_i].ETA = fConvertTimeSpanToString $_tmp_eta_obj
 						break
 					}
