@@ -532,17 +532,17 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 					####
 					if ($_sub_header.TotalSectors -ne "-")
 					{
-						#$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
-						$_process_size_TiB = ([math]::Round(([int]($_sub_header.TotalSectors) + $_tmp_disk_replot_sctors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						$_process_size_TiB = ([math]::Round([int]($_sub_header.TotalSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
+						##$_process_size_TiB = ([math]::Round(([int]($_sub_header.TotalSectors) + $_tmp_disk_replot_sctors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
 						#$_plotted_size_TiB = ([math]::Round([int]($_sub_header.CompletedSectors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
 						$_plotted_size_TiB = ([math]::Round(([int]($_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)).ToString()
-						#$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
-						$_all_process_size_TiB += [int]($_sub_header.TotalSectors) + $_tmp_disk_replot_sctors
+						$_all_process_size_TiB += [int]($_sub_header.TotalSectors)
+						##$_all_process_size_TiB += [int]($_sub_header.TotalSectors) + $_tmp_disk_replot_sctors
 						#$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors)
 						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors
 						#
 						#$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 2)).toString() + "%"
-						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 2)).toString() + "%"
+						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / ([int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)).toString() + "%"
 						$_all_process_completed_sectors += [int]($_sub_header.CompletedSectors)
 						$_all_process_total_sectors += [int]($_sub_header.TotalSectors)
 						#

@@ -570,14 +570,15 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	## build html for web ui
 	#
 	[array]$_process_metrics_arr = $null
-	if ($script:_global_process_metrics_arr)
-	{
-		$_process_metrics_arr = $script:_global_process_metrics_arr
-	}
-	else
-	{
-		$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
-	}
+	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
+	##if ($script:_global_process_metrics_arr)
+	##{
+	##	$_process_metrics_arr = $script:_global_process_metrics_arr
+	##}
+	##else
+	##{
+	##	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
+	##}
 	$_process_header_arr = $_process_metrics_arr[0].ProcessHeader
 	$_process_sub_header_arr = $_process_metrics_arr[0].ProcessSubHeader
 	$_process_disk_data_arr = $_process_metrics_arr[0].ProcessData
@@ -624,9 +625,21 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 		$_process_sector_time = 0.0
 		$_b_i_was_here = $false
 
+		####
+		$_tmp_disk_replot_sctors = 0
+		foreach ($_disk_data_obj in $_process_disk_data_arr)
+		{
+			if ($_process_farm_sub_header.UUId -eq $_disk_data_obj.UUId)
+			{
+				#$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatusHold
+				$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatus + $_disk_data_obj.ExpiringSectors
+			}
+		}
+			####
 		if ($_process_farm_sub_header.TotalSectors -ne "-")
 		{
-			$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / [int]($_process_farm_sub_header.TotalSectors)) * 100, 1)
+			#$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / [int]($_process_farm_sub_header.TotalSectors)) * 100, 1)
+			$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / ([int]($_process_farm_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)
 			$_overall_progress_disp = $_overall_progress.toString() + "%"
 			#
 			#if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
@@ -669,8 +682,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
-			#$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
-			$_process_size_TiB = [math]::Round($_process_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+			#$_process_size = [int]($_process_farm_sub_header.TotalSectors) + $_tmp_disk_replot_sctors
+			$_process_size_TiB = [math]::Round($_process_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 
 			$_process_size_disp = $_process_size_TiB.ToString()
 		}
@@ -1858,10 +1871,13 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							{
 								$_b_incremental_sector_count_changed = $true
 
-								if ($script:_b_enable_new_sector_times_calc -and $_completed_sectors -gt 0 -and $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
-								{								
-									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
-									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+								if ($script:_b_enable_new_sector_times_calc -and $_completed_sectors -gt 0) 
+								{
+									if ($script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
+									{								
+										$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
+										$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+									}
 								}
 								else
 								{

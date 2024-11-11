@@ -154,7 +154,7 @@ function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_label
 					{
 						if (xValues_alt_labels[i].toString() == _label) {
 							//_bar_label = "ETA: " + ce_eta[i] + " days";
-							_bar_label = "Size: " + ce_size[i] + " TiB, " + "ETA: " + ce_eta[i] + " days";
+							_bar_label = "Size: " + ce_size[i] + " TiB, " + "ETA: " + ce_eta[i];
 							break;
 						}
 					}

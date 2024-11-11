@@ -254,8 +254,9 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						
 						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
-						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-
+						#$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
+						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors + $_expiring_sector_count + $_replot_sector_count
+						
 						$_process_total_disks += 1
 						$_process_total_disks_disp = $_process_total_disks
 						
@@ -287,7 +288,8 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
 						if ($_total_sectors_GiB -ne 0) {
-							$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
+							#$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
+							$_plotting_percent_complete = [math]::Round(($_completed_sectors / ($_total_sectors_GiB - $_expiring_sector_count - $_replot_sector_count)) * 100, 2)
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 						}
 						if ($_minutes_per_sector_data_disp -ne "-") {
