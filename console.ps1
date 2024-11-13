@@ -563,7 +563,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 							{
 								$_temp_sector_time_per_farm = [double](3600/ ([double]($_sub_header.SectorsPerHourAvg) * $_sub_header.TotalDisksForETA))
 							}
-							$_process_eta = [double]($_temp_sector_time_per_farm * ($_temp_total_sectors_per_farm - $_temp_completed_sectors_per_farm))
+							$_process_eta = [double]($_temp_sector_time_per_farm * ($_temp_total_sectors_per_farm - $_temp_completed_sectors_per_farm - $_tmp_disk_replot_sctors))
 							
 							$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 							$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
@@ -1556,7 +1556,24 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_b_write_header = $true
 			#
 			##
-			$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+			#
+			####11/12 change start
+			#$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+			[array]$_disk_metrics_arr = $null
+			foreach ($_farmer_disk_metrics_arr_obj in $script:_farmer_disk_metrics_arr)
+			{
+				if ($_farmer_disk_metrics_arr_obj)
+				{
+					if ($_farmer_disk_metrics_arr_obj.Id -eq $_host_url)
+					{
+						$_disk_metrics_arr = $_farmer_disk_metrics_arr_obj.MetricsArr
+						break
+					}
+				}
+				else {break}
+			}
+			####11/12 change end
+			#
 			$_disk_UUId_arr = $_disk_metrics_arr[0].Id
 			$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 			$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
@@ -2739,7 +2756,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_eta = "ETA   "
 	$_label_replot = "    Replots    "
 	$_label_sectors_per_hour = "SCT    "
-	$_label_minutes_per_sectors = "Time/ "
+	$_label_minutes_per_sectors = "SCT   "
 	$_label_rewards = "Rewards"
 	$_label_misses = "  Miss  "
 	#
@@ -2751,7 +2768,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_eta_row2 = "      "
 	$_label_replot_row2 = "EX/RM/% Cmpl   "
 	$_label_sectors_per_hour_row2 = "PH     "
-	$_label_minutes_per_sectors_row2 = "SCT   "
+	$_label_minutes_per_sectors_row2 = "Time  "
 	$_label_rewards_row2 = "       "
 	$_label_misses_row2 = "TO/RJ/FL"
 	#
@@ -2873,7 +2890,22 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_b_write_header = $true
 		#
 		##
-		$_disk_metrics_arr = fGetDiskSectorPerformance $_individual_farmer_metrics_formatted_arr
+		####11/12 change start
+		#$_disk_metrics_arr = fGetDiskSectorPerformance $_individual_farmer_metrics_formatted_arr
+		[array]$_disk_metrics_arr = $null
+		foreach ($_farmer_disk_metrics_arr_obj in $script:_farmer_disk_metrics_arr)
+		{
+			if ($_farmer_disk_metrics_arr_obj)
+			{
+				if ($_farmer_disk_metrics_arr_obj.Id -eq $_host_url)
+				{
+					$_disk_metrics_arr = $_farmer_disk_metrics_arr_obj.MetricsArr
+					break
+				}
+			}
+			else {break}
+		}
+		####11/12 change end
 		$_disk_UUId_arr = $_disk_metrics_arr[0].Id
 		$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 		$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards

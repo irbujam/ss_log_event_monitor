@@ -96,7 +96,22 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 			[void]$_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			#
-			$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+			####11/12 change start
+			#$_disk_metrics_arr = fGetDiskSectorPerformance $_farmer_metrics_formatted_arr
+			[array]$_disk_metrics_arr = $null
+			foreach ($_farmer_disk_metrics_arr_obj in $script:_farmer_disk_metrics_arr)
+			{
+				if ($_farmer_disk_metrics_arr_obj)
+				{
+					if ($_farmer_disk_metrics_arr_obj.Id -eq $_host_url)
+					{
+						$_disk_metrics_arr = $_farmer_disk_metrics_arr_obj.MetricsArr
+						break
+					}
+				}
+				else {break}
+			}
+			####11/12 change end
 			$_disk_UUId_arr = $_disk_metrics_arr[0].Id
 			$_disk_sector_performance_arr = $_disk_metrics_arr[0].Performance
 			$_disk_rewards_arr = $_disk_metrics_arr[0].Rewards
@@ -237,6 +252,9 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				$_plotting_percent_complete_disp = "-"
 				$_eta = "-"
 				$_eta_disp = "-"
+				$_completed_sectors = 0
+				$_disk_plotted_size_TiB = "-"
+				$_remaining_sectors = 0
 				foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
 				{
 					if ($_disk_plots_completed_obj) {
@@ -252,10 +270,11 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						}
 						else {break}
 						
-						$_reminaing_sectors = [int]($_disk_plots_remaining_obj.Sectors)
+						$_remaining_sectors = [int]($_disk_plots_remaining_obj.Sectors)
 						$_completed_sectors = [int]($_disk_plots_completed_obj.Sectors)
-						#$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
-						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors + $_expiring_sector_count + $_replot_sector_count
+						$_disk_plotted_size_TiB = [math]::Round(($_completed_sectors + $_expiring_sector_count + $_replot_sector_count) * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
+						#$_total_sectors_GiB = $_completed_sectors + $_remaining_sectors
+						$_total_sectors_GiB = $_completed_sectors + $_remaining_sectors + $_expiring_sector_count + $_replot_sector_count
 						
 						$_process_total_disks += 1
 						$_process_total_disks_disp = $_process_total_disks
@@ -263,18 +282,18 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						$_process_total_disks_net_plotting += 1
 						$_process_total_disks_for_eta = $_process_total_disks_net_plotting
 						
-						if ($_reminaing_sectors -eq 0) {
+						if ($_remaining_sectors -eq 0) {
 							$_process_total_disks_net_plotting = $_process_total_disks_net_plotting - 1
 							$_process_total_disks_for_eta = $_process_total_disks_net_plotting
 						}
 						
-						$_process_remaining_sectors += $_reminaing_sectors
+						$_process_remaining_sectors += $_remaining_sectors
 						$_process_remaining_sectors_disp = $_process_remaining_sectors
 						#
 						#
-						if($_reminaing_sectors -gt $_max_process_remaining_sectors)
+						if($_remaining_sectors -gt $_max_process_remaining_sectors)
 						{
-							$_max_process_remaining_sectors = $_reminaing_sectors
+							$_max_process_remaining_sectors = $_remaining_sectors
 						}	
 						#
 						#
@@ -286,16 +305,17 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 						#$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB / 1000, 2)
 						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 
-						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
+						#$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString() + " TiB"
+						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
 						if ($_total_sectors_GiB -ne 0) {
 							#$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 1)
 							$_plotting_percent_complete = [math]::Round(($_completed_sectors / ($_total_sectors_GiB - $_expiring_sector_count - $_replot_sector_count)) * 100, 2)
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
 						}
-						if ($_minutes_per_sector_data_disp -ne "-") {
-							#$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_reminaing_sectors)) / (60 * 24), 2)
+						if ($_minutes_per_sector_data_disp -ne "-" -and $_sectors_per_hour_data_disp -ne "-") {
+							#$_eta = [math]::Round((([double]($_minutes_per_sector_data_disp) * $_remaining_sectors)) / (60 * 24), 2)
 							#$_eta_disp = $_eta.toString() + " days"
-							$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_reminaing_sectors
+							$_eta = [double]($_time_per_sector_data_obj.TotalSeconds) * $_remaining_sectors
 							$_eta_obj = New-TimeSpan -seconds $_eta
 							#$_eta_disp = $_eta_obj.days.ToString()+"d " + $_eta_obj.hours.ToString()+"h " + $_eta_obj.minutes.ToString() + "m "
 							$_eta_disp = fConvertTimeSpanToString $_eta_obj
@@ -336,6 +356,7 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 					DiskId					= $_disk_UUId_obj.Id
 					Size					= $_total_disk_sectors_disp
 					PercentComplete			= $_plotting_percent_complete_disp
+					SectorsCompleted		= $_disk_plotted_size_TiB
 					ETA						= $_eta_disp
 					ReplotStatus			= $_replot_sector_count
 					ReplotStatusHold		= $_replot_sector_count_hold
@@ -541,6 +562,7 @@ function fConverPSArrToJScriptArr ([array]$_io_arr) {
 			$_resp_js += ',DiskId:' + ' "' + $_io_arr[$j].DiskId + '"'
 			$_resp_js += ',Size:' + ' "' + $_io_arr[$j].Size + '"'
 			$_resp_js += ',PercentComplete:' + ' "' + $_io_arr[$j].PercentComplete + '"'
+			$_resp_js += ',SectorsCompleted:' + ' "' + $_io_arr[$j].SectorsCompleted + '"'
 			$_resp_js += ',ETA:' + ' "' + $_io_arr[$j].ETA + '"'
 			$_resp_js += ',ReplotStatus:' + ' "' + $_io_arr[$j].ReplotStatus + '"'
 			$_resp_js += ',SectorsPerHour:' + ' "' + $_io_arr[$j].SectorsPerHour + '"'
@@ -550,7 +572,8 @@ function fConverPSArrToJScriptArr ([array]$_io_arr) {
 			}
 			else{
 				$_temp_min_per_sector = New-TimeSpan -seconds $_io_arr[$j].MinutesPerSector
-				$_resp_js += ',MinutesPerSector:' + ' "' + ($_temp_min_per_sector.minutes.ToString() + "m " + $_temp_min_per_sector.seconds.ToString() + "s") + '"'
+				#$_resp_js += ',MinutesPerSector:' + ' "' + ($_temp_min_per_sector.minutes.ToString() + "m " + $_temp_min_per_sector.seconds.ToString() + "s") + '"'
+				$_resp_js += ',MinutesPerSector:' + ' "' + (fConvertTimeSpanToString $_temp_min_per_sector) + '"'
 			}
 			$_resp_js += ',Rewards:' + ' "' + $_io_arr[$j].Rewards + '"'
 			$_resp_js += ',Misses:' + ' "' + $_io_arr[$j].Misses + '"'
@@ -565,6 +588,7 @@ function fConverPSArrToJScriptArr ([array]$_io_arr) {
 			$_resp_js += ',DiskId:' + ' "' + $_io_arr[$j].DiskId + '"'
 			$_resp_js += ',Size:' + ' "' + $_io_arr[$j].Size + '"'
 			$_resp_js += ',PercentComplete:' + ' "' + $_io_arr[$j].PercentComplete + '"'
+			$_resp_js += ',SectorsCompleted:' + ' "' + $_io_arr[$j].SectorsCompleted + '"'
 			$_resp_js += ',ETA:' + ' "' + $_io_arr[$j].ETA + '"'
 			$_resp_js += ',ReplotStatus:' + ' "' + $_io_arr[$j].ReplotStatus + '"'
 			$_resp_js += ',SectorsPerHour:' + ' "' + $_io_arr[$j].SectorsPerHour + '"'
@@ -574,7 +598,8 @@ function fConverPSArrToJScriptArr ([array]$_io_arr) {
 			}
 			else {
 				$_temp_min_per_sector = New-TimeSpan -seconds $_io_arr[$j].MinutesPerSector
-				$_resp_js += ',MinutesPerSector:' + ' "' + ($_temp_min_per_sector.minutes.ToString() + "m " + $_temp_min_per_sector.seconds.ToString() + "s") + '"'
+				#$_resp_js += ',MinutesPerSector:' + ' "' + ($_temp_min_per_sector.minutes.ToString() + "m " + $_temp_min_per_sector.seconds.ToString() + "s") + '"'
+				$_resp_js += ',MinutesPerSector:' + ' "' + (fConvertTimeSpanToString $_temp_min_per_sector) + '"'
 			}
 			$_resp_js += ',Rewards:' + ' "' + $_io_arr[$j].Rewards + '"'
 			$_resp_js += ',Misses:' + ' "' + $_io_arr[$j].Misses + '"'
