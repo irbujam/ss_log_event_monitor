@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.2.4"
+	$_monitor_file_name = "v0.2.5"
 	#
 	$_refresh_duration_default = 30
 	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -1681,7 +1681,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		##
 		{
 			$_uptime_value_int_ = [int]($_metrics_obj.Value)
-			if ($_uptime_seconds -lt $_uptime_value_int_)
+			#if ($_uptime_seconds -lt $_uptime_value_int_)
+			if ($_uptime_seconds -le 0)
 			{
 				$_uptime_seconds = $_uptime_value_int_
 			}
@@ -1718,7 +1719,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 					if ($_most_recent_uptime_by_farmId_arr[$_h]) {
 						if ($_unique_farm_id -eq $_most_recent_uptime_by_farmId_arr[$_h].Id)
 						{
-							$_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime = $_uptime_value_int_
+							if ($_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime -le 0)
+							{
+								$_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime = $_uptime_value_int_
+							}
 							$_b_add_item_to_arr = $false
 							break
 						}

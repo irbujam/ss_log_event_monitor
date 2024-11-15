@@ -1529,7 +1529,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_b_not_used_alert_status = fNotifyProcessOutOfSyncState $_process_type $_hostname
 					}
 					Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
-					Write-Host ", " -nonewline
+					Write-Host " " -nonewline
 					Write-Host "Peers:" -nonewline -ForegroundColor $_farmer_header_color
 					Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
 					$_num_rows += 1
@@ -1699,13 +1699,17 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$_process_total_sectors = 0
 			$_process_total_sectors_disp = "-"
 			$_process_total_disks = 0
-			$_process_total_disks_disp = "-"
+			#$_process_total_disks_disp = "-"
+			$_farm_disks_total = 0
+			$_farm_disks_completed = 0
+			$_farm_disks_remaining = 0
 			#$_process_total_disks_for_eta = 0
 			$_tmp_farm_expired_sector_count = 0
 			$_tmp_farm_expiring_sector_count = 0
 			foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 			{
 				$_label_disk_id_length = $_disk_UUId_obj.Id.Length
+				$_farm_disks_total += 1
 				#
 				# get size, % progresion and ETA at farm level
 				foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
@@ -1755,11 +1759,13 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 
 						$_process_total_disks += 1
-						$_process_total_disks_disp = $_process_total_disks
+						#$_process_total_disks_disp = $_process_total_disks
+						$_farm_disks_remaining = $_process_total_disks
 
 						if ($_reminaing_sectors -eq 0) {
 							$_process_total_disks = $_process_total_disks - 1
-							$_process_total_disks_disp = $_process_total_disks
+							#$_process_total_disks_disp = $_process_total_disks
+							$_farm_disks_remaining = $_process_total_disks
 						}
 						
 						$_process_remaining_sectors += $_reminaing_sectors
@@ -1780,8 +1786,29 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					}
 				}
 			}
+			$_farm_disks_completed = $_farm_disks_total - $_farm_disks_remaining
+			## Write plots count to farm header data line
+			$_farm_disks_count_label = "Plots(#/Cmpl/RM):"
+			$_farm_disks_count_disp = "-"
+			if ($_farm_disks_total -gt 0)
+			{
+				$_farm_disks_count_disp = $_farm_disks_total.toString() + "/" + $_farm_disks_completed.toString() + "/" + $_farm_disks_remaining.toString()
+			}
+			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length
+			Write-Host ", " -nonewline -ForegroundColor $_fg_color_white
+			Write-Host $_farm_disks_count_label -nonewline -ForegroundColor $_farmer_header_color
+			Write-Host $_farm_disks_count_disp -nonewline -ForegroundColor $_farmer_header_data_color
+			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length
+			if ($_label_disk_id_length -eq 0)
+			{
+				$_spacer_length = $script:_label_all_dash.Length - 2 - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length
+			}
+			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
+			$_num_rows += 1
 			#
 			#
+			## Get progress/eta at farm level
 			$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks
 			$_eta_hold_ = 0
 			#
@@ -1804,7 +1831,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			#$_num_rows += 1
 			## hold cursor position for farm level rewards
 			#Write-Host "|" -nonewline
-			Write-Host ", " -nonewline
+			#Write-Host ", " -nonewline
 			$_farm_level_rewards_CursorPosition = $host.UI.RawUI.CursorPosition
 			Write-Host ""
 			$_num_rows += 1
@@ -1870,13 +1897,15 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			{
 				$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 			}
-			#$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
-			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+			$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+			#$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+			#$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			if ($_label_disk_id_length -eq 0)
 			{
-				$_spacer_length = $script:_label_all_dash.Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+				$_spacer_length = $script:_label_all_dash.Length -2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 			}
 			$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+			Write-Host "|" -nonewline -ForegroundColor $_fg_color_white
 			Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
 			Write-Host $_farm_rewards_disp -nonewline -ForegroundColor $_farmer_header_data_color
 			Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
@@ -3034,12 +3063,16 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_process_total_sectors = 0
 		$_process_total_sectors_disp = "-"
 		$_process_total_disks = 0
-		$_process_total_disks_disp = "-"
+		#$_process_total_disks_disp = "-"
+		$_farm_disks_total = 0
+		$_farm_disks_completed = 0
+		$_farm_disks_remaining = 0
 		$_tmp_farm_expired_sector_count = 0
 		$_tmp_farm_expiring_sector_count = 0
 		foreach ($_disk_UUId_obj in $_disk_UUId_arr)
 		{
 			$_label_disk_id_length = $_disk_UUId_obj.Id.Length
+			$_farm_disks_total += 1
 			#
 			# get size, % progresion and ETA at farm level
 			foreach ($_disk_plots_completed_obj in $_disk_plots_completed_arr)
@@ -3095,11 +3128,13 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors
 
 					$_process_total_disks += 1
-					$_process_total_disks_disp = $_process_total_disks
+					#$_process_total_disks_disp = $_process_total_disks
+					$_farm_disks_remaining = $_process_total_disks
 
 					if ($_reminaing_sectors -eq 0) {
 						$_process_total_disks = $_process_total_disks - 1
-						$_process_total_disks_disp = $_process_total_disks
+						#$_process_total_disks_disp = $_process_total_disks
+						$_farm_disks_remaining = $_process_total_disks
 					}
 					
 					$_process_remaining_sectors += $_reminaing_sectors
@@ -3120,8 +3155,29 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				}
 			}
 		}
+		$_farm_disks_completed = $_farm_disks_total - $_farm_disks_remaining
+		## Write plots count to farm header data line
+		$_farm_disks_count_label = "Plots(#/Cmpl/RM):"
+		$_farm_disks_count_disp = "-"
+		if ($_farm_disks_total -gt 0)
+		{
+			$_farm_disks_count_disp = $_farm_disks_total.toString() + "/" + $_farm_disks_completed.toString() + "/" + $_farm_disks_remaining.toString()
+		}
+		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length
+		Write-Host ", " -nonewline -ForegroundColor $_fg_color_white
+		Write-Host $_farm_disks_count_label -nonewline -ForegroundColor $_farmer_header_color
+		Write-Host $_farm_disks_count_disp -nonewline -ForegroundColor $_farmer_header_data_color
+		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length
+		if ($_label_disk_id_length -eq 0)
+		{
+			$_spacer_length = $script:_label_all_dash.Length - 2 - $_farm_disks_count_disp.Length - $_farm_disks_count_label.Length
+		}
+		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+		Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
+		$_num_rows += 1
 		#
 		#
+		## Get progress/eta at farm level
 		$_disk_plots_remaining_arr_sorted = fSortObjArrBySectorRemaining $_disk_plots_remaining_arr $_process_total_disks
 		$_eta_hold_ = 0
 		for ($_h = 0; $_h -lt ($_disk_plots_remaining_arr_sorted | Measure-Object).count; $_h++)
@@ -3143,7 +3199,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		#$_num_rows += 1
 		## hold cursor position for farm level rewards
 		#Write-Host "|" -nonewline
-		Write-Host ", " -nonewline
+		#Write-Host ", " -nonewline
 		$_farm_level_rewards_CursorPosition = $host.UI.RawUI.CursorPosition
 		Write-Host ""
 		$_num_rows += 1
@@ -3209,13 +3265,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		{
 			$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 		}
-		#$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
-		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+		$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
+		#$_spacer_length = $_label_disk_id_length + $_total_header_length + $_total_header_labels - $_process_header_filler_length - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 		if ($_label_disk_id_length -eq 0)
 		{
 			$_spacer_length = $script:_label_all_dash.Length - 2 - $_farm_rewards_disp.Length - $_farm_rewards_disp_label.Length
 		}
 		$_label_spacer = fBuildDynamicSpacer $_spacer_length $_spacer
+		Write-Host "|" -nonewline -ForegroundColor $_fg_color_white
 		Write-Host $_farm_rewards_disp_label -nonewline -ForegroundColor $_farmer_header_color
 		Write-Host ($_farm_rewards_disp) -nonewline -ForegroundColor $_farmer_header_data_color
 		Write-Host ($_label_spacer + "|") -ForegroundColor $_fg_color_white
