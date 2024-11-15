@@ -1134,6 +1134,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	}
 	## farm aggregate rewards
 	$_all_process_rewards_per_day_estimated = [math]::Round($_all_process_rewards_per_hour * 24, 1)
+	$_all_process_rewards_per_hour = [math]::Round($_all_process_rewards_per_hour, 1)
 	#
 	#
 	if ($_all_process_misses -eq 0) {

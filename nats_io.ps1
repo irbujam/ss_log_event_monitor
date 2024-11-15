@@ -96,7 +96,9 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 						$_cache_obj_arr += $_nats_connection_item_details_obj
 						break
 					}
-					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.farmer-identify") -ge 0)
+					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.farmer-identify") -ge 0 `
+							-or $_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("farm.read-piece") -ge 0 `
+							-or $_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("farm.plotted-sectors") -ge 0)
 					{
 						$_farmer_obj_arr += $_nats_connection_item_details_obj
 						break

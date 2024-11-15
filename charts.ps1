@@ -468,9 +468,9 @@ function fBuildPieChart ([string]$_io_chart_labels, [string]$_chart_alt_labels, 
 		{
 			if (xValues_alt_labels[i].toString() == x_value) {
 				bFoundUUIdMatch = true;
-				_el_uptime = ce_uptime[i];
-				_el_sectorsPerHourAvg = ce_sectorsPerHourAvg[i];
-				_el_minutesPerSectorAvg = ce_minutesPerSectorAvg[i];
+				//_el_uptime = ce_uptime[i];
+				//_el_sectorsPerHourAvg = ce_sectorsPerHourAvg[i];
+				//_el_minutesPerSectorAvg = ce_minutesPerSectorAvg[i];
 				//disk header
 				_div_html += "<Table border=1>";
 				_div_html += "<tr>";
@@ -506,17 +506,19 @@ function fBuildPieChart ([string]$_io_chart_labels, [string]$_chart_alt_labels, 
 	return $_io_html_pie_chart
 }
 
+
 #function fBuildDonutProgressBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_SectorTimes_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_chart_label, [string]$_io_chart_alt_label, [string]$_io_chart_progress_data, [string]$_io_chart_plotted_size_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 {
 	$_io_html_bar_chart = ""
 	$_ind_chart_id = "barChart" + $_io_ind_chart_seq_num.toString()
+	#$_div_progress_id = "progress" + $_io_ind_chart_seq_num.toString()
 
 #		<canvas id="barChart" onclick="fBarChartClick()" style="width:100%;max-width:500px"></canvas>
 #	var ce_SectorTime = ' + $_io_chart_SectorTimes_data + ';
 	$_io_html_bar_chart += 
 	'
-		<canvas id="' + $_ind_chart_id + '" onclick="fBarChartClick()" style="width:100%;max-width:500px"></canvas>
+	<canvas id="' + $_ind_chart_id + '" onclick="fBarChartClick()" style="width:100%;max-width:500px"></canvas>
 
 	<script>
 
@@ -534,67 +536,26 @@ function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_
 	var _ce_disk_data_arr = ' + $_io_chart_disk_data_arr + ';
 
 	var ce_progress = ' + $_io_chart_progress_data + ';
-
-	var xValues_alt_labels = [];
-	if (xValues_alt.length > 0) {
-			xValues_alt_labels.push(xValues_alt);
+	
+	var ce_label = xValues_alt;
+	if (xValues_alt.length <= 0) {
+		ce_label = xValues;
 	}
-	else {
-			xValues_alt_labels.push(xValues);
-	}
-
+	//var html_div_id = ' + $_div_progress_id + ';
+	
 	var yValues_incomplete = 100;
 	if (yValues != "") {
 		yValues_incomplete = Math.round((100 - Number(yValues)) * 10) / 10;
 	}
 	var yValues_incomplete_disp = yValues_incomplete.toString();
 
-	const originalDoughnutDraw = Chart.controllers.doughnut.prototype.draw;
 
-	Chart.helpers.extend(Chart.controllers.doughnut.prototype, {
-	  draw: function() {
-		const chart = this.chart;
-		const {
-		  width,
-		  height,
-		  ctx,
-		  config
-		} = chart.chart;
-
-		const {
-		  datasets
-		} = config.data;
-
-		const dataset = datasets[0];
-		const datasetData = dataset.data;
-		const completed = datasetData[0];
-		const text = `${completed}% completed`;
-		let x, y, mid;
-
-		originalDoughnutDraw.apply(this, arguments);
-
-		const fontSize = (height / 350).toFixed(2);
-		ctx.font = fontSize + "em Lato, sans-serif";
-		ctx.textBaseline = "top";
-
-
-		x = Math.round((width - ctx.measureText(text).width) / 2);
-		y = (height / 1.8) - fontSize;
-		//ctx.fillStyle = "#000000"
-		ctx.fillText(text, x, y);
-		mid = x + ctx.measureText(text).width / 2;
-	  }
-	});
-
-	//var context = document.getElementById("barChart").getContext("2d");
-	var context = document.getElementById(chart_id).getContext("2d");
-	//var percent_value = 3;
-	var chart = new Chart(context, {
+	var ctx = document.getElementById(chart_id).getContext("2d");
+	var chart = new Chart(ctx, {
 	  type: "doughnut",
 	  data: {
-			labels: [xValues_alt_labels,xValues_alt_labels],
+			labels: [xValues_alt,xValues_alt],
 		datasets: [{
-		  label: "First dataset",
 		  data: [yValues, yValues_incomplete_disp],
 		  backgroundColor: ["#00baa6", "#ededed"]
 		}]
@@ -608,15 +569,13 @@ function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_
 			onClick: function(c,i){
 				e = i[0];
 				var x_value = this.data.labels[e._index];
-				var y_value = this.data.datasets[0].data[e._index];
 				var bFoundUUIdMatch = false;
 				var _div_html = "";
 				
-				alert("xValues_alt =" + xValues_alt);
-				alert(xValues_alt == x_value);
+				alert("selected x_value =" + x_value);
+				alert("ce_label =" + ce_label);
 				
-				//if (xValues_alt == x_value) {
-				if (xValues_alt_labels[0] == x_value) {
+				if (ce_label == x_value) {
 					bFoundUUIdMatch = true;
 					_el_uptime = ce_uptime;
 					_el_size = ce_size;
@@ -654,6 +613,7 @@ function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_
 							_div_html += "<td>" + "..." + _ce_disk_data_arr[j].DiskId.substr(_ce_disk_data_arr[j].DiskId.length - 5) + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].Size + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].PercentComplete + "</td>";
+							_div_html += "<td>" + _ce_disk_data_arr[j].SectorsCompleted + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].ETA + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].ReplotStatus + "</td>";
 							_div_html += "<td>" + _ce_disk_data_arr[j].SectorsPerHour + "</td>";
@@ -665,9 +625,12 @@ function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_
 					}
 					_div_html += "</Table>";
 					document.getElementById("progress").innerHTML = _div_html;
+					//document.getElementById("progress' + $_io_ind_chart_seq_num.toString() + '").innerHTML = _div_html;
+					
 				}
 				if (bFoundUUIdMatch == false) {
 					document.getElementById("progress").innerHTML = "something off, xValues_alt:" + xValues_alt;
+					//document.getElementById("progress' + $_io_ind_chart_seq_num.toString() + '").innerHTML = "something off, xValues_alt:" + xValues_alt;
 				}
 			}
 	  },
@@ -677,4 +640,4 @@ function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_
 
 	return $_io_html_bar_chart
 }
-
+	
