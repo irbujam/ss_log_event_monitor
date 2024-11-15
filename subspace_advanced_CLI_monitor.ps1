@@ -15,15 +15,16 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.2.1"
+	$_monitor_file_name = "v0.3.1"
 	#
 	$_refresh_duration_default = 30
-	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
-	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
+	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
+	$script:_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
 	$script:_url_discord = ""
 	$script:_telegram_api_token = ""
 	$script:_telegram_chat_id = ""
 	#
+	$script:_piece_cache_size_text = ""
 	$script:_piece_cache_size_percent = 0		# default to 0 if no user specified value
 	$script:_TiB_to_GiB_converter = 1024
 	$script:_sector_size_GiB = 0.9843112		# sector size for 1000 pieces (current default) is 1056896064 bytes
@@ -32,18 +33,20 @@ function main {
 	$_b_console_disabled = $false
 	####
 	$_b_listener_running = $false
-	$_api_enabled = "N"
-	$_api_host = ""
+	$script:_api_enabled = "N"
+	$script:_api_host = ""
 	$_api_host_ip = ""
 	$_api_host_port = ""
 	$_url_prefix_listener = ""
 	$_b_request_processed = $false
 	#
 	$script:_b_user_refresh = $false
+	[array]$script:_global_process_metrics_arr = $null
 	#
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$script:_b_first_time = $true
 	#
+	[array]$script:_farmer_disk_metrics_arr = $null
 	[array]$script:_replot_sector_count_hold_arr = $null
 	#
 	[array]$script:_incremental_plot_elapsed_time_arr = $null
@@ -68,6 +71,7 @@ function main {
 	$script:_b_ps_window_resize_enabled = "N"
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
+	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
 	####
 	
 	#fResizePSWindow 40 125 $true
@@ -76,7 +80,7 @@ function main {
 	try {
 		while ($true) {
 			#
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) 
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) 
 			{
 				$_b_allow_refresh = $true
 			}
@@ -93,6 +97,7 @@ function main {
 				$script:_telegram_api_token = ""
 				$script:_telegram_chat_id = ""
 				$script:_individual_farmer_id_arr = $null
+				$script:_farmer_disk_metrics_arr = $null
 				$Stopwatch.Restart()
 				Clear-Host
 				[System.Console]::CursorVisible = $false
@@ -111,85 +116,20 @@ function main {
 				$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
 				$_node_metrics_raw_arr = [System.Collections.ArrayList]@()
 
-				$_configFile = "./config.txt"
-				$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
-
-				$script:_process_alt_name_max_length = 0
-				$script:_process_farmer_alt_name_max_length = 0
-				for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
-				{
-					if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
-						$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
-						$_process_type = $_config[0].toString()
-						if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $_api_enabled = $_config[1].toString()}
-						elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
-						elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
-							$refreshTimeScaleInSeconds = [int]$_config[1].toString()
-							if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = $_refresh_duration_default}
-						}
-						elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
-						elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
-						elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
-						elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
-						elseif ($_process_type.toLower().IndexOf("piece_cache_size") -ge 0) { $_piece_cache_size_text = [int](fExtractTextFromString $_config[1].toString() "%") }
-						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
-							$_alert_frequency_seconds = [int]$_config[1].toString()
-						}
-						elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $script:_b_first_time) {
-							
-							$_start_up_view = $_config[1].toString().toLower()
-							if ($_start_up_view.IndexOf("s") -eq 0)
-							{
-								$script:_b_write_process_summary_to_console = $true
-								$script:_b_write_process_details_to_console = $false
-							}
-							elseif ($_start_up_view.IndexOf("d") -eq 0)
-							{
-								$script:_b_write_process_summary_to_console = $false
-								$script:_b_write_process_details_to_console = $true
-							}
-						}
-						# get max length for host alt name
-						elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
-							$_process_ip = $_config[1].toString()
-							$_process_hostname_alt = ""
-							if ($_config.Count -gt 3) {
-								$_process_hostname_alt = $_config[3].toString()
-							}
-							$_process_hostname = $_process_ip
-							if ($_process_hostname_alt -and $_process_hostname_alt.length -gt 0)
-							{
-								$_process_hostname = $_process_hostname_alt
-							}
-							switch ($_process_type.toLower()) {
-								"node" {
-									if ($_process_hostname.Length -gt $script:_process_alt_name_max_length) 
-									{
-										$script:_process_alt_name_max_length = $_process_hostname.Length
-									}
-								}
-								"farmer" {
-									if ($_process_hostname.Length -gt $script:_process_farmer_alt_name_max_length) 
-									{
-										$script:_process_farmer_alt_name_max_length = $_process_hostname.Length
-									}
-								}
-							}
-						}
-					}
-				}
+				$_farmers_ip_arr = fReloadConfig
+				
 				# check if alert frequency was provided in config and if not default to aut-refresh frequency 
-				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null -or $_alert_frequency_seconds -lt $refreshTimeScaleInSeconds) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
+				if ($script:_alert_frequency_seconds -eq 0 -or $script:_alert_frequency_seconds -eq "" -or $script:_alert_frequency_seconds -eq $null -or $script:_alert_frequency_seconds -lt $script:refreshTimeScaleInSeconds) {$script:_alert_frequency_seconds = $script:refreshTimeScaleInSeconds}
 				#
 				# set piece_cache_size to user input or to default as needed
-				if ($_piece_cache_size_text -eq "" -or $_piece_cache_size_text.Length -le 0) { $script:_piece_cache_size_percent = 0 }
-				else { $script:_piece_cache_size_percent = [int]($_piece_cache_size_text) }
+				if ($script:_piece_cache_size_text -eq "" -or $script:_piece_cache_size_text.Length -le 0) { $script:_piece_cache_size_percent = 0 }
+				else { $script:_piece_cache_size_percent = [int]($script:_piece_cache_size_text) }
 				# set size multiplier
 				$script:_mulitplier_size_converter = $script:_sector_size_GiB / (1 - ($script:_piece_cache_size_percent * 0.01))
 				#
 				### Check if API mode enabled and we have a host
 				#
-				if ($_api_enabled.toLower() -eq "y" -and $_api_host -ne $null -and $_api_host -ne "")
+				if ($script:_api_enabled.toLower() -eq "y" -and $script:_api_host -ne $null -and $script:_api_host -ne "")
 				{
 					$_b_console_disabled = $true
 
@@ -197,7 +137,7 @@ function main {
 					{
 						#### create listener object for later use
 						# create a listener for inbound http request
-						$_api_host_arr = $_api_host.split(":").Trim(" ")
+						$_api_host_arr = $script:_api_host.split(":").Trim(" ")
 						$_api_host_ip = $_api_host_arr[0]
 						$_api_host_port = $_api_host_arr[1]
 						
@@ -255,12 +195,12 @@ function main {
 						fGetSummaryDataForConsole $_farmers_ip_arr
 					}
 					# check previous alerts and reset for the next event
-					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $script:_alert_frequency_seconds)
 					{
 						$_alert_stopwatch.Restart()
 					}
 					$script:_b_first_time = $false
-					$_last_display_type_request = fStartCountdownTimer $refreshTimeScaleInSeconds
+					$_last_display_type_request = fStartCountdownTimer $script:refreshTimeScaleInSeconds
 					if ($_last_display_type_request.toLower() -eq "summary") { $script:_b_write_process_summary_to_console = $true; $script:_b_write_process_details_to_console = $false }
 					elseif ($_last_display_type_request.toLower() -eq "detail") { $script:_b_write_process_summary_to_console = $false; $script:_b_write_process_details_to_console = $true }
 				}
@@ -335,10 +275,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 			##
 			Write-Host
-			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
-					if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds)
+			#if ($_seconds_elapsed -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
+					$_farmers_ip_arr = $_io_farmers_ip_arr
+					if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds)
 					{					
+						$_farmers_ip_arr = fReloadConfig
 						$Stopwatch.Restart()
 					}
 					#fWriteDetailDataToConsole $_io_farmers_ip_arr
@@ -351,7 +293,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 						fGetSummaryDataForConsole $_farmers_ip_arr
 					}
 
-					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $script:_alert_frequency_seconds)
 					{
 						$_alert_stopwatch.Restart()
 					}
@@ -359,7 +301,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					$_sleep_interval_milliseconds = 1000
 					$_spinner = '|', '/', '-', '\'
 					$_spinnerPos = 0
-					$_end_dt = [datetime]::UtcNow.AddSeconds($refreshTimeScaleInSeconds)
+					$_end_dt = [datetime]::UtcNow.AddSeconds($script:refreshTimeScaleInSeconds)
 					#[System.Console]::CursorVisible = $false
 					
 					$script:_b_first_time = $false
@@ -567,7 +509,16 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	#
 	## build html for web ui
 	#
+	[array]$_process_metrics_arr = $null
 	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
+	##if ($script:_global_process_metrics_arr)
+	##{
+	##	$_process_metrics_arr = $script:_global_process_metrics_arr
+	##}
+	##else
+	##{
+	##	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
+	##}
 	$_process_header_arr = $_process_metrics_arr[0].ProcessHeader
 	$_process_sub_header_arr = $_process_metrics_arr[0].ProcessSubHeader
 	$_process_disk_data_arr = $_process_metrics_arr[0].ProcessData
@@ -576,9 +527,17 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_b_initial_entry = $true
 	#
 	##
+	####11/11 change start
+	<#
+	$_html_bar_chart_arr = [System.Collections.ArrayList]@()
+	$_ind_chart_seq_num = 0
+	#>
+	####11/11 change end
+	#
 	$_chart_labels = '['
 	$_chart_alt_labels = '['
 	$_chart_progess_data = '['
+	$_chart_plotted_size_data = '['
 	$_chart_sector_time_data = '['
 	$_chart_total_sector_time_data = '['
 	$_chart_total_sectors_per_hour_data = '['
@@ -590,8 +549,22 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_chart_rewards_data = '['
 	foreach ($_process_farm_sub_header in $_process_sub_header_arr)
 	{
+		####11/11 change start
+		<#
+		$_ind_chart_label = '"' + '' + '"'
+		$_ind_chart_alt_label = '"' + '' + '"'
+		$_ind_chart_progess_data = '"' + '' + '"'
+		$_ind_chart_plotted_size_data = '"' + '' + '"'
+		$_ind_chart_eta_data = '"' + '' + '"'
+		$_ind_chart_size_data = '"' + '' + '"'
+		$_ind_chart_uptime_data = '"' + '' + '"'
+		$_ind_chart_sector_time_data = '"' + '' + '"' 
+		$_ind_chart_total_sectors_per_hour_data = '"' + '' + '"'
+		#>
+		####11/11 change end
 		$_overall_progress = "-"
 		$_overall_progress_disp = "-"
+		$_overall_plotted_size = "-"
 		$_process_eta = 0.0
 		$_process_eta_disp = "-"
 		$_process_size = 0.0
@@ -599,25 +572,41 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 		$_process_sector_time = 0.0
 		$_b_i_was_here = $false
 
+		####
+		$_tmp_disk_replot_sctors = 0
+		foreach ($_disk_data_obj in $_process_disk_data_arr)
+		{
+			if ($_process_farm_sub_header.UUId -eq $_disk_data_obj.UUId)
+			{
+				#$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatusHold
+				$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatus + $_disk_data_obj.ExpiringSectors
+			}
+		}
+			####
 		if ($_process_farm_sub_header.TotalSectors -ne "-")
 		{
-			$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / [int]($_process_farm_sub_header.TotalSectors)) * 100, 1)
+			#$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / [int]($_process_farm_sub_header.TotalSectors)) * 100, 1)
+			$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / ([int]($_process_farm_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)
 			$_overall_progress_disp = $_overall_progress.toString() + "%"
 			#
+			$_overall_plotted_size = [int]($_process_farm_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors
+			$_overall_plotted_size_TiB = [math]::Round($_overall_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 			#if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
-			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
+			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.SectorsPerHourAvg -ne 0 -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 				#$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
-				$_tmp_sectors_per_hour_farm =  [math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA, 1)
-				$_tmp_sector_time_farm = 0
-				if ($_tmp_sectors_per_hour_farm -gt 0)
-				{
-					$_tmp_sector_time_farm = [double](3600 / $_tmp_sectors_per_hour_farm)
-				}
-				#
-				if ($_tmp_sector_time_farm -gt 0)
-				{
-					$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
-				}
+				$_tmp_sector_time_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
+				$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
+				$_tmp_sectors_per_hour_farm = [math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA, 1)
+				#$_tmp_sector_time_farm = 0
+				#if ($_tmp_sectors_per_hour_farm -gt 0)
+				#{
+				#	$_tmp_sector_time_farm = [double](3600 / $_tmp_sectors_per_hour_farm)
+				#}
+				##
+				#if ($_tmp_sector_time_farm -gt 0)
+				#{
+				#	$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
+				#}
 
 				$_b_i_was_here = $true
 				##$_process_eta = [double]($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors)
@@ -627,22 +616,50 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				#	$_temp_sector_time_per_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
 				#}
 				#$_process_eta = [double]($_temp_sector_time_per_farm * $_process_farm_sub_header.RemainingSectors)
-				$_process_eta = [double]($_tmp_sector_time_farm * $_process_farm_sub_header.RemainingSectors)
+				$_temp_total_sectors_per_farm = 0
+				if ($_process_farm_sub_header.TotalSectors -ne "-")
+				{
+					$_temp_total_sectors_per_farm = [double]($_process_farm_sub_header.TotalSectors)
+				}
+				$_temp_completed_sectors_per_farm = 0
+				if ($_process_farm_sub_header.CompletedSectors -ne "-")
+				{
+					$_temp_completed_sectors_per_farm = [double]($_process_farm_sub_header.CompletedSectors)
+				}
+				$_process_eta = [double]($_tmp_sector_time_farm * ($_temp_total_sectors_per_farm - $_temp_completed_sectors_per_farm - $_tmp_disk_replot_sctors))
 				$_process_eta_obj = New-TimeSpan -seconds $_process_eta
 				$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
-			#$_process_size_TiB = [math]::Round($_process_size / 1000, 2)
-			$_process_size_TiB = [math]::Round($_process_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 1)
+			#$_process_size = [int]($_process_farm_sub_header.TotalSectors) + $_tmp_disk_replot_sctors
+			$_process_size_TiB = [math]::Round($_process_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 
 			$_process_size_disp = $_process_size_TiB.ToString()
 		}
 
+		####11/11 change start
+		<#
+		$_ind_chart_label = '"' + $_process_farm_sub_header.UUId + '"'
+		$_ind_chart_alt_label = '"' + $_process_farm_sub_header.Hostname + '"'
+		$_ind_chart_progess_data = '"' + $_overall_progress + '"'
+		$_ind_chart_plotted_size_data = '"' + $_overall_plotted_size_TiB + '"'
+		$_ind_chart_eta_data = '"' + $_process_eta_disp + '"'
+		$_ind_chart_size_data = '"' + $_process_size_disp + '"'
+		$_ind_chart_uptime_data = '"' + $_process_farm_sub_header.Uptime + '"'
+		$_ind_chart_sector_time_data = '"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
+		if ($_process_sector_time.TotalSeconds -gt 0)
+		{
+			$_ind_chart_total_sectors_per_hour_data = '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds, 1)).ToString() + '"'
+		}
+		#>		
+		####11/11 change end
 		if ($_b_initial_entry)
 		{
 			$_chart_labels += '"' + $_process_farm_sub_header.UUId + '"'
 			$_chart_alt_labels += '"' + $_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += '"' + $_overall_progress + '"'
+			$_chart_plotted_size_data += '"' + $_overall_plotted_size_TiB + '"'
+
 			if ($_b_i_was_here) {
 				#$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
 				$_chart_sector_time_data += '"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
@@ -651,11 +668,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
 			}
 			#$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
-			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds, 1) + '"' 
+			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds, 2) + '"' 
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
-					$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+					$_chart_total_sectors_per_hour_data += '"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds, 1)).ToString() + '"'
 				}
 				else {
 					$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
@@ -668,7 +685,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_eta_data += '"' + $_process_eta_disp + '"'
 			$_chart_size_data += '"' + $_process_size_disp + '"'
 			$_chart_uptime_data += '"' + $_process_farm_sub_header.Uptime + '"'
-			$_chart_perf_sectorsPerHour_data += '"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 2)).ToString() + '"'
+			$_chart_perf_sectorsPerHour_data += '"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 1)).ToString() + '"'
 			$_chart_perf_minutesPerSector_data += '"' + ([math]::Round([double]($_process_farm_sub_header.MinutesPerSectorAvg), 2)).ToString() + '"'
 			$_chart_rewards_data += '"' + $_process_farm_sub_header.TotalRewards + '"'
 			$_b_initial_entry = $false
@@ -677,6 +694,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_labels += ',"' +$_process_farm_sub_header.UUId + '"'
 			$_chart_alt_labels += ',"' +$_process_farm_sub_header.Hostname + '"'
 			$_chart_progess_data += ',"' + $_overall_progress + '"'
+			$_chart_plotted_size_data += ',"' + $_overall_plotted_size_TiB + '"'
 			if ($_b_i_was_here) {
 				$_chart_sector_time_data += ',"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
 			}
@@ -688,7 +706,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
 				{
-					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds)).ToString() + '"'
+					$_chart_total_sectors_per_hour_data += ',"' + ([math]::Round(3600 / $_process_sector_time.TotalSeconds, 1)).ToString() + '"'
 				}
 				else {
 					$_chart_total_sectors_per_hour_data += ',"' + 0 + '"'
@@ -701,14 +719,22 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_eta_data += ',"' + $_process_eta_disp + '"'
 			$_chart_size_data += ',"' + $_process_size_disp + '"'
 			$_chart_uptime_data += ',"' + $_process_farm_sub_header.Uptime + '"'
-			$_chart_perf_sectorsPerHour_data += ',"' + $_process_farm_sub_header.SectorsPerHourAvg + '"'
-			$_chart_perf_minutesPerSector_data += ',"' + $_process_farm_sub_header.MinutesPerSectorAvg + '"'
+			$_chart_perf_sectorsPerHour_data += ',"' + ([math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg), 1)).ToString() + '"'
+			$_chart_perf_minutesPerSector_data += ',"' + ([math]::Round([double]($_process_farm_sub_header.MinutesPerSectorAvg), 2)).ToString() + '"'
 			$_chart_rewards_data += ',"' + $_process_farm_sub_header.TotalRewards + '"'
 		}
+		####11/11 change start
+		<#
+		$_tmp_html_bar_chart = fBuildDonutProgressBarChart $_ind_chart_seq_num $_ind_chart_label $_ind_chart_alt_label $_ind_chart_progess_data $_ind_chart_plotted_size_data $_ind_chart_sector_time_data $_ind_chart_eta_data $_ind_chart_size_data $_ind_chart_uptime_data $_ind_chart_total_sectors_per_hour_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+		[void]$_html_bar_chart_arr.add($_tmp_html_bar_chart)
+		$_ind_chart_seq_num += 1
+		#>
+		####11/11 change end
 	}
 	$_chart_labels += ']'
 	$_chart_alt_labels += ']'
 	$_chart_progess_data += ']'
+	$_chart_plotted_size_data += ']'
 	$_chart_sector_time_data += ']'
 	$_chart_total_sector_time_data += ']'
 	$_chart_total_sectors_per_hour_data += ']'
@@ -730,16 +756,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				<head>
 				<title>Autonomys Network Monitor</title>
 				<meta name="viewport" content="width=device-width, initial-scale=1">
-				<meta http-equiv="refresh" content="' + $refreshTimeScaleInSeconds + '">
+				<!--<meta http-equiv="refresh" content="' + $script:refreshTimeScaleInSeconds + '">-->
 				<style>
 				body {
 					#padding: 25px;
 					background-color: white;
 					color: black;
 					font-size: 15px;
+					font-family: Arial, Helvetica, sans-serif;
 				}
 				.dark-mode {
-					background-color: black;
+					//background-color: black;
+					background-color: #181818;
 					color: white;
 					font-size: 15px;
 				}
@@ -747,7 +775,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				.chart_font_header {
 					#background-color: white;
 					#color: black;
-					font-size: 15px;
+					font-size: 12px;
 				}
 				.chart_font {
 					#background-color: white;
@@ -780,7 +808,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					#height: 10%;
 					background-color: #800000;
 				}
-
+				.divtable
+				{
+					font-family: Arial, Helvetica, sans-serif;
+					font-size: 11px;
+				}
 				</style>
 				</head>
 				<button onclick="fToggleDisplayMode()">Toggle dark mode</font></button>
@@ -809,12 +841,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				}
 				</script>'
 
-	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
-	$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance (Avg)'
-	
+	#$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_plotted_size_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_total_sectors_per_hour_data $_process_disk_data_js_arr 'Farm Plotting Progress'
+	#$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance (Avg)'
 	
 	$_html_net_performance_chart = fBuildNetPerformanceChart $_chart_labels $_chart_alt_labels $_chart_total_sectors_per_hour_data $_chart_total_sector_time_data $_process_disk_data_js_arr 'Farm Performance (Net)'
-	
 	
 	$_html_pie_chart = fBuildPieChart $_chart_labels $_chart_alt_labels $_chart_rewards_data $_process_disk_data_js_arr 'Farm Rewards'
 
@@ -864,26 +895,39 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_html_full += "<br>"
 	#$_html_full += "<Table>"
 	#$_html_full += "<tr><td>"
+
 	$_html_full += $_html_bar_chart
-	#$_html_full += "</td></tr>"
-	#$_html_full += "<tr><td>"
-	$_html_full += '<div id=progress onclick="fClearBarChartDetails()"></div>'
-	#$_html_full += "</td></tr>"
-	#$_html_full += "<tr><td>"
-	$_html_full += $_html_radar_chart
-	
-	
+	####11/11 change start
+	<#
+	$_html_full += "<br>"
+	if ($_html_bar_chart_arr) {
+		$_html_full += "<Table border=1>"
+		$_html_full += "<tr>"
+		for ($_i = 0; $_i -lt $_html_bar_chart_arr.Count; $_i++)
+		{
+			$_html_full += "<td>"
+			$_html_full += $_html_bar_chart_arr[$_i]
+			$_html_full += "</td>"
+		}
+		#$_html_full += "</tr>"
+		#$_html_full += "<tr>"
+		#for ($_i = 0; $_i -lt $_html_bar_chart_arr.Count; $_i++)
+		#{
+		#	$_html_full += "<td>"
+		#	$_html_full += '<div id="progress' + $_i + '" onclick="fClearBarChartDetails()" class="divtable"></div>'
+		#	$_html_full += "</td>"
+		#}
+		$_html_full += "</tr>"
+		$_html_full += "</Table>"
+	}
+	#>
+	####11/11 change end
+
+	$_html_full += '<div id="progress" onclick="fClearBarChartDetails()" class="divtable"></div>'
+	#$_html_full += $_html_radar_chart
 	$_html_full += $_html_net_performance_chart
-	
-	
-	#$_html_full += "</td></tr>"
-	#$_html_full += "<tr><td>"
 	$_html_full += $_html_pie_chart
-	#$_html_full += "</td></tr>"
-	#$_html_full += "<tr><td>"
-	$_html_full += '<div id=rewards onclick="fClearPieChartDetails()"></div>'
-	#$_html_full += "</td></tr>"
-	#$_html_full += "</Table>"
+	$_html_full += '<div id=rewards onclick="fClearPieChartDetails()" class="divtable"></div>'
 
 	$_html_full +=
 				'</body>
@@ -1105,6 +1149,96 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 	}
 	Write-Host
 	return $_resp_last_display_type_request
+}
+
+function fReloadConfig() {
+	$_configFile = "./config.txt"
+	$_process_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
+
+	$script:_process_alt_name_max_length = 0
+	$script:_process_farmer_alt_name_max_length = 0
+	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
+	{
+		if ($_process_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_process_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
+			$_config = $_process_ip_arr[$arrPos].toString().split(":").Trim(" ")
+			$_process_type = $_config[0].toString()
+			if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $script:_api_enabled = $_config[1].toString()}
+			elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$script:_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
+			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
+				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
+				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
+			}
+			elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
+			elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
+			elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("piece_cache_size") -ge 0) { $script:_piece_cache_size_text = [int](fExtractTextFromString $_config[1].toString() "%") }
+			elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
+				$script:_alert_frequency_seconds = [int]$_config[1].toString()
+			}
+			elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $script:_b_first_time) {
+				
+				$_start_up_view = $_config[1].toString().toLower()
+				if ($_start_up_view.IndexOf("s") -eq 0)
+				{
+					$script:_b_write_process_summary_to_console = $true
+					$script:_b_write_process_details_to_console = $false
+				}
+				elseif ($_start_up_view.IndexOf("d") -eq 0)
+				{
+					$script:_b_write_process_summary_to_console = $false
+					$script:_b_write_process_details_to_console = $true
+				}
+			}
+			# get max length for host alt name
+			elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+				$_process_ip = $_config[1].toString()
+				####11/12 change start
+				$_host_port = $_config[2].toString()
+				$_host_url = $_process_ip + ":" + $_host_port
+				####11/12 change end
+				$_process_hostname_alt = ""
+				if ($_config.Count -gt 3) {
+					$_process_hostname_alt = $_config[3].toString()
+				}
+				$_process_hostname = $_process_ip
+				if ($_process_hostname_alt -and $_process_hostname_alt.length -gt 0)
+				{
+					$_process_hostname = $_process_hostname_alt
+				}
+				switch ($_process_type.toLower()) {
+					"node" {
+						if ($_process_hostname.Length -gt $script:_process_alt_name_max_length) 
+						{
+							$script:_process_alt_name_max_length = $_process_hostname.Length
+						}
+					}
+					"farmer" {
+						if ($_process_hostname.Length -gt $script:_process_farmer_alt_name_max_length) 
+						{
+							$script:_process_farmer_alt_name_max_length = $_process_hostname.Length
+						}
+						#
+						####11/12 change start
+						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+						$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
+						$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
+						$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr					
+						$_tmp_disk_metrics_arr_obj = [PSCustomObject]@{
+							Id				= $_host_url
+							ProcessType 	= $_process_type
+							MetricsArr		= $_tmp_disk_metrics_arr
+						}
+						$script:_farmer_disk_metrics_arr += $_tmp_disk_metrics_arr_obj
+						####11/12 change end
+						#
+					}
+				}
+			}
+		}
+	}
+	## return from function
+	return $_process_ip_arr
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
@@ -1557,7 +1691,8 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		##
 		{
 			$_uptime_value_int_ = [int]($_metrics_obj.Value)
-			if ($_uptime_seconds -lt $_uptime_value_int_)
+			#if ($_uptime_seconds -lt $_uptime_value_int_)
+			if ($_uptime_seconds -le 0)
 			{
 				$_uptime_seconds = $_uptime_value_int_
 			}
@@ -1594,7 +1729,10 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 					if ($_most_recent_uptime_by_farmId_arr[$_h]) {
 						if ($_unique_farm_id -eq $_most_recent_uptime_by_farmId_arr[$_h].Id)
 						{
-							$_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime = $_uptime_value_int_
+							if ($_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime -le 0)
+							{
+								$_most_recent_uptime_by_farmId_arr[$_h].TotalElapsedTime = $_uptime_value_int_
+							}
 							$_b_add_item_to_arr = $false
 							break
 						}
@@ -1788,10 +1926,13 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							{
 								$_b_incremental_sector_count_changed = $true
 
-								if ($script:_b_enable_new_sector_times_calc -and $_completed_sectors -gt 0 -and $script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
-								{								
-									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
-									$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+								if ($script:_b_enable_new_sector_times_calc -and $_completed_sectors -gt 0) 
+								{
+									if ($script:_total_time_elpased_stopwatch.Elapsed.TotalSeconds -gt (2 * [math]::Round($_total_elpased_time / $_completed_sectors,0)))
+									{								
+										$script:_incremental_plot_elapsed_time_arr[$_h].DeltaSectorsCompleted = $_completed_sectors - $script:_incremental_plot_elapsed_time_arr[$_h].CompletedSectorsInSession
+										$script:_incremental_plot_elapsed_time_arr[$_h].DeltaElapsedTime = $_total_elpased_time - $script:_incremental_plot_elapsed_time_arr[$_h].ElapsedTime
+									}
 								}
 								else
 								{
@@ -2096,7 +2237,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 				fSendDiscordNotification $_io_alert_url $_alert_text
 				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
 			}
@@ -2121,7 +2262,7 @@ function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_h
 	$_alert_text = $_io_process_type + " is out of sync, Hostname:" + $_io_hostname
 	try {
 		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 			fSendDiscordNotification  $script:_url_discord $_alert_text
 			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
 			$_b_resp_ok = $_b_bot_msg_sent_ok

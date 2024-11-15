@@ -96,7 +96,9 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 						$_cache_obj_arr += $_nats_connection_item_details_obj
 						break
 					}
-					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.farmer-identify") -ge 0)
+					elseif ($_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("subspace.controller.farmer-identify") -ge 0 `
+							-or $_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("farm.read-piece") -ge 0 `
+							-or $_nats_connection_item_subs_arr[$_nats_connection_item_subs_arr_pos].toLower().IndexOf("farm.plotted-sectors") -ge 0)
 					{
 						$_farmer_obj_arr += $_nats_connection_item_details_obj
 						break
@@ -707,6 +709,7 @@ $_b_cluster_information_printed = $true
 				if ($_io_process_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_process_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 					$_config = $_io_process_arr[$arrPos].toString().split(":").Trim(" ")
 					$_process_type = $_config[0].toString()
+					$_b_disk_plot_id_match_found = $false
 					if ($_process_type.toLower() -eq "farmer") { 
 						$_host_ip = $_config[1].toString()
 						$_host_port = $_config[2].toString()
@@ -728,15 +731,32 @@ $_b_cluster_information_printed = $true
 						#	$_ss_farmer_disp_name_length = $_nats_farmer_hostname.Length
 						#	break
 						#}
-						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-						$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
-						$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
-						$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr
+						#
+						####11/12 change start
+						#$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+						#$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
+						#$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
+						#$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr
+						[array]$_tmp_disk_metrics_arr = $null
+						foreach ($_farmer_disk_metrics_arr_obj in $script:_farmer_disk_metrics_arr)
+						{
+							if ($_farmer_disk_metrics_arr_obj)
+							{
+								if ($_farmer_disk_metrics_arr_obj.Id -eq $_host_url)
+								{
+									$_tmp_disk_metrics_arr = $_farmer_disk_metrics_arr_obj.MetricsArr
+									break
+								}
+							}
+							else {break}
+						}
+						####11/12 change end
+						#
 						$_tmp_disk_UUId_arr = $_tmp_disk_metrics_arr[0].Id
 
 
 						$_nats_farmer_subscriptions_arr = $_ss_farmer_obj_arr_item.Subscriptions
-						$_b_disk_plot_id_match_found = $false
+						#$_b_disk_plot_id_match_found = $false
 						foreach ($_tmp_disk_UUId_obj in $_tmp_disk_UUId_arr)
 						{
 							if ($_tmp_disk_UUId_obj) {
@@ -751,11 +771,9 @@ $_b_cluster_information_printed = $true
 									}
 								}
 							}
-							if ($_b_disk_plot_id_match_found) 
-							{
-								break
-							}
+							if ($_b_disk_plot_id_match_found) { break }
 						}
+						if ($_b_disk_plot_id_match_found) { break }
 						#10/18/2024 - End change
 					}
 				}
