@@ -544,7 +544,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 						#$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 2)).toString() + "%"
 						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / ([int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)).toString() + "%"
 						$_all_process_completed_sectors += [int]($_sub_header.CompletedSectors)
-						$_all_process_total_sectors += [int]($_sub_header.TotalSectors)
+						$_all_process_total_sectors += [int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors
 						#
 						if ($_sub_header.RemainingSectors -ne "-" -and $_sub_header.SectorTime -ne $null -and $_sub_header.TotalDisksForETA -ne 0) {
 							$_temp_total_sectors_per_farm = 0
