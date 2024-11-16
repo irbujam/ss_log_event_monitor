@@ -280,6 +280,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					$_farmers_ip_arr = $_io_farmers_ip_arr
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds)
 					{					
+						$script:_farmer_disk_metrics_arr = $null
 						$_farmers_ip_arr = fReloadConfig
 						$Stopwatch.Restart()
 					}
