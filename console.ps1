@@ -150,7 +150,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				##
 				Write-Host
 				$_num_rows += 1
-				break
+				#break		#DO NOT UNCOMMENT as this will stop displaying more than one NATS
 			}
 		}
 	}
