@@ -15,15 +15,16 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.3.0"
+	$_monitor_file_name = "v0.3.1"
 	#
 	$_refresh_duration_default = 30
-	$refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
-	$_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
+	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
+	$script:_alert_frequency_seconds = 0		# defined in config, defaults to refreshTimeScaleInSeconds if not provided
 	$script:_url_discord = ""
 	$script:_telegram_api_token = ""
 	$script:_telegram_chat_id = ""
 	#
+	$script:_piece_cache_size_text = ""
 	$script:_piece_cache_size_percent = 0		# default to 0 if no user specified value
 	$script:_TiB_to_GiB_converter = 1024
 	$script:_sector_size_GiB = 0.9843112		# sector size for 1000 pieces (current default) is 1056896064 bytes
@@ -32,8 +33,8 @@ function main {
 	$_b_console_disabled = $false
 	####
 	$_b_listener_running = $false
-	$_api_enabled = "N"
-	$_api_host = ""
+	$script:_api_enabled = "N"
+	$script:_api_host = ""
 	$_api_host_ip = ""
 	$_api_host_port = ""
 	$_url_prefix_listener = ""
@@ -79,7 +80,7 @@ function main {
 	try {
 		while ($true) {
 			#
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) 
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) 
 			{
 				$_b_allow_refresh = $true
 			}
@@ -115,103 +116,20 @@ function main {
 				$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
 				$_node_metrics_raw_arr = [System.Collections.ArrayList]@()
 
-				$_configFile = "./config.txt"
-				$_farmers_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
-
-				$script:_process_alt_name_max_length = 0
-				$script:_process_farmer_alt_name_max_length = 0
-				for ($arrPos = 0; $arrPos -lt $_farmers_ip_arr.Count; $arrPos++)
-				{
-					if ($_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
-						$_config = $_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
-						$_process_type = $_config[0].toString()
-						if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $_api_enabled = $_config[1].toString()}
-						elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
-						elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
-							$refreshTimeScaleInSeconds = [int]$_config[1].toString()
-							if ($refreshTimeScaleInSeconds -eq 0 -or $refreshTimeScaleInSeconds -eq "" -or $refreshTimeScaleInSeconds -eq $null) {$refreshTimeScaleInSeconds = $_refresh_duration_default}
-						}
-						elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
-						elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
-						elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
-						elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
-						elseif ($_process_type.toLower().IndexOf("piece_cache_size") -ge 0) { $_piece_cache_size_text = [int](fExtractTextFromString $_config[1].toString() "%") }
-						elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
-							$_alert_frequency_seconds = [int]$_config[1].toString()
-						}
-						elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $script:_b_first_time) {
-							
-							$_start_up_view = $_config[1].toString().toLower()
-							if ($_start_up_view.IndexOf("s") -eq 0)
-							{
-								$script:_b_write_process_summary_to_console = $true
-								$script:_b_write_process_details_to_console = $false
-							}
-							elseif ($_start_up_view.IndexOf("d") -eq 0)
-							{
-								$script:_b_write_process_summary_to_console = $false
-								$script:_b_write_process_details_to_console = $true
-							}
-						}
-						# get max length for host alt name
-						elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
-							$_process_ip = $_config[1].toString()
-							####11/12 change start
-							$_host_port = $_config[2].toString()
-							$_host_url = $_process_ip + ":" + $_host_port
-							####11/12 change end
-							$_process_hostname_alt = ""
-							if ($_config.Count -gt 3) {
-								$_process_hostname_alt = $_config[3].toString()
-							}
-							$_process_hostname = $_process_ip
-							if ($_process_hostname_alt -and $_process_hostname_alt.length -gt 0)
-							{
-								$_process_hostname = $_process_hostname_alt
-							}
-							switch ($_process_type.toLower()) {
-								"node" {
-									if ($_process_hostname.Length -gt $script:_process_alt_name_max_length) 
-									{
-										$script:_process_alt_name_max_length = $_process_hostname.Length
-									}
-								}
-								"farmer" {
-									if ($_process_hostname.Length -gt $script:_process_farmer_alt_name_max_length) 
-									{
-										$script:_process_farmer_alt_name_max_length = $_process_hostname.Length
-									}
-									#
-									####11/12 change start
-									$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-									$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
-									$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
-									$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr					
-									$_tmp_disk_metrics_arr_obj = [PSCustomObject]@{
-										Id				= $_host_url
-										ProcessType 	= $_process_type
-										MetricsArr		= $_tmp_disk_metrics_arr
-									}
-									$script:_farmer_disk_metrics_arr += $_tmp_disk_metrics_arr_obj
-									####11/12 change end
-									#
-								}
-							}
-						}
-					}
-				}
+				$_farmers_ip_arr = fReloadConfig
+				
 				# check if alert frequency was provided in config and if not default to aut-refresh frequency 
-				if ($_alert_frequency_seconds -eq 0 -or $_alert_frequency_seconds -eq "" -or $_alert_frequency_seconds -eq $null -or $_alert_frequency_seconds -lt $refreshTimeScaleInSeconds) {$_alert_frequency_seconds = $refreshTimeScaleInSeconds}
+				if ($script:_alert_frequency_seconds -eq 0 -or $script:_alert_frequency_seconds -eq "" -or $script:_alert_frequency_seconds -eq $null -or $script:_alert_frequency_seconds -lt $script:refreshTimeScaleInSeconds) {$script:_alert_frequency_seconds = $script:refreshTimeScaleInSeconds}
 				#
 				# set piece_cache_size to user input or to default as needed
-				if ($_piece_cache_size_text -eq "" -or $_piece_cache_size_text.Length -le 0) { $script:_piece_cache_size_percent = 0 }
-				else { $script:_piece_cache_size_percent = [int]($_piece_cache_size_text) }
+				if ($script:_piece_cache_size_text -eq "" -or $script:_piece_cache_size_text.Length -le 0) { $script:_piece_cache_size_percent = 0 }
+				else { $script:_piece_cache_size_percent = [int]($script:_piece_cache_size_text) }
 				# set size multiplier
 				$script:_mulitplier_size_converter = $script:_sector_size_GiB / (1 - ($script:_piece_cache_size_percent * 0.01))
 				#
 				### Check if API mode enabled and we have a host
 				#
-				if ($_api_enabled.toLower() -eq "y" -and $_api_host -ne $null -and $_api_host -ne "")
+				if ($script:_api_enabled.toLower() -eq "y" -and $script:_api_host -ne $null -and $script:_api_host -ne "")
 				{
 					$_b_console_disabled = $true
 
@@ -219,7 +137,7 @@ function main {
 					{
 						#### create listener object for later use
 						# create a listener for inbound http request
-						$_api_host_arr = $_api_host.split(":").Trim(" ")
+						$_api_host_arr = $script:_api_host.split(":").Trim(" ")
 						$_api_host_ip = $_api_host_arr[0]
 						$_api_host_port = $_api_host_arr[1]
 						
@@ -277,12 +195,12 @@ function main {
 						fGetSummaryDataForConsole $_farmers_ip_arr
 					}
 					# check previous alerts and reset for the next event
-					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $script:_alert_frequency_seconds)
 					{
 						$_alert_stopwatch.Restart()
 					}
 					$script:_b_first_time = $false
-					$_last_display_type_request = fStartCountdownTimer $refreshTimeScaleInSeconds
+					$_last_display_type_request = fStartCountdownTimer $script:refreshTimeScaleInSeconds
 					if ($_last_display_type_request.toLower() -eq "summary") { $script:_b_write_process_summary_to_console = $true; $script:_b_write_process_details_to_console = $false }
 					elseif ($_last_display_type_request.toLower() -eq "detail") { $script:_b_write_process_summary_to_console = $false; $script:_b_write_process_details_to_console = $true }
 				}
@@ -357,10 +275,13 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 			##
 			Write-Host
-			#if ($_seconds_elapsed -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
-			if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
-					if ($Stopwatch.Elapsed.TotalSeconds -ge $refreshTimeScaleInSeconds)
+			#if ($_seconds_elapsed -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
+			if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
+					$_farmers_ip_arr = $_io_farmers_ip_arr
+					if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds)
 					{					
+						$script:_farmer_disk_metrics_arr = $null
+						$_farmers_ip_arr = fReloadConfig
 						$Stopwatch.Restart()
 					}
 					#fWriteDetailDataToConsole $_io_farmers_ip_arr
@@ -373,7 +294,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 						fGetSummaryDataForConsole $_farmers_ip_arr
 					}
 
-					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $_alert_frequency_seconds)
+					if ($_alert_stopwatch.Elapsed.TotalSeconds -ge $script:_alert_frequency_seconds)
 					{
 						$_alert_stopwatch.Restart()
 					}
@@ -381,7 +302,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					$_sleep_interval_milliseconds = 1000
 					$_spinner = '|', '/', '-', '\'
 					$_spinnerPos = 0
-					$_end_dt = [datetime]::UtcNow.AddSeconds($refreshTimeScaleInSeconds)
+					$_end_dt = [datetime]::UtcNow.AddSeconds($script:refreshTimeScaleInSeconds)
 					#[System.Console]::CursorVisible = $false
 					
 					$script:_b_first_time = $false
@@ -836,7 +757,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				<head>
 				<title>Autonomys Network Monitor</title>
 				<meta name="viewport" content="width=device-width, initial-scale=1">
-				<!--<meta http-equiv="refresh" content="' + $refreshTimeScaleInSeconds + '">-->
+				<!--<meta http-equiv="refresh" content="' + $script:refreshTimeScaleInSeconds + '">-->
 				<style>
 				body {
 					#padding: 25px;
@@ -1229,6 +1150,96 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 	}
 	Write-Host
 	return $_resp_last_display_type_request
+}
+
+function fReloadConfig() {
+	$_configFile = "./config.txt"
+	$_process_ip_arr = Get-Content -Path $_configFile | Select-String -Pattern ":"
+
+	$script:_process_alt_name_max_length = 0
+	$script:_process_farmer_alt_name_max_length = 0
+	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
+	{
+		if ($_process_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_process_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
+			$_config = $_process_ip_arr[$arrPos].toString().split(":").Trim(" ")
+			$_process_type = $_config[0].toString()
+			if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $script:_api_enabled = $_config[1].toString()}
+			elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$script:_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
+			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
+				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
+				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
+			}
+			elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
+			elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
+			elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("piece_cache_size") -ge 0) { $script:_piece_cache_size_text = [int](fExtractTextFromString $_config[1].toString() "%") }
+			elseif ($_process_type.toLower().IndexOf("alert-frequency") -ge 0) {
+				$script:_alert_frequency_seconds = [int]$_config[1].toString()
+			}
+			elseif ($_process_type.toLower().IndexOf("start-up") -ge 0 -and $script:_b_first_time) {
+				
+				$_start_up_view = $_config[1].toString().toLower()
+				if ($_start_up_view.IndexOf("s") -eq 0)
+				{
+					$script:_b_write_process_summary_to_console = $true
+					$script:_b_write_process_details_to_console = $false
+				}
+				elseif ($_start_up_view.IndexOf("d") -eq 0)
+				{
+					$script:_b_write_process_summary_to_console = $false
+					$script:_b_write_process_details_to_console = $true
+				}
+			}
+			# get max length for host alt name
+			elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
+				$_process_ip = $_config[1].toString()
+				####11/12 change start
+				$_host_port = $_config[2].toString()
+				$_host_url = $_process_ip + ":" + $_host_port
+				####11/12 change end
+				$_process_hostname_alt = ""
+				if ($_config.Count -gt 3) {
+					$_process_hostname_alt = $_config[3].toString()
+				}
+				$_process_hostname = $_process_ip
+				if ($_process_hostname_alt -and $_process_hostname_alt.length -gt 0)
+				{
+					$_process_hostname = $_process_hostname_alt
+				}
+				switch ($_process_type.toLower()) {
+					"node" {
+						if ($_process_hostname.Length -gt $script:_process_alt_name_max_length) 
+						{
+							$script:_process_alt_name_max_length = $_process_hostname.Length
+						}
+					}
+					"farmer" {
+						if ($_process_hostname.Length -gt $script:_process_farmer_alt_name_max_length) 
+						{
+							$script:_process_farmer_alt_name_max_length = $_process_hostname.Length
+						}
+						#
+						####11/12 change start
+						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+						$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
+						$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
+						$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr					
+						$_tmp_disk_metrics_arr_obj = [PSCustomObject]@{
+							Id				= $_host_url
+							ProcessType 	= $_process_type
+							MetricsArr		= $_tmp_disk_metrics_arr
+						}
+						$script:_farmer_disk_metrics_arr += $_tmp_disk_metrics_arr_obj
+						####11/12 change end
+						#
+					}
+				}
+			}
+		}
+	}
+	## return from function
+	return $_process_ip_arr
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
@@ -2227,7 +2238,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 				fSendDiscordNotification $_io_alert_url $_alert_text
 				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
 			}
@@ -2252,7 +2263,7 @@ function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_h
 	$_alert_text = $_io_process_type + " is out of sync, Hostname:" + $_io_hostname
 	try {
 		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $_alert_frequency_seconds) {
+		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 			fSendDiscordNotification  $script:_url_discord $_alert_text
 			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
 			$_b_resp_ok = $_b_bot_msg_sent_ok
