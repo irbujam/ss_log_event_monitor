@@ -542,7 +542,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 						$_all_process_plotted_size_TiB += [int]($_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors
 						#
 						#$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / [int]($_sub_header.TotalSectors)) * 100, 2)).toString() + "%"
-						$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / ([int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)).toString() + "%"
+						if (([int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors) -ne 0) {
+							$_overall_progress = ([math]::Round(([int]($_sub_header.CompletedSectors) / ([int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)).toString() + "%"
+						}
 						$_all_process_completed_sectors += [int]($_sub_header.CompletedSectors)
 						$_all_process_total_sectors += [int]($_sub_header.TotalSectors) - $_tmp_disk_replot_sctors
 						#
