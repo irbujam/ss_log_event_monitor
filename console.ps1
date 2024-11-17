@@ -2293,7 +2293,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors + $_replot_sector_count_hold
 						$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 						$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
-						if ($_total_sectors_GiB -ne 0) {
+						if ($_total_sectors_GiB -ne 0 -and ($_total_sectors_GiB - $_replot_sector_count_hold) -ne 0) {
 							#$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
 							$_plotting_percent_complete = [math]::Round(($_completed_sectors / ($_total_sectors_GiB - $_replot_sector_count_hold)) * 100, 2)
 							$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
@@ -3659,7 +3659,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_total_sectors_GiB = $_completed_sectors + $_reminaing_sectors + $_replot_sector_count_hold
 					$_total_disk_sectors_TiB = [math]::Round($_total_sectors_GiB * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 					$_total_disk_sectors_disp = $_total_disk_sectors_TiB.ToString()
-					if ($_total_sectors_GiB -ne 0) {
+					if ($_total_sectors_GiB -ne 0 -and ($_total_sectors_GiB - $_replot_sector_count_hold) -ne 0) {
 						#$_plotting_percent_complete = [math]::Round(($_completed_sectors / $_total_sectors_GiB) * 100, 2)
 						$_plotting_percent_complete = [math]::Round(($_completed_sectors / ($_total_sectors_GiB - $_replot_sector_count_hold)) * 100, 2)
 						$_plotting_percent_complete_disp = $_plotting_percent_complete.ToString() + "%"
