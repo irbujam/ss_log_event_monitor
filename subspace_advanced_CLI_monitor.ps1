@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.3.4"
+	$_monitor_file_name = "v0.3.5"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -60,6 +60,8 @@ function main {
 	$script:_b_write_process_details_to_console = $false
 	$script:_b_write_process_summary_to_console = $true
 	#
+	$script:_nats_server_name = ""
+	$script:_b_cluster_mode = $false
 	[array]$script:_ss_controller_obj_arr = $null
 	[array]$script:_ss_cache_obj_arr = $null
 	[array]$script:_ss_farmer_obj_arr = $null
@@ -68,7 +70,8 @@ function main {
 	[object]$script:_cluster_data_row_pos_hold = $null
 	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
-	$script:_b_ps_window_resize_enabled = "N"
+	#$script:_b_ps_window_resize_enabled = "N"
+	$script:_alert_category_txt = "all"				#default set to send  alerts for all components
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
 	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
@@ -1158,6 +1161,7 @@ function fReloadConfig() {
 
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
+	$script:_b_cluster_mode = $false
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
 		if ($_process_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_process_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
@@ -1169,7 +1173,8 @@ function fReloadConfig() {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
 			}
-			elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
+			#elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("send-an-alert") -ge 0) { $script:_alert_category_txt = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
@@ -1191,6 +1196,7 @@ function fReloadConfig() {
 					$script:_b_write_process_details_to_console = $true
 				}
 			}
+			elseif ($_process_type.toLower().IndexOf("nats") -ge 0) { $script:_b_cluster_mode = $true }
 			# get max length for host alt name
 			elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
 				$_process_ip = $_config[1].toString()
@@ -1221,6 +1227,7 @@ function fReloadConfig() {
 						}
 						#
 						####11/12 change start
+						$_hostname = ""
 						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
 						$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
 						$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
@@ -2238,9 +2245,25 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
-				fSendDiscordNotification $_io_alert_url $_alert_text
-				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
+			#if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
+			if ($_hostname -ne "" -and ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds)) {
+				$_b_generate_selective_alert = $false
+				#if ($script:_b_cluster_mode) {
+				#	if ($_io_process_type.toLower() -eq "node" -and ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0))
+				#	{
+				#		$_b_generate_selective_alert = $true
+				#	}
+				#}
+				#elseif ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf($_io_process_type.toLower()) -ge 0) {
+				if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf($_io_process_type.toLower()) -ge 0) {
+					$_b_generate_selective_alert = $true
+				}
+				#
+				if ($_b_generate_selective_alert) 
+				{
+					fSendDiscordNotification $_io_alert_url $_alert_text
+					$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
+				}
 			}
 		}
 		catch {}
@@ -2264,9 +2287,11 @@ function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_h
 	try {
 		$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
 		if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
-			fSendDiscordNotification  $script:_url_discord $_alert_text
-			$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
-			$_b_resp_ok = $_b_bot_msg_sent_ok
+			if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf($_io_process_type.toLower()) -ge 0) {
+				fSendDiscordNotification  $script:_url_discord $_alert_text
+				$_b_bot_msg_sent_ok = fSendTelegramBotNotification $_alert_text
+				$_b_resp_ok = $_b_bot_msg_sent_ok
+			}
 		}
 	}
 	catch {}

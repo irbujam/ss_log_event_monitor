@@ -489,9 +489,11 @@ $_b_cluster_information_printed = $true
 			}
 			else {
 				$_console_msg_color = $_html_red
-				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-				$script:_custom_alert_text += "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
-				$_b_cluster_alert_triggered = $true
+				if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("controller") -ge 0) {
+					if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+					$script:_custom_alert_text += "SS Controller" + " status: Stopped, Host:" + $_ss_controller_obj_arr_item.IP
+					$_b_cluster_alert_triggered = $true
+				}
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -530,9 +532,11 @@ $_b_cluster_information_printed = $true
 		}
 		else {
 			$_console_msg_color = $_html_red
-			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-			$script:_custom_alert_text += "SS Controller" + " status: Inactive, Host:" + "None set-up"
-			$_b_cluster_alert_triggered = $true
+			if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("controller") -ge 0) {
+				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+				$script:_custom_alert_text += "SS Controller" + " status: Inactive, Host:" + "None set-up"
+				$_b_cluster_alert_triggered = $true
+			}
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -625,9 +629,11 @@ $_b_cluster_information_printed = $true
 			}
 			else {
 				$_console_msg_color = $_html_red
-				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-				$script:_custom_alert_text += "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
-				$_b_cluster_alert_triggered = $true
+				if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cache") -ge 0) {
+					if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+					$script:_custom_alert_text += "SS Cache" + " status: Stopped, Host:" + $_ss_cache_obj_arr_item.IP
+					$_b_cluster_alert_triggered = $true
+				}
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -662,9 +668,11 @@ $_b_cluster_information_printed = $true
 		}
 		else {
 			$_console_msg_color = $_html_red
-			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-			$script:_custom_alert_text += "SS Cache" + " status: Inactive, Host:" + "None set-up"
-			$_b_cluster_alert_triggered = $true
+			if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cache") -ge 0) {
+				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+				$script:_custom_alert_text += "SS Cache" + " status: Inactive, Host:" + "None set-up"
+				$_b_cluster_alert_triggered = $true
+			}
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -842,9 +850,11 @@ $_b_cluster_information_printed = $true
 			}
 			else {
 				$_console_msg_color = $_html_red
-				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-				$script:_custom_alert_text += "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
-				$_b_cluster_alert_triggered = $true
+				if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("farmer") -ge 0) {
+					if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+					$script:_custom_alert_text += "SS Farmer" + " status: Stopped, Host:" + $_nats_farmer_hostname
+					$_b_cluster_alert_triggered = $true
+				}
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -880,9 +890,11 @@ $_b_cluster_information_printed = $true
 		else {
 			$_console_msg_color = $_html_red
 			if ($_nats_farmer_hostname.Length -le 0) { $_nats_farmer_hostname = "None set-up" }
-			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-			$script:_custom_alert_text += "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
-			$_b_cluster_alert_triggered = $true
+			if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("farmer") -ge 0) {
+				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+				$script:_custom_alert_text += "SS Farmer" + " status: Inactive, Host:" + $_nats_farmer_hostname
+				$_b_cluster_alert_triggered = $true
+			}
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
@@ -974,9 +986,11 @@ $_b_cluster_information_printed = $true
 			}
 			else {
 				$_console_msg_color = $_html_red
-				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-				$script:_custom_alert_text += "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
-				$_b_cluster_alert_triggered = $true
+				if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("plotter") -ge 0) {
+					if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+					$script:_custom_alert_text += "SS Plotter" + " status: Stopped, Host:" + $_ss_plotter_obj_arr_item.IP
+					$_b_cluster_alert_triggered = $true
+				}
 			}
 			Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 			#
@@ -1016,9 +1030,11 @@ $_b_cluster_information_printed = $true
 		}
 		else {
 			$_console_msg_color = $_html_red
-			if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
-			$script:_custom_alert_text += "SS Plotter" + " status: Inactive, Host:" + "None set-up"
-			$_b_cluster_alert_triggered = $true
+			if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("plotter") -ge 0) {
+				if ($script:_custom_alert_text.Length -gt 0) { $script:_custom_alert_text += " | " }
+				$script:_custom_alert_text += "SS Plotter" + " status: Inactive, Host:" + "None set-up"
+				$_b_cluster_alert_triggered = $true
+			}
 		}
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 		#
