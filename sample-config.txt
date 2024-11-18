@@ -1,6 +1,7 @@
 #### start of config file
 #### sample config below contains user defined environment values
-#### please don't change format
+#### '#' in front of the line indicates a comment line and is just there for readability and can be deleted
+#### please stick to using below format
 #
 #-------------------------------------------------------------------------------------------------------------------------
 # http endpoint set-up (use Y-enabled, N-disabled for enable-api setting). "N" is default
@@ -28,6 +29,21 @@ Telegram-api-token: 1234567890:UUUUUUUUUUUUUUUU.....
 Telegram-chat-id: 1010000000
 
 Alert-frequency(seconds) : 3600
+
+#-------------------------------------------------------------------------------------------------------------------------
+## <<< NEW >>> This is an optional feature. You can now customize alert notification generation for individual components
+## 
+## Examples below:
+##         - to generate alerts for node and farmer only, set value to 'Cluster'
+##         - to generate alerts for all cluster components only set value to 'Cluster'
+##         - to generate  alerts for node, farmer, nats and controller only set value to 'farmer, node, controller, nats'
+##         - to receive alerts for everything set value to 'everything' OR 'all'
+##         - to receive alerts for nothing set value to 'none'
+##
+## the default value is preset to: 'all' and alerts will be sent for everything
+#-------------------------------------------------------------------------------------------------------------------------
+
+# Send-an-Alert : all
 
 #-------------------------------------------------------------------------------------------------------------------------
 ## adjust console screen refresh time as apppropriate (if 0 is provided the value will default to 30 seconds)
