@@ -34,7 +34,7 @@ Alert-frequency(seconds) : 3600
 ## <<< NEW >>> This is an optional feature. You can now customize alert notification generation for individual components
 ## 
 ## Examples below:
-##         - to generate alerts for node and farmer only, set value to 'Cluster'
+##         - to generate alerts for node and farmer only, set value to 'node, farmer'
 ##         - to generate alerts for all cluster components only set value to 'Cluster'
 ##         - to generate  alerts for node, farmer, nats and controller only set value to 'farmer, node, controller, nats'
 ##         - to receive alerts for everything set value to 'everything' OR 'all'
