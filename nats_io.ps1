@@ -111,6 +111,7 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 				}
 			}
 		}
+		#
 		$_io_nats_connections_obj.Controller = $_controller_obj_arr
 		$_io_nats_connections_obj.Cache = $_cache_obj_arr
 		$_io_nats_connections_obj.Farmer = $_farmer_obj_arr
@@ -119,6 +120,29 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 	}
 	catch {}
 	return $_io_nats_connections_obj_arr
+}
+
+function fSanitizeConnections ([array]$_io_arr) {
+	[array]$_sanitized_arr = $null
+	#
+	$_sorted_arr = $_io_arr
+	if ($_io_arr.Count -gt 1)
+	{
+		$_sorted_arr = $_io_arr | Sort-Object @{Expression={$_.IP}; descending=$false}, @{Expression={$_.Port}; descending=$true}
+	}
+	for ($_i = 0; $_i -lt $_sorted_arr.Count; $_i++)
+	{
+		if ($_i -eq 0)
+		{
+			$_sanitized_arr += $_sorted_arr[$_i]
+		}
+		elseif ($_sorted_arr[$_i].IP -ne $_sorted_arr[$_i-1].IP)
+		{
+			$_sanitized_arr += $_sorted_arr[$_i]
+		}
+	}	
+	#
+	return $_sanitized_arr
 }
 
 function fGetNatsServerClosedConnections ([string]$_io_nats_url) {
@@ -157,7 +181,9 @@ function fGetNatsServerClosedConnections ([string]$_io_nats_url) {
 function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 [array]$_nats_active_connection_obj_arr = $null
 [array]$_nats_closed_connection_obj_arr = $null
-	
+#
+[array]$_tmp_conn_obj_arr = $null	
+#
 	$_nats_server_response = fPingNatsServer $_io_nats_url
 	$script:_nats_server_health_status = $_nats_server_response.Status
 	$script:_nats_server_name = $_nats_server_response.ServerName
@@ -165,6 +191,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 		$_nats_active_connection_obj_arr = fGetNatsServerActiveConnections $_io_nats_url
 		for ($_nats_active_connection_obj_arr_pos = 0; $_nats_active_connection_obj_arr_pos -lt $_nats_active_connection_obj_arr.Count; $_nats_active_connection_obj_arr_pos++)
 		{
+			$_tmp_conn_obj_arr = $null
 			#$script:_ss_controller_obj_arr += $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Controller
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Controller
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
@@ -182,9 +209,14 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				if ($_b_new_cluster_component)
 				{
-					$script:_ss_controller_obj_arr += $_nats_controller_obj_item
+					#$script:_ss_controller_obj_arr += $_nats_controller_obj_item
+					$_tmp_conn_obj_arr += $_nats_controller_obj_item
 				}
+				else { $_tmp_conn_obj_arr = $script:_ss_controller_obj_arr }
 			}
+			$script:_ss_controller_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
+			#
+			$_tmp_conn_obj_arr = $null
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Cache
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
@@ -201,9 +233,14 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				if ($_b_new_cluster_component)
 				{
-					$script:_ss_cache_obj_arr += $_nats_controller_obj_item
+					#$script:_ss_cache_obj_arr += $_nats_controller_obj_item
+					$_tmp_conn_obj_arr += $_nats_controller_obj_item
 				}
+				else { $_tmp_conn_obj_arr = $script:_ss_cache_obj_arr }
 			}
+			$script:_ss_cache_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
+			#
+			$_tmp_conn_obj_arr = $null
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Farmer
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
@@ -220,10 +257,14 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				if ($_b_new_cluster_component)
 				{
-					$script:_ss_farmer_obj_arr += $_nats_controller_obj_item
+					#$script:_ss_farmer_obj_arr += $_nats_controller_obj_item
+					$_tmp_conn_obj_arr += $_nats_controller_obj_item
 				}
+				else { $_tmp_conn_obj_arr = $script:_ss_farmer_obj_arr }
 			}
+			$script:_ss_farmer_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
 			#
+			$_tmp_conn_obj_arr = $null
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Plotter
 			for ($_nats_controller_obj_item_arr_pos = 0; $_nats_controller_obj_item_arr_pos -lt $_nats_controller_obj_item_arr.Count; $_nats_controller_obj_item_arr_pos++)
 			{
@@ -235,15 +276,17 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 					if ($script:_ss_plotter_obj_arr.IP -eq $_nats_controller_obj_item.IP -and $script:_ss_plotter_obj_arr.Port -eq $_nats_controller_obj_item.Port)
 					{
 						$_b_new_cluster_component = $false
-						
 						break
 					}
 				}
 				if ($_b_new_cluster_component)
 				{
-					$script:_ss_plotter_obj_arr += $_nats_controller_obj_item
+					#$script:_ss_plotter_obj_arr += $_nats_controller_obj_item
+					$_tmp_conn_obj_arr += $_nats_controller_obj_item
 				}
+				else { $_tmp_conn_obj_arr = $script:_ss_plotter_obj_arr }
 			}
+			$script:_ss_plotter_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
 		}
 	}
 	#
@@ -412,8 +455,8 @@ $_b_cluster_information_printed = $true
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Controller.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].IP)
-						if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].IP -and $_ss_controller_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].Port)
+						if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].IP)
+						#if ($_ss_controller_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].IP -and $_ss_controller_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Controller[$_connection_arr_pos].Port)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_controller_disp_name_length = $_ss_controller_obj_arr_item.IP.Length
@@ -548,8 +591,8 @@ $_b_cluster_information_printed = $true
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Cache.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].IP)
-						if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].IP -and $_ss_cache_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].Port)
+						if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].IP)
+						#if ($_ss_cache_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].IP -and $_ss_cache_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Cache[$_connection_arr_pos].Port)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_cache_disp_name_length = $_ss_cache_obj_arr_item.IP.Length
@@ -663,6 +706,7 @@ $_b_cluster_information_printed = $true
 	$_item_sequence_num = -1
 	for ($_ss_farmer_obj_arr_pos = 0; $_ss_farmer_obj_arr_pos -lt $script:_ss_farmer_obj_arr.Count; $_ss_farmer_obj_arr_pos++)
 	{
+		$_ss_farmer_disp_name_length = 0
 		$_b_nats_connection_type_match_found = $false
 		[object]$_nats_active_connection_obj_arr_item = $null
 		$_ss_farmer_obj_arr_item = $script:_ss_farmer_obj_arr[$_ss_farmer_obj_arr_pos]
@@ -682,8 +726,8 @@ $_b_cluster_information_printed = $true
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Farmer.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].IP)
-						if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].IP -and $_ss_farmer_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].Port)
+						if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].IP)
+						#if ($_ss_farmer_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].IP -and $_ss_farmer_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Farmer[$_connection_arr_pos].Port)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_farmer_disp_name_length = $_ss_farmer_obj_arr_item.IP.Length
@@ -896,8 +940,8 @@ $_b_cluster_information_printed = $true
 				{
 					for ($_connection_arr_pos = 0; $_connection_arr_pos -lt $_nats_active_connection_obj_arr_item.Plotter.Count; $_connection_arr_pos++)
 					{
-						#if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].IP)
-						if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].IP -and $_ss_plotter_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].Port)
+						if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].IP)
+						#if ($_ss_plotter_obj_arr_item.IP -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].IP -and $_ss_plotter_obj_arr_item.Port -eq $_nats_active_connection_obj_arr_item.Plotter[$_connection_arr_pos].Port)
 						{
 							$_b_nats_connection_type_match_found = $true
 							$_ss_plotter_disp_name_length = $_ss_plotter_obj_arr_item.IP.Length
