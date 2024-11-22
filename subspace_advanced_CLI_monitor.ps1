@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.3.5"
+	$_monitor_file_name = "v0.3.6"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -46,6 +46,7 @@ function main {
 	$_alert_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$script:_b_first_time = $true
 	#
+	[array]$script:_process_status_arr = $null
 	[array]$script:_farmer_disk_metrics_arr = $null
 	[array]$script:_replot_sector_count_hold_arr = $null
 	#
@@ -60,8 +61,12 @@ function main {
 	$script:_b_write_process_details_to_console = $false
 	$script:_b_write_process_summary_to_console = $true
 	#
+	## 11/21 - change start
+	$script:_cluster_id_seq = 0
+	## 11/21 - change end
 	$script:_nats_server_name = ""
 	$script:_b_cluster_mode = $false
+	$script:_b_disable_farmer_display_at_cluster = $true	#disabled by default
 	[array]$script:_ss_controller_obj_arr = $null
 	[array]$script:_ss_cache_obj_arr = $null
 	[array]$script:_ss_farmer_obj_arr = $null
@@ -101,6 +106,7 @@ function main {
 				$script:_telegram_chat_id = ""
 				$script:_individual_farmer_id_arr = $null
 				$script:_farmer_disk_metrics_arr = $null
+				$script:_process_status_arr = $null
 				$Stopwatch.Restart()
 				Clear-Host
 				[System.Console]::CursorVisible = $false
@@ -284,6 +290,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds)
 					{					
 						$script:_farmer_disk_metrics_arr = $null
+						$script:_process_status_arr = $null
 						$_farmers_ip_arr = fReloadConfig
 						$Stopwatch.Restart()
 					}
@@ -1162,6 +1169,9 @@ function fReloadConfig() {
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
 	$script:_b_cluster_mode = $false
+	## 11/21 - change start
+	$script:_cluster_id_seq = 0
+	## 11/21 - change end
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
 		if ($_process_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_process_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
@@ -1203,6 +1213,17 @@ function fReloadConfig() {
 				####11/12 change start
 				$_host_port = $_config[2].toString()
 				$_host_url = $_process_ip + ":" + $_host_port
+
+				$_host_friendly_name = ""
+				if ($_config.Count -gt 3) {
+					$_host_friendly_name = $_config[3].toString()
+				}
+				$_hostname = $_process_ip
+				if ($_host_friendly_name -and $_host_friendly_name.length -gt 0)
+				{
+					$_hostname = $_host_friendly_name
+				}
+
 				####11/12 change end
 				$_process_hostname_alt = ""
 				if ($_config.Count -gt 3) {
@@ -1219,6 +1240,14 @@ function fReloadConfig() {
 						{
 							$script:_process_alt_name_max_length = $_process_hostname.Length
 						}
+						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+						$_tmp_process_status_arr_obj = [PSCustomObject]@{
+							Id				= $_host_url
+							ProcessType 	= $_process_type
+							ProcessStatus 	= $_tmp_process_state_arr[1]
+							ProcessResp		= $_tmp_process_state_arr[0]
+						}
+						$script:_process_status_arr += $_tmp_process_status_arr_obj
 					}
 					"farmer" {
 						if ($_process_hostname.Length -gt $script:_process_farmer_alt_name_max_length) 
@@ -1227,8 +1256,14 @@ function fReloadConfig() {
 						}
 						#
 						####11/12 change start
-						$_hostname = ""
 						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+						$_tmp_process_status_arr_obj = [PSCustomObject]@{
+							Id				= $_host_url
+							ProcessType 	= $_process_type
+							ProcessStatus 	= $_tmp_process_state_arr[1]
+							ProcessResp		= $_tmp_process_state_arr[0]
+						}
+						$script:_process_status_arr += $_tmp_process_status_arr_obj
 						$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
 						$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
 						$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr					
@@ -2246,7 +2281,7 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
 			#if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
-			if ($_hostname -ne "" -and ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds)) {
+			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 				$_b_generate_selective_alert = $false
 				#if ($script:_b_cluster_mode) {
 				#	if ($_io_process_type.toLower() -eq "node" -and ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0))
@@ -2303,7 +2338,11 @@ function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_h
 function fCheckGitNewVersion ([string]$_io_git_url) {
 	.{
 		$gitVersionArr = [System.Collections.ArrayList]@()
+		try {
 		$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri $_io_git_url 2>$null
+		}
+		catch {}
+		
 		if ($gitVersionCurrObj) {
 			$tempArr_1 = $gitVersionArr.add($gitVersionCurrObj.tag_name)
 			$gitNewVersionReleaseDate = (Get-Date $gitVersionCurrObj.published_at).ToLocalTime() 
@@ -2315,14 +2354,17 @@ function fCheckGitNewVersion ([string]$_io_git_url) {
 
 function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [string]$_io_process_path, [string]$_io_process_name) {
 	## check monitor git version and report on variance
-	if ($_monitor_file_name -ne $_io_process_git_version[0])
+	if ($_io_process_git_version)
 	{
-		Write-Host ("New monitor release available: Autonomys_monitor_" + $_io_process_git_version[0].toString() + ", dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
-		Write-Host
-	}
-	else 
-	{ 
-		#do nothing
+		if ($_monitor_file_name -ne $_io_process_git_version[0])
+		{
+			Write-Host ("New monitor release available: Autonomys_monitor_" + $_io_process_git_version[0].toString() + ", dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
+			Write-Host
+		}
+		else 
+		{ 
+			#do nothing
+		}
 	}
 }
 
