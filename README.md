@@ -15,7 +15,7 @@ To use the monitor:
 **Requirements:**
 - must use latest CLI release (see https://github.com/autonomys/subspace/releases)
 - powershell is installed (Windows should have powershell pre-installed. For installing powershell on linux see https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4)
-- install dependencies to use wallet balance feature as outlined in instructions_install-dependencies-for-balance.md
+- install dependencies to use wallet balance feature as outlined in <b>instructions_install-dependencies-for-balance.md</b>
 - add --prometheus-listen-on [node-local-ip:port] to node start-up script
 - add --prometheus-listen-on [farmer-local-ip:port] to farmer start-up script
 - change node/farmer settings in the config.txt file so that the ip:port are matching to the values set for --prometheus-listen-on your node and farmer
