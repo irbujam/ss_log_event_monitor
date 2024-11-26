@@ -1308,7 +1308,15 @@ function fReloadConfig() {
 function  fGetVltBalance([string]$_io_node_url, [string]$_io_vlt_address) {
 	$_balance = 0
 	try {
-		$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
+		$_b_windows_host = fCheckPlatformType
+		if ($_b_windows_host)
+		{
+			$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
+		}
+		else 
+		{
+			$_balance = node ./getAcctBalance.js $_io_node_url $_io_vlt_address
+		}
 	}
 	catch {}
 	$_balance = [math]::Round($_balance / [math]::Pow(10, 18), 4)
