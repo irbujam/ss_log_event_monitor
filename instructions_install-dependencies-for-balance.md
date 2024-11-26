@@ -16,3 +16,7 @@ Note: powershell session is needed by default to use wallet balance feature, To 
 - In the System variables section, scroll down and find the Path variable. Click on Edit.
 - Make sure the path C:\Program Files\nodejs\ is included in the list of paths. If it's not, add it by clicking New and typing C:\Program Files\nodejs\.
 - Restart Command Prompt: After updating the PATH, close and reopen Command Prompt for the changes to take effect.
+
+Instructions for Linux OS:
+open shell and type following command(s) and press enter 
+- sudo apt install nodejs -y && sudo apt install npm -y && npm install @polkadot/api
