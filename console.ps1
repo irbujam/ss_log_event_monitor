@@ -42,7 +42,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	## 11/21 change start
 	#$_label_process_alt_name = "Id"
 	$_label_process_alt_name = "Host"
-	if ($script:_b_cluster_mode) { $_label_process_alt_name = "Host [Cluster Id]" } 
+	if ($script:_b_cluster_mode) { $_label_process_alt_name = "Host        " } 
 	## 11/21 change end
 
 
@@ -72,6 +72,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	## 11/21 change start
 	#$_label_process_alt_name_row2 = "  "
 	$_label_process_alt_name_row2 =  fBuildDynamicSpacer $_label_process_alt_name.Length $_spacer
+	if ($script:_b_cluster_mode) { $_label_process_alt_name_row2 =  "[Cluster Id]" } 
 	## 11/21 change end
 	
 	
@@ -134,6 +135,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_cluster_info_padding_length = 0
 	if ($script:_b_cluster_mode) { $_cluster_info_padding_length = 2 + 3 }
 	$script:_process_farmer_alt_name_max_length += $_cluster_info_padding_length
+	if ($script:_process_farmer_alt_name_max_length -lt $_label_process_alt_name.Length) { $script:_process_farmer_alt_name_max_length = $_label_process_alt_name.Length - 2}
 	## 11/21 change end
 	
 	
