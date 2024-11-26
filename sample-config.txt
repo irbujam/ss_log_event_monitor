@@ -4,6 +4,15 @@
 #### please stick to using below format
 #
 #-------------------------------------------------------------------------------------------------------------------------
+# <<< NEW >>> Wallet balance display using address provided. This is an optional feature.
+#
+# defaults to hourly refresh (3600 seconds) if no value provided against balance-refresh-frequency
+#-------------------------------------------------------------------------------------------------------------------------
+
+wallet-address            : <your autonmoys wallet address>
+balance-refresh (seconds) : 3600
+
+#-------------------------------------------------------------------------------------------------------------------------
 # http endpoint set-up (use Y-enabled, N-disabled for enable-api setting). "N" is default
 #
 # You can use either localhost or an IP

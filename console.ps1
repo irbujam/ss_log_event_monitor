@@ -1349,9 +1349,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	# Refresh
 	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#$_num_rows += 1
-	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+	Write-Host ", Balance (AI3): " -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
+	$_num_rows += 1
+
 	$_num_rows += 1
 	#
 	fResizePSWindow $_num_rows $_num_cols
@@ -2830,9 +2834,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	# Refresh
 	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#$_num_rows += 1
-	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+	Write-Host ", Balance (AI3): " -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
@@ -4235,9 +4241,11 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	# Refresh
 	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#$_num_rows += 1
-	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+	Write-Host ", Balance (AI3): " -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition

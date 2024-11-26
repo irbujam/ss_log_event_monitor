@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.3.7"
+	$_monitor_file_name = "v0.3.8"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -80,6 +80,12 @@ function main {
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
 	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
+	##
+	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"
+	$script:_vlt_address = ""
+	$script:_vlt_balance = 0
+	$script:_vlt_balance_refresh_frequency = 3600	#defaults to hourly refresh
+	$_balance_refresh_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	####
 	
 	#fResizePSWindow 40 125 $true
@@ -1185,6 +1191,8 @@ function fReloadConfig() {
 			}
 			#elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("send-an-alert") -ge 0) { $script:_alert_category_txt = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("wallet-address") -ge 0) { $script:_vlt_address = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("balance-refresh") -ge 0) { $script:_vlt_balance_refresh_frequency = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
@@ -1280,8 +1288,31 @@ function fReloadConfig() {
 			}
 		}
 	}
+	#
+	if ($script:_vlt_balance_refresh_frequency -eq 0 -or $script:_vlt_balance_refresh_frequency -eq "" -or $script:_vlt_balance_refresh_frequency -eq $null -or $script:_vlt_balance_refresh_frequency.Length -le 0)
+	{
+		$script:_vlt_balance_refresh_frequency = 3600	#revert to default hourly refresh if config value was emptied
+	}
+	if ($script:_vlt_address.Length -gt 0 -and $script:_vlt_address -ne $null) {
+		if ($script:_b_first_time -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
+		{
+			$_balance_refresh_stopwatch.Restart()
+			$script:_vlt_balance = fGetVltBalance $script:_node_url $script:_vlt_address
+		}
+	}
+	#
 	## return from function
 	return $_process_ip_arr
+}
+
+function  fGetVltBalance([string]$_io_node_url, [string]$_io_vlt_address) {
+	$_balance = 0
+	try {
+		$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
+	}
+	catch {}
+	$_balance = [math]::Round($_balance / [math]::Pow(10, 18), 4)
+	return $_balance
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
