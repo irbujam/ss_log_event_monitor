@@ -6,6 +6,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_num_cols = 0
 	#
 	#
+	$_spacer = " "
+	$script:_cluster_id_seq = 0
+	#
 	## get process header and disk data
 	$_process_metrics_arr = fGetDataForHtml $_io_process_arr
 	$script:_global_process_metrics_arr = $_process_metrics_arr
@@ -34,7 +37,15 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	## define process header labels - set 1 of 3
 	#$_label_process_type = "Process"
 	$_label_serial_num = "#"
-	$_label_process_alt_name = "Id"
+
+
+	## 11/21 change start
+	#$_label_process_alt_name = "Id"
+	$_label_process_alt_name = "Host"
+	if ($script:_b_cluster_mode) { $_label_process_alt_name = "Host        " } 
+	## 11/21 change end
+
+
 	#$_label_process_state = "Status "
 	#$_label_process_state = "P"
 	$_label_process_uptime = "Uptime"
@@ -56,7 +67,15 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	## define process header labels - set 2 of 3
 	#$_label_process_type_row2 = "Type   "
 	$_label_serial_num_row2 = " "
-	$_label_process_alt_name_row2 = "  "
+	
+	
+	## 11/21 change start
+	#$_label_process_alt_name_row2 = "  "
+	$_label_process_alt_name_row2 =  fBuildDynamicSpacer $_label_process_alt_name.Length $_spacer
+	if ($script:_b_cluster_mode) { $_label_process_alt_name_row2 =  "[Cluster Id]" } 
+	## 11/21 change end
+	
+	
 	#$_label_process_state_row2 = "       "
 	#$_label_process_state_row2 = "W"
 	$_label_process_uptime_row2 = "      "
@@ -76,7 +95,14 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	## define process header labels - set 3 of 3
 	#$_label_process_type_row3 = "       "
 	$_label_serial_num_row3 = " "
-	$_label_process_alt_name_row3 = "  "
+
+
+	## 11/21 change start
+	#$_label_process_alt_name_row3 = "  "
+	$_label_process_alt_name_row3 =  fBuildDynamicSpacer $_label_process_alt_name.Length $_spacer
+	## 11/21 change end
+
+
 	#$_label_process_state_row3 = "       "
 	#$_label_process_state_row3 = "R"
 	$_label_process_uptime_row3 = "      "
@@ -103,7 +129,17 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	## farmer label sizing assessment
 	$_label_count = 13
-	$_label_total_length =  $_label_serial_num.Length + $script:_process_farmer_alt_name_max_length + $_label_process_uptime.Length +	$_label_process_size.Length + $_label_process_progress.Length + 
+	
+	
+	## 11/21 change start
+	$_cluster_info_padding_length = 0
+	if ($script:_b_cluster_mode) { $_cluster_info_padding_length = 2 + 3 }
+	$script:_process_farmer_alt_name_max_length += $_cluster_info_padding_length
+	if ($script:_process_farmer_alt_name_max_length -lt $_label_process_alt_name.Length) { $script:_process_farmer_alt_name_max_length = $_label_process_alt_name.Length - 2}
+	## 11/21 change end
+	
+	
+	$_label_total_length =  $_label_serial_num.Length + $script:_process_farmer_alt_name_max_length + $_label_process_uptime.Length + $_label_process_size.Length + $_label_process_progress.Length + 
 							$_label_process_eta.Length + $_label_process_sector_time.Length + $_label_process_total_sectors_per_hour.Length + $_label_process_total_TiB_per_day.Length + $_label_process_disks.Length + 
 							$_label_process_replot_disks.Length + $_label_process_rewards.Length + $_label_process_misses.Length
 	$_label_separator_count = 14
@@ -116,13 +152,14 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	$_data_line_separator = "-"
 	#
-	$_spacer = " "
 	#
 	for ($arrPos = 0; $arrPos -lt $_io_process_arr.Count; $arrPos++)
 	{
 		$_farmer_metrics_raw = ""
 		$_node_metrics_raw = ""
-		[array]$_process_state_arr = $null
+		## 11/18 changes start
+		#[array]$_process_state_arr = $null
+		## 11/18 changes end
 		$_b_process_running_ok = $false
 		if ($_io_process_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_process_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 			$_config = $_io_process_arr[$arrPos].toString().split(":").Trim(" ")
@@ -418,6 +455,15 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			if ($_process_isOftype.toLower() -ne "farmer") { continue }
 			#
 			###
+			
+			
+			## 11/21 change start
+			if ($script:_b_cluster_mode) {
+				$_process_alt_name += " [" + (fGetFarmerMatchInCluster $_process_name) + "]"
+			}
+			## 11/21 change end
+			
+			
 			$_individual_farmer_count += 1
 			$_individual_farmer_count_disp = $_individual_farmer_count.toString()
 			if ($_individual_farmer_count -gt 9)
@@ -428,7 +474,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_individual_farmer_id = [PSCustomObject]@{
 				SN					= $_individual_farmer_count_disp
 				Id					= $_process_name
-				Hostname			= $_process_alt_name
+				## 11/21 change start
+				#Hostname			= $_process_alt_name
+				Hostname			= $_header.Hostname
+				## 11/21 change end
 			}
 			$script:_individual_farmer_id_arr += $_individual_farmer_id
 			###
@@ -1300,9 +1349,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	# Refresh
 	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#$_num_rows += 1
-	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+	Write-Host ", Balance (AI3): " -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
+	$_num_rows += 1
+
 	$_num_rows += 1
 	#
 	fResizePSWindow $_num_rows $_num_cols
@@ -1314,6 +1367,9 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	#
 	$_num_rows = 0
 	$_num_cols = 0
+	#
+	$_spacer = " "
+	$script:_cluster_id_seq = 0
 	#
 	# define color pallete
 	$_header_color = "gray"
@@ -1364,7 +1420,6 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_rewards_row2 = "       "
 	$_label_misses_row2 = "TO/RJ/FL"
 	#
-	$_spacer = " "
 	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_size_plotted.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
 	$_total_header_labels = 10
 	#
@@ -1372,7 +1427,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	{
 		$_farmer_metrics_raw = ""
 		$_node_metrics_raw = ""
-		[array]$_process_state_arr = $null
+		## 11/18 changes start
+		#[array]$_process_state_arr = $null
+		$_process_resp_raw = $null
+		## 11/18 changes end
 		$_b_process_running_ok = $false
 		if ($_io_farmers_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_farmers_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 			$_config = $_io_farmers_ip_arr[$arrPos].toString().split(":").Trim(" ")
@@ -1409,8 +1467,24 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 
 				if (!($_process_type.toLower().IndexOf("nats") -ge 0))
 				{
-					$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-					$_b_process_running_ok = $_process_state_arr[1]
+					## 11/18 changes start
+					#$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+					#$_b_process_running_ok = $_process_state_arr[1]
+					$_process_resp_raw = $null
+					foreach ($_process_status_arr_obj in $script:_process_status_arr)
+					{
+						if ($_process_status_arr_obj)
+						{
+							if ($_process_status_arr_obj.Id -eq $_host_url)
+							{
+								$_b_process_running_ok = $_process_status_arr_obj.ProcessStatus
+								$_process_resp_raw = $_process_status_arr_obj.ProcessResp
+								break
+							}
+						}
+						else {break}
+					}
+					## 11/18 changes end
 				}
 				
 				$_node_peers_connected = 0
@@ -1461,7 +1535,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					}
 				}
 				elseif ($_process_type.toLower() -eq "node") {				# get node metrics
-					$_node_metrics_raw = $_process_state_arr[0]
+					## 11/18 changes start
+					#$_node_metrics_raw = $_process_state_arr[0]
+					$_node_metrics_raw = $_process_resp_raw
+					## 11/18 changes end
 					[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
 					$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
 
@@ -1510,9 +1587,27 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				}
 				Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 				Write-Host ", " -nonewline
-				Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
-				Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
-				$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host:").Length + $_hostname.Length
+
+				## 11/21 change start
+				#Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
+				#Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
+				#$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host:").Length + $_hostname.Length
+				if ($_process_type.toLower() -eq "farmer" -and $script:_b_cluster_mode) 
+				{
+					Write-Host "Host [Cluster Id]:" -nonewline -ForegroundColor $_farmer_header_color
+					$_cluster_identifier = fGetFarmerMatchInCluster $_host_url
+					$_cluster_identifier_disp = " [" + $_cluster_identifier + "]"
+					Write-Host ($_hostname + $_cluster_identifier_disp) -nonewline -ForegroundColor $_farmer_header_data_color
+					$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host [Cluster Id]:").Length + $_hostname.Length + $_cluster_identifier_disp.Length
+				}
+				else
+				{
+					Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
+					Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
+					$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host:").Length + $_hostname.Length
+				}
+				## 11/21 change end
+
 
 				if ($_process_type.toLower() -eq "node") {
 					Write-Host ", " -nonewline
@@ -1551,7 +1646,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 			$script:_individual_farmer_id_arr += $_individual_farmer_id
 			###
 			#
-			$_farmer_metrics_raw = $_process_state_arr[0]
+			## 11/18 change start
+			#$_farmer_metrics_raw = $_process_state_arr[0]
+			$_farmer_metrics_raw = $_process_resp_raw
+			## 11/18 change end
 			[void]$_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			
@@ -2736,9 +2834,11 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	# Refresh
 	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#$_num_rows += 1
-	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+	Write-Host ", Balance (AI3): " -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
@@ -2755,6 +2855,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_num_cols = 0
 	#
 	#
+	$_spacer = " "
 	#
 	# define color pallete
 	$_header_color = "white"
@@ -2804,12 +2905,14 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_rewards_row2 = "       "
 	$_label_misses_row2 = "TO/RJ/FL"
 	#
-	$_spacer = " "
 	$_total_header_length = $_label_size.Length + $_label_percent_complete.Length + $_label_size_plotted.Length + $_label_eta.Length + $_label_replot.Length + $_label_sectors_per_hour.Length + $_label_minutes_per_sectors.Length + $_label_rewards.Length + $_label_misses.Length
 	$_total_header_labels = 10
 	#
-	$_individual_farmer_metrics_raw = ""
-	[array]$_individual_farmer_state_arr = $null
+	## 11/18 changes start
+	#$_individual_farmer_metrics_raw = ""
+	#[array]$_individual_farmer_state_arr = $null
+	$_process_resp_raw = $null
+	## 11/18 changes end
 	$_b_process_running_ok = $false
 	if ($_io_individual_farmer_id) {
 		#
@@ -2831,8 +2934,24 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_hostname = $_host_friendly_name
 		}
 		#
-		$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-		$_b_process_running_ok = $_individual_farmer_state_arr[1]
+		## 11/18 changes start
+		#$_individual_farmer_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+		#$_b_process_running_ok = $_individual_farmer_state_arr[1]
+		$_process_resp_raw = $null
+		foreach ($_process_status_arr_obj in $script:_process_status_arr)
+		{
+			if ($_process_status_arr_obj)
+			{
+				if ($_process_status_arr_obj.Id -eq $_host_url)
+				{
+					$_b_process_running_ok = $_process_status_arr_obj.ProcessStatus
+					$_process_resp_raw = $_process_status_arr_obj.ProcessResp
+					break
+				}
+			}
+			else {break}
+		}
+		## 11/18 changes end
 		
 		$_total_spacer_length = $script:_label_all_dash.Length
 		$_num_cols = $_total_spacer_length + 2		# extra seperators at start & end of line
@@ -2910,13 +3029,37 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		Write-Host $_console_msg -ForegroundColor $_fg_color_black -BackgroundColor $_console_msg_color -nonewline
 
 		Write-Host ", " -nonewline
-		Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
-		Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
-		$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host:").Length + $_hostname.Length
+
+
+		## 11/21 change start
+		#Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
+		#Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
+		#$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host:").Length + $_hostname.Length
+		if ($_process_type.toLower() -eq "farmer" -and $script:_b_cluster_mode) 
+		{
+			Write-Host "Host [Cluster Id]:" -nonewline -ForegroundColor $_farmer_header_color
+			$_cluster_identifier = fGetFarmerMatchInCluster $_host_url
+			$_cluster_identifier_disp = " [" + $_cluster_identifier + "]"
+			Write-Host ($_hostname + $_cluster_identifier_disp) -nonewline -ForegroundColor $_farmer_header_data_color
+			$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host [Cluster Id]:").Length + $_hostname.Length + $_cluster_identifier_disp.Length
+		}
+		else
+		{
+			Write-Host "Host:" -nonewline -ForegroundColor $_farmer_header_color
+			Write-Host $_hostname -nonewline -ForegroundColor $_farmer_header_data_color
+			$_process_header_filler_length += $_console_msg.Length + (", ").Length + ("Host:").Length + $_hostname.Length
+		}
+		## 11/21 change end
+
+
+
+
 		#
 		#
-		$_individual_farmer_metrics_raw = $_individual_farmer_state_arr[0]
-		$_individual_farmer_metrics_formatted_arr = fParseMetricsToObj $_individual_farmer_metrics_raw
+		## 11/18 change start
+		#$_individual_farmer_metrics_raw = $_individual_farmer_state_arr[0]
+		#$_individual_farmer_metrics_formatted_arr = fParseMetricsToObj $_individual_farmer_metrics_raw
+		## 11/18 change end
 		
 		# header lables
 		$_b_write_header = $true
@@ -4098,9 +4241,11 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	# Refresh
 	#Write-Host "Last refresh on       : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -ForegroundColor $_info_label_data_color;
 	#$_num_rows += 1
-	Write-Host "Last refresh on : " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ",    Latest autonomys cli github version : " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -ForegroundColor $_gitVersionDispColor
+	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version : " -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
+	Write-Host ", Balance (AI3): " -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
@@ -4109,6 +4254,58 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
 	#
 }
+
+
+## 11/21 change start
+function fGetFarmerMatchInCluster ([string]$_io_host_url) {
+	$_tmp_host_ip = $_io_host_url.split(":")
+	# match farmer metrics against host from config
+	$_b_disk_plot_id_match_found = $false
+	$_io_cluster_id_seq_disp = "-"
+	#
+	[array]$_tmp_disk_metrics_arr = $null
+	foreach ($_farmer_disk_metrics_arr_obj in $script:_farmer_disk_metrics_arr)
+	{
+		if ($_farmer_disk_metrics_arr_obj)
+		{
+			if ($_farmer_disk_metrics_arr_obj.Id -eq $_io_host_url)
+			#if ($_farmer_disk_metrics_arr_obj.Id -eq $_tmp_host_ip[0])
+			{
+				$_tmp_disk_metrics_arr = $_farmer_disk_metrics_arr_obj.MetricsArr
+				break
+			}
+		}
+	}
+	##
+	$_tmp_disk_UUId_arr = $_tmp_disk_metrics_arr[0].Id
+	for ($_ss_farmer_obj_arr_pos = 0; $_ss_farmer_obj_arr_pos -lt $script:_ss_farmer_obj_arr.Count; $_ss_farmer_obj_arr_pos++)
+	{
+		$_ss_farmer_obj_arr_item = $script:_ss_farmer_obj_arr[$_ss_farmer_obj_arr_pos]
+		$_nats_farmer_hostname = $_ss_farmer_obj_arr_item.IP.toString()
+		if ($_tmp_host_ip[0] -ne $_nats_farmer_hostname) { continue }
+		$_nats_farmer_subscriptions_arr = $_ss_farmer_obj_arr_item.Subscriptions
+		foreach ($_tmp_disk_UUId_obj in $_tmp_disk_UUId_arr)
+		{
+			if ($_tmp_disk_UUId_obj) {
+				for ($_nats_farmer_subscriptions_arr_pos = 0; $_nats_farmer_subscriptions_arr_pos -lt $_nats_farmer_subscriptions_arr.Count; $_nats_farmer_subscriptions_arr_pos++)
+				{
+					if ($_nats_farmer_subscriptions_arr[$_nats_farmer_subscriptions_arr_pos].toLower().IndexOf($_tmp_disk_UUId_obj.Id.toLower()) -ge 0)
+					{
+						$_b_disk_plot_id_match_found = $true
+						$_io_cluster_id_seq_disp = $_ss_farmer_obj_arr_item.Seq_no
+						break
+					}
+				}
+			}
+			if ($_b_disk_plot_id_match_found) { break }
+		}
+		if ($_b_disk_plot_id_match_found) { break }
+	}
+	#return $_b_disk_plot_id_match_found
+	return $_io_cluster_id_seq_disp
+}
+## 11/21 change end
+
 
 function fDisplayHelpSummary() {
 	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,EX=Expired,"

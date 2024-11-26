@@ -11,7 +11,10 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 		$_farmer_metrics_raw = ""
 		$_node_metrics_raw = ""
 		$_host_friendly_name = ""
-		[array]$_process_state_arr = $null
+		## 11/18 changes start
+		#[array]$_process_state_arr = $null
+		$_process_resp_raw = $null
+		## 11/18 changes end
 		if ($_io_farmers_hostip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_io_farmers_hostip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
 			$_config = $_io_farmers_hostip_arr[$arrPos].toString().split(":").Trim(" ")
 			$_process_type = $_config[0].toString()
@@ -45,9 +48,25 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				{
 					$_hostname = $_host_friendly_name
 				}
-
-				$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-				$_b_process_running_ok = $_process_state_arr[1]
+				#
+				## 11/18 changes start
+				#$_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
+				#$_b_process_running_ok = $_process_state_arr[1]
+				$_process_resp_raw = $null
+				foreach ($_process_status_arr_obj in $script:_process_status_arr)
+				{
+					if ($_process_status_arr_obj)
+					{
+						if ($_process_status_arr_obj.Id -eq $_host_url)
+						{
+							$_b_process_running_ok = $_process_status_arr_obj.ProcessStatus
+							$_process_resp_raw = $_process_status_arr_obj.ProcessResp
+							break
+						}
+					}
+					else {break}
+				}
+				## 11/18 changes end
 				#
 				# get process header information
 				$_process_status = "Running"
@@ -61,7 +80,10 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 				$_node_sync_state_disp = ""
 				$_node_peers_connected = ""
 				if ($_process_type.toLower() -eq "node") {				# get node metrics
-					$_node_metrics_raw = $_process_state_arr[0]
+					## 11/18 changes start
+					#$_node_metrics_raw = $_process_state_arr[0]
+					$_node_metrics_raw = $_process_resp_raw
+					## 11/18 changes end
 					[void]$_node_metrics_raw_arr.add($_node_metrics_raw)
 					$_node_metrics_formatted_arr = fParseMetricsToObj $_node_metrics_raw_arr[$_node_metrics_raw_arr.Count - 1]
 
@@ -92,7 +114,10 @@ function fGetDataForHtml ([array]$_io_farmers_hostip_arr) {
 
 			if ($_process_type.toLower() -ne "farmer") { continue }
 
-			$_farmer_metrics_raw = $_process_state_arr[0]
+			## 11/18 change start
+			#$_farmer_metrics_raw = $_process_state_arr[0]
+			$_farmer_metrics_raw = $_process_resp_raw
+			## 11/18 change end
 			[void]$_farmers_metrics_raw_arr.add($_farmer_metrics_raw)
 			$_farmer_metrics_formatted_arr = fParseMetricsToObj $_farmers_metrics_raw_arr[$_farmers_metrics_raw_arr.Count - 1]
 			#
