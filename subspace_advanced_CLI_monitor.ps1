@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.3.8"
+	$_monitor_file_name = "v0.3.9"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -61,9 +61,7 @@ function main {
 	$script:_b_write_process_details_to_console = $false
 	$script:_b_write_process_summary_to_console = $true
 	#
-	## 11/21 - change start
 	$script:_cluster_id_seq = 0
-	## 11/21 - change end
 	$script:_nats_server_name = ""
 	$script:_b_cluster_mode = $false
 	$script:_b_disable_farmer_display_at_cluster = $true	#disabled by default
@@ -88,7 +86,7 @@ function main {
 	$_balance_refresh_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	####
 	
-	#fResizePSWindow 40 125 $true
+	$script:_b_windows_host = fCheckPlatformType
 	Clear-Host
 	
 	try {
@@ -127,6 +125,8 @@ function main {
 				$_html_black = "black"
 				$_html_yellow = "yellow"
 				$_html_gray = "gray"
+				$_html_dark_blue = "darkblue"
+				$_html_dark_magenta = "darkmagenta"
 
 				$_farmers_metrics_raw_arr = [System.Collections.ArrayList]@()
 				$_node_metrics_raw_arr = [System.Collections.ArrayList]@()
@@ -156,14 +156,11 @@ function main {
 						$_api_host_ip = $_api_host_arr[0]
 						$_api_host_port = $_api_host_arr[1]
 						
-						#Write-Host ("_api_host_ip: " + $_api_host_ip)
-						#Write-Host ("_api_host_port: " + $_api_host_port)
 						$_api_host_url = $_api_host_ip + ":" + $_api_host_port
 						if ($_api_host_ip -eq "0.0.0.0" ){ $_api_host_url = "*:" + $_api_host_port }
 						
 						$_url_prefix = "http://" + $_api_host_url + "/"
 						$_url_prefix_listener = $_url_prefix.toString().replace("http://127.0.0.1", "http://localhost")
-						#Write-Host ("_url_prefix_listener: " + $_url_prefix_listener)
 
 						$_http_listener = New-Object System.Net.HttpListener
 						$_http_listener.Prefixes.Add($_url_prefix_listener)
@@ -178,12 +175,9 @@ function main {
 				#Write data to appropriate destination
 				if ($_b_console_disabled) {
 					$_b_request_processed = fInvokeHttpRequestListener  $_farmers_ip_arr $_context_task
-					#$_http_listener.Close()	
 					$script:_b_first_time = $false
 				}
 				else{
-					##fWriteDetailDataToConsole $_farmers_ip_arr
-					#fGetSummaryDataForConsole $_farmers_ip_arr
 					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
@@ -271,7 +265,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			#
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
-			#Write-Host
 			Write-Host
 			Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
@@ -290,7 +283,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
 			##
 			Write-Host
-			#if ($_seconds_elapsed -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true) {
 			if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds -or $script:_b_first_time -eq $true -or $script:_b_user_refresh -eq $true) { 
 					$_farmers_ip_arr = $_io_farmers_ip_arr
 					if ($Stopwatch.Elapsed.TotalSeconds -ge $script:refreshTimeScaleInSeconds)
@@ -300,7 +292,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 						$_farmers_ip_arr = fReloadConfig
 						$Stopwatch.Restart()
 					}
-					#fWriteDetailDataToConsole $_io_farmers_ip_arr
 					if ($script:_b_write_process_details_to_console)
 					{
 						fWriteDetailDataToConsole $_farmers_ip_arr
@@ -319,7 +310,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 					$_spinner = '|', '/', '-', '\'
 					$_spinnerPos = 0
 					$_end_dt = [datetime]::UtcNow.AddSeconds($script:refreshTimeScaleInSeconds)
-					#[System.Console]::CursorVisible = $false
 					
 					$script:_b_first_time = $false
 					while (($_remaining_time = ($_end_dt - [datetime]::UtcNow).TotalSeconds) -gt 0) {
@@ -345,14 +335,12 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$script:_b_write_process_summary_to_console = $false
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
-									#Write-Host
 									Write-Host
 									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-									#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									Write-Host
@@ -374,7 +362,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$script:_b_write_process_summary_to_console = $true
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
-									#Write-Host
 									Write-Host
 									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
@@ -507,7 +494,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 						} 
 						####
 						Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
-						#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
 						Write-Host "Refreshing in " -NoNewline 
 						Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
 						Write-Host " seconds..." -NoNewline 
@@ -528,14 +514,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	#
 	[array]$_process_metrics_arr = $null
 	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
-	##if ($script:_global_process_metrics_arr)
-	##{
-	##	$_process_metrics_arr = $script:_global_process_metrics_arr
-	##}
-	##else
-	##{
-	##	$_process_metrics_arr = fGetDataForHtml $_io_farmers_ip_arr
-	##}
 	$_process_header_arr = $_process_metrics_arr[0].ProcessHeader
 	$_process_sub_header_arr = $_process_metrics_arr[0].ProcessSubHeader
 	$_process_disk_data_arr = $_process_metrics_arr[0].ProcessData
@@ -595,44 +573,23 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 		{
 			if ($_process_farm_sub_header.UUId -eq $_disk_data_obj.UUId)
 			{
-				#$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatusHold
 				$_tmp_disk_replot_sctors += $_disk_data_obj.ReplotStatus + $_disk_data_obj.ExpiringSectors
 			}
 		}
 			####
 		if ($_process_farm_sub_header.TotalSectors -ne "-")
 		{
-			#$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / [int]($_process_farm_sub_header.TotalSectors)) * 100, 1)
 			$_overall_progress = [math]::Round(([int]($_process_farm_sub_header.CompletedSectors) / ([int]($_process_farm_sub_header.TotalSectors) - $_tmp_disk_replot_sctors)) * 100, 2)
 			$_overall_progress_disp = $_overall_progress.toString() + "%"
 			#
 			$_overall_plotted_size = [int]($_process_farm_sub_header.CompletedSectors) + $_tmp_disk_replot_sctors
 			$_overall_plotted_size_TiB = [math]::Round($_overall_plotted_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
-			#if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.MinutesPerSectorAvg -ne "-" -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
 			if ($_process_farm_sub_header.RemainingSectors -ne "-" -and $_process_farm_sub_header.SectorTime -ne $null -and $_process_farm_sub_header.SectorsPerHourAvg -ne 0 -and $_process_farm_sub_header.TotalDisksForETA -ne 0) {
-				#$_process_sector_time = New-TimeSpan -seconds ($_process_farm_sub_header.SectorTime / $_process_farm_sub_header.TotalDisksForETA)
 				$_tmp_sector_time_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
 				$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
 				$_tmp_sectors_per_hour_farm = [math]::Round([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA, 1)
-				#$_tmp_sector_time_farm = 0
-				#if ($_tmp_sectors_per_hour_farm -gt 0)
-				#{
-				#	$_tmp_sector_time_farm = [double](3600 / $_tmp_sectors_per_hour_farm)
-				#}
-				##
-				#if ($_tmp_sector_time_farm -gt 0)
-				#{
-				#	$_process_sector_time = New-TimeSpan -seconds $_tmp_sector_time_farm
-				#}
 
 				$_b_i_was_here = $true
-				##$_process_eta = [double]($_process_farm_sub_header.SectorTime * $_process_farm_sub_header.RemainingSectors)
-				#$_temp_sector_time_per_farm = 0.0
-				#if ([double]($_process_farm_sub_header.SectorsPerHourAvg) -gt 0)
-				#{
-				#	$_temp_sector_time_per_farm = [double](3600/ ([double]($_process_farm_sub_header.SectorsPerHourAvg) * $_process_farm_sub_header.TotalDisksForETA))
-				#}
-				#$_process_eta = [double]($_temp_sector_time_per_farm * $_process_farm_sub_header.RemainingSectors)
 				$_temp_total_sectors_per_farm = 0
 				if ($_process_farm_sub_header.TotalSectors -ne "-")
 				{
@@ -648,7 +605,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				$_process_eta_disp = fConvertTimeSpanToString $_process_eta_obj
 			}
 			$_process_size = [int]($_process_farm_sub_header.TotalSectors)
-			#$_process_size = [int]($_process_farm_sub_header.TotalSectors) + $_tmp_disk_replot_sctors
 			$_process_size_TiB = [math]::Round($_process_size * $script:_mulitplier_size_converter / $script:_TiB_to_GiB_converter, 2)
 
 			$_process_size_disp = $_process_size_TiB.ToString()
@@ -678,13 +634,11 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_chart_plotted_size_data += '"' + $_overall_plotted_size_TiB + '"'
 
 			if ($_b_i_was_here) {
-				#$_chart_sector_time_data += '"' + $_process_sector_time.minutes.ToString() + "m " + $_process_sector_time.seconds.ToString() + "s" + '"' 
 				$_chart_sector_time_data += '"' + (fConvertTimeSpanToString $_process_sector_time) + '"' 
 			}
 			else {
 				$_chart_sector_time_data += '"' + 0 + "m " + 0 + "s" + '"' 
 			}
-			#$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
 			$_chart_total_sector_time_data += '"' + [math]::Round($_process_sector_time.TotalSeconds, 2) + '"' 
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
@@ -698,7 +652,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			else {
 				$_chart_total_sectors_per_hour_data += '"' + 0 + '"'
 			}
-			#$_chart_eta_data += '"' + $_process_eta + '"'
 			$_chart_eta_data += '"' + $_process_eta_disp + '"'
 			$_chart_size_data += '"' + $_process_size_disp + '"'
 			$_chart_uptime_data += '"' + $_process_farm_sub_header.Uptime + '"'
@@ -718,7 +671,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			else {
 				$_chart_sector_time_data += ',"' + 0 + "m " + 0 + "s" + '"' 
 			}
-			#$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds / 60, 1) + '"' 
 			$_chart_total_sector_time_data += ',"' + [math]::Round($_process_sector_time.TotalSeconds, 1) + '"' 
 			if ($_b_i_was_here) {
 				if ($_process_sector_time.TotalSeconds -gt 0)
@@ -732,7 +684,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			else {
 				$_chart_total_sectors_per_hour_data += ',"' + 0 + '"'
 			}
-			#$_chart_eta_data += ',"' + $_process_eta + '"'
 			$_chart_eta_data += ',"' + $_process_eta_disp + '"'
 			$_chart_size_data += ',"' + $_process_size_disp + '"'
 			$_chart_uptime_data += ',"' + $_process_farm_sub_header.Uptime + '"'
@@ -858,7 +809,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				}
 				</script>'
 
-	#$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_process_disk_data_js_arr 'Farm Plotting Progress'
 	$_html_bar_chart = fBuildBarChart $_chart_labels $_chart_alt_labels $_chart_progess_data $_chart_plotted_size_data $_chart_sector_time_data $_chart_eta_data $_chart_size_data $_chart_uptime_data $_chart_total_sectors_per_hour_data $_process_disk_data_js_arr 'Farm Plotting Progress'
 	#$_html_radar_chart = fBuildRadarChart $_chart_labels $_chart_alt_labels $_chart_perf_sectorsPerHour_data $_chart_perf_minutesPerSector_data $_chart_rewards_data $_process_disk_data_js_arr 'Farm Performance (Avg)'
 	
@@ -910,8 +860,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_html_full += "<br>"
 	$_html_full += "<br>"
 	$_html_full += "<br>"
-	#$_html_full += "<Table>"
-	#$_html_full += "<tr><td>"
 
 	$_html_full += $_html_bar_chart
 	####11/11 change start
@@ -950,7 +898,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 				'</body>
 				</html>'
 	
-	#$_context = $_io_context_task
 	
 	# read request properties
 	$_request_method = $_context.Request.HttpMethod
@@ -964,7 +911,6 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 	$_context.Response.StatusCode = 200
 	if (($_request_method -eq "GET" -or $_request_method -eq "get") -and $_request_url_endpoint.toLower() -eq "/summary") {
 		$_console_log =  "valid url: " + $_request_url + ", method: " + $_request_method
-		#Write-Host $_console_log
 		$_response = $_html_full
 		if ($_response) {
 			$_response_bytes = [System.Text.Encoding]::UTF8.GetBytes($_response)
@@ -1013,7 +959,6 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					#Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
 					Write-Host
 					##
 					## check monitor git version and display variance in console
@@ -1158,7 +1103,6 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 		#
 		[System.Console]::CursorVisible = $false
 		Write-Host -NoNewline ("`r {0} " -f $_spinner[$_spinnerPos++ % 4]) -ForegroundColor White 
-		#Write-Host -NoNewLine ("Refreshing in {0,3} seconds..." -f [Math]::Ceiling($_remaining_time))
 		Write-Host "Refreshing in " -NoNewline 
 		Write-Host ([Math]::Ceiling($_remaining_time)) -NoNewline -ForegroundColor black -BackgroundColor gray
 		Write-Host " seconds..." -NoNewline 
@@ -1175,9 +1119,8 @@ function fReloadConfig() {
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
 	$script:_b_cluster_mode = $false
-	## 11/21 - change start
 	$script:_cluster_id_seq = 0
-	## 11/21 - change end
+	$script:_vlt_address = ""
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
 		if ($_process_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_process_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
@@ -1185,14 +1128,13 @@ function fReloadConfig() {
 			$_process_type = $_config[0].toString()
 			if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $script:_api_enabled = $_config[1].toString()}
 			elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$script:_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
+			elseif ($_process_type.toLower().IndexOf("balance-refresh") -ge 0) { $script:_vlt_balance_refresh_frequency = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
 			}
-			#elseif ($_process_type.toLower().IndexOf("pswindowresizeenabled") -ge 0) { $script:_b_ps_window_resize_enabled = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("send-an-alert") -ge 0) { $script:_alert_category_txt = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("wallet-address") -ge 0) { $script:_vlt_address = $_config[1].toString() }
-			elseif ($_process_type.toLower().IndexOf("balance-refresh") -ge 0) { $script:_vlt_balance_refresh_frequency = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
@@ -1218,7 +1160,6 @@ function fReloadConfig() {
 			# get max length for host alt name
 			elseif ($_process_type.toLower() -eq "node" -or $_process_type.toLower() -eq "farmer") { 
 				$_process_ip = $_config[1].toString()
-				####11/12 change start
 				$_host_port = $_config[2].toString()
 				$_host_url = $_process_ip + ":" + $_host_port
 
@@ -1232,7 +1173,6 @@ function fReloadConfig() {
 					$_hostname = $_host_friendly_name
 				}
 
-				####11/12 change end
 				$_process_hostname_alt = ""
 				if ($_config.Count -gt 3) {
 					$_process_hostname_alt = $_config[3].toString()
@@ -1263,7 +1203,6 @@ function fReloadConfig() {
 							$script:_process_farmer_alt_name_max_length = $_process_hostname.Length
 						}
 						#
-						####11/12 change start
 						$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
 						$_tmp_process_status_arr_obj = [PSCustomObject]@{
 							Id				= $_host_url
@@ -1281,7 +1220,6 @@ function fReloadConfig() {
 							MetricsArr		= $_tmp_disk_metrics_arr
 						}
 						$script:_farmer_disk_metrics_arr += $_tmp_disk_metrics_arr_obj
-						####11/12 change end
 						#
 					}
 				}
@@ -1294,12 +1232,13 @@ function fReloadConfig() {
 		$script:_vlt_balance_refresh_frequency = 3600	#revert to default hourly refresh if config value was emptied
 	}
 	if ($script:_vlt_address.Length -gt 0 -and $script:_vlt_address -ne $null) {
-		if ($script:_b_first_time -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
+		if ($script:_b_first_time -or $script:_vlt_balance -eq 0 -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
 		{
 			$_balance_refresh_stopwatch.Restart()
 			$script:_vlt_balance = fGetVltBalance $script:_node_url $script:_vlt_address
 		}
 	}
+	else { 	$script:_vlt_balance = 0 }
 	#
 	## return from function
 	return $_process_ip_arr
@@ -1308,8 +1247,7 @@ function fReloadConfig() {
 function  fGetVltBalance([string]$_io_node_url, [string]$_io_vlt_address) {
 	$_balance = 0
 	try {
-		$_b_windows_host = fCheckPlatformType
-		if ($_b_windows_host)
+		if ($script:_b_windows_host)
 		{
 			$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
 		}
@@ -1335,7 +1273,6 @@ function fGetElapsedTime ([object]$_io_obj) {
 
 function fConvertTimeSpanToString ([object]$_io_ts_obj) {
 	$_resp_ts_str = "-"
-	#$_resp_ts_str = $_io_ts_obj.days.toString() + "d " + $_io_ts_obj.hours.toString() + "h " + $_io_ts_obj.minutes.toString() + "m"
 	if ($_io_ts_obj) {
 		if ($_io_ts_obj.days -gt 0)
 		{
@@ -1505,8 +1442,7 @@ function fCheckPlatformType () {
 
 function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
 	#if ($_b_ps_window_resize_enabled.toLower() -eq 'y')
-	$_b_windows_host = fCheckPlatformType
-	if ($_b_windows_host)
+	if ($script:_b_windows_host)
 	{
 		$_height = $_io_ps_window_height + 8
 		$_width = $_io_ps_window_width + 2
@@ -1535,7 +1471,6 @@ function fPingMetricsUrl ([string]$ioUrl) {
 		$_response = ""
 		$_fullUrl = "http://" + $ioUrl + "/metrics"
 		try {
-			#$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl -TimeoutSec 20
 			$farmerObj = Invoke-RestMethod -Method 'GET' -uri $_fullUrl -TimeoutSec 5
 			if ($farmerObj) {
 				$_response = $farmerObj.toString()
@@ -1712,7 +1647,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 	$_total_rewards_per_farmer = 0
 	#
 	##
-	## 11/6 start
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
 		if (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_auditing_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
@@ -1750,7 +1684,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 					TotalElapsedTime			= $_uptime_value_int_
 				}
 				#
-				#$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
 				$_b_add_item_to_arr = $true
 				for ($_h = 0; $_h -lt $_most_recent_uptime_by_farmId_arr.count; $_h++)
 				{
@@ -1773,7 +1706,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 		##
 		{
 			$_uptime_value_int_ = [int]($_metrics_obj.Value)
-			#if ($_uptime_seconds -lt $_uptime_value_int_)
 			if ($_uptime_seconds -le 0)
 			{
 				$_uptime_seconds = $_uptime_value_int_
@@ -1827,13 +1759,11 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			}
 		}
 	}
-	## 11/6 end
 	##
 	foreach ($_metrics_obj in $_io_farmer_metrics_arr)
 	{
 		$_b_incremental_sector_count_changed = $false
 		##
-		#if ($_metrics_obj.Name.IndexOf("subspace_farmer_sectors_total_sectors") -ge 0 -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		if (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sectors_total_sectors") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sectors_total_sectors") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		##
 		{
@@ -1886,7 +1816,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						Id				= $_plot_id
 						ExpiredSectors	= [int]($_sectors)
 					}
-					#$script:_replot_sector_count_hold_arr += $_expired_plots_info
 					$_b_add_exp_arr_id = $true
 					for ($_h = 0; $_h -lt $script:_replot_sector_count_hold_arr.count; $_h++)
 					{
@@ -1906,43 +1835,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 				}
 			}
 		}
-<#
-		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_auditing_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_auditing_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
-		##
-		{
-			$_uptime_value_int_ = [int]($_metrics_obj.Value)
-			if ($_uptime_seconds -lt $_uptime_value_int_)
-			{
-				$_uptime_seconds = $_uptime_value_int_
-			}
-			$_unique_farm_id = $_metrics_obj.Instance
-			$_farm_id_info = [PSCustomObject]@{
-				Id		= $_unique_farm_id
-			}
-			#
-			$_b_add_UUId_arr_id = $true
-			for ($_h = 0; $_h -lt $_resp_UUId_arr.count; $_h++)
-			{
-				if ($_resp_UUId_arr[$_h]) {
-					if ($_unique_farm_id -eq $_resp_UUId_arr[$_h].Id)
-					{
-						$_b_add_UUId_arr_id = $false
-						break
-					}
-				}
-			}
-			if ($_b_add_UUId_arr_id)
-			{
-				$_resp_UUId_arr += $_farm_id_info
-			}
-			$_elapsed_time_info = [PSCustomObject]@{
-				Id							= $_unique_farm_id
-				TotalElapsedTime			= $_uptime_value_int_
-			}
-			#
-			$_most_recent_uptime_by_farmId_arr += $_elapsed_time_info
-		}
-#>
 		##
 		elseif (($_metrics_obj.Name.toLower().IndexOf("subspace_farmer_farm_sector_downloading_time_seconds_count") -ge 0 -or $_metrics_obj.Name.toLower().IndexOf("subspace_farmer_sector_downloading_time_seconds_count") -ge 0) -and $_metrics_obj.Id.IndexOf("farm_id") -ge 0) 
 		##
@@ -2131,7 +2023,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 			{
 				$_farmer_id = $_metrics_obj.Instance -split ","
 				$_farmer_disk_id_rewards = $_farmer_id[0]
-				#if ($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) {
 				switch ($true) {
 					($_metrics_obj.Criteria.toLower().IndexOf("success") -ge 0) 
 					{
@@ -2140,12 +2031,9 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						$_disk_rewards_metric = [PSCustomObject]@{
 							Id		= $_farmer_disk_id_rewards
 							Rewards	= $_farmer_disk_proving_success_count
-							#Misses	= $_farmer_disk_proving_misses_count
 						}
 						$_resp_rewards_arr += $_disk_rewards_metric
 					}
-				#elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0) {
-				#elseif ($_metrics_obj.Criteria.toLower().IndexOf("timeout") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("rejected") -ge 0 -or $_metrics_obj.Criteria.toLower().IndexOf("failed") -ge 0) {
 					default  
 					{
 						$_farmer_disk_proving_misses_count = [int]($_metrics_obj.Value)
@@ -2164,12 +2052,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							}
 						}
 								
-						#$_disk_misses_metric = [PSCustomObject]@{
-						#	Id		= $_farmer_disk_id_rewards
-						#	#Rewards	= $_farmer_disk_proving_success_count
-						#	Misses	= $_farmer_disk_proving_misses_count
-						#}
-						#$_resp_misses_arr += $_disk_misses_metric
 						$_b_miss_captured_prev = $false
 						for ($_m = 0; $_m -lt $_resp_misses_arr.Count; $_m++)
 						{
@@ -2188,7 +2070,6 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 						{
 							$_disk_misses_metric = [PSCustomObject]@{
 								Id			= $_farmer_disk_id_rewards
-								#Rewards	= $_farmer_disk_proving_success_count
 								Misses		= $_farmer_disk_proving_misses_count
 								Timeout		= $_farmer_disk_proving_misses_timeout_count
 								Rejected	= $_farmer_disk_proving_misses_rejected_count
@@ -2237,7 +2118,6 @@ function fSendDiscordNotification ([string]$ioUrl, [string]$ioMsg) {
 	$JSON = @{ "content" = $ioMsg; } | convertto-json
 	if ($ioUrl -and $ioUrl.Trim(" ").length -gt 0)
 	{
-		#Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 		$_resp = Invoke-WebRequest -uri $ioUrl -Method POST -Body $JSON -Headers @{'Content-Type' = 'application/json'}
 	}
 }
@@ -2260,20 +2140,6 @@ function fSendTelegramBotNotification ([string]$_io_bot_msg) {
 	$_bot_url = $_host_base_url + $_bot_api_token + $_host_url_endpoint
 	## fetch chat_id for bot alert
 	$_bot_resp = fInvokeTelegramBot $_bot_url $_bot_invoke_method
-	<#
-	$_bot_chat_id = ""
-	foreach ($_chats in $_bot_resp)
-	{
-		if($_chats.message.chat -and  $_chats.message.chat.type)
-		{
-			if ($_chats.message.chat.type.toString() -eq "private")
-			{
-				$_bot_chat_id = $_chats.message.chat.id.toString()
-				break
-			}
-		}
-	}
-	#>
 	$_bot_chat_id = $script:_telegram_chat_id
 	#
 	## outbound msg url endpoint
@@ -2319,16 +2185,8 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 		$_alert_text = $_io_process_type + " status: Stopped, Hostname:" + $_io_hostname
 		try {
 			$_seconds_elapsed = $_alert_stopwatch.Elapsed.TotalSeconds
-			#if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 			if ($script:_b_first_time -eq $true -or $_seconds_elapsed -ge $script:_alert_frequency_seconds) {
 				$_b_generate_selective_alert = $false
-				#if ($script:_b_cluster_mode) {
-				#	if ($_io_process_type.toLower() -eq "node" -and ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0))
-				#	{
-				#		$_b_generate_selective_alert = $true
-				#	}
-				#}
-				#elseif ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf($_io_process_type.toLower()) -ge 0) {
 				if ($script:_alert_category_txt.toLower().IndexOf("all") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("everything") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf("cluster") -ge 0 -or $script:_alert_category_txt.toLower().IndexOf($_io_process_type.toLower()) -ge 0) {
 					$_b_generate_selective_alert = $true
 				}
@@ -2378,14 +2236,15 @@ function fCheckGitNewVersion ([string]$_io_git_url) {
 	.{
 		$gitVersionArr = [System.Collections.ArrayList]@()
 		try {
-		$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri $_io_git_url 2>$null
+			$gitVersionCurrObj = Invoke-RestMethod -Method 'GET' -uri $_io_git_url 2>$null
 		}
 		catch {}
 		
 		if ($gitVersionCurrObj) {
-			$tempArr_1 = $gitVersionArr.add($gitVersionCurrObj.tag_name)
+			[void]$gitVersionArr.add($gitVersionCurrObj.tag_name)
 			$gitNewVersionReleaseDate = (Get-Date $gitVersionCurrObj.published_at).ToLocalTime() 
-			$tempArr_1 = $gitVersionArr.add($gitNewVersionReleaseDate)
+			[void]$gitVersionArr.add($gitNewVersionReleaseDate)
+			[void]$gitVersionArr.add($gitVersionCurrObj.body)
 		}
 	}|Out-Null
 	return $gitVersionArr
@@ -2397,7 +2256,13 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 	{
 		if ($_monitor_file_name -ne $_io_process_git_version[0])
 		{
-			Write-Host ("New monitor release available: Autonomys_monitor_" + $_io_process_git_version[0].toString() + ", dated: " + $_io_process_git_version[1].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
+			#Write-Host ("New monitor release available: " + $_io_process_git_version[0].toString() + ", Dated: " + $_io_process_git_version[1].toString('yyyy-MM-dd') + ", ChangeLog: " + $_io_process_git_version[2].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
+			Write-Host "New monitor release available: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_line_spacer_color
+			Write-Host $_io_process_git_version[0].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_line_spacer_color
+			Write-Host ", Dated: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_line_spacer_color
+			Write-Host $_io_process_git_version[1].toString('yyyy-MM-dd') -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_line_spacer_color
+			Write-Host ", ChangeLog: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_line_spacer_color
+			Write-Host $_io_process_git_version[2].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_line_spacer_color
 			Write-Host
 		}
 		else 
@@ -2406,6 +2271,5 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 		}
 	}
 }
-
 
 main

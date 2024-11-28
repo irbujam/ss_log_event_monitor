@@ -1,5 +1,4 @@
 
-#function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_minutesPerSector_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 function fBuildBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_io_chart_plotted_size_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 {
 	$_io_html_bar_chart = ""
@@ -507,7 +506,6 @@ function fBuildPieChart ([string]$_io_chart_labels, [string]$_chart_alt_labels, 
 }
 
 
-#function fBuildDonutProgressBarChart ([string]$_io_chart_labels, [string]$_io_chart_alt_labels, [string]$_io_chart_progress_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_SectorTimes_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_chart_label, [string]$_io_chart_alt_label, [string]$_io_chart_progress_data, [string]$_io_chart_plotted_size_data, [string]$_chart_sector_time_data, [string]$_io_chart_eta_data, [string]$_io_chart_size_data, [string]$_io_chart_uptime_data, [string]$_io_chart_sectorsPerHour_data, [string]$_io_chart_disk_data_arr, [string]$_io_chart_title)
 {
 	$_io_html_bar_chart = ""
@@ -640,4 +638,3 @@ function fBuildDonutProgressBarChart ([int]$_io_ind_chart_seq_num, [string]$_io_
 
 	return $_io_html_bar_chart
 }
-	
