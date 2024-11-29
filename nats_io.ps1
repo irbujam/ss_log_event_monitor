@@ -1,6 +1,3 @@
-<#  ------------------------------------------------------------------------------------------------
-	Script location on Github: https://github.com/irbujam/ss_log_event_monitor
-	--------------------------------------------------------------------------------------------- #>
 
 function fGenAlertNotifications ([string]$_io_alert_text) {
 	try {
@@ -67,7 +64,6 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 		if ($_nats_resp_obj) {
 			$_nats_connection_count = $_nats_resp_obj.connections.Count
 			$_nats_connections_arr = $_nats_resp_obj.connections
-			#Write-Host "_nats_connections_arr.Count = " $_nats_connections_arr.Count
 			for ($_nats_connections_arr_pos = 0; $_nats_connections_arr_pos -lt $_nats_connections_arr.Count; $_nats_connections_arr_pos++)
 			{
 				$_nats_connection_item = $_nats_connections_arr[$_nats_connections_arr_pos]
@@ -80,9 +76,7 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 					StartTime	= $_nats_connection_item.start
 					LastSeen	= $_nats_connection_item.last_activity
 					Uptime		= $_nats_connection_item.uptime
-					#10/18/2024 - start change
 					Subscriptions = $_nats_connection_item.subscriptions_list
-					#10/18/2024 - end change
 				}
 				[array]$_nats_connection_item_subs_arr = $_nats_connection_item.subscriptions_list
 
@@ -158,7 +152,6 @@ function fGetNatsServerClosedConnections ([string]$_io_nats_url) {
 		if ($_nats_resp_obj) {
 			$_nats_connection_count = $_nats_resp_obj.connections.Count
 			$_nats_connections_arr = $_nats_resp_obj.connections
-			#Write-Host "_nats_connections_arr.Count = " $_nats_connections_arr.Count
 			for ($_nats_connections_arr_pos = 0; $_nats_connections_arr_pos -lt $_nats_connections_arr.Count; $_nats_connections_arr_pos++)
 			{
 				$_nats_connection_item = $_nats_connections_arr[$_nats_connections_arr_pos]
@@ -323,17 +316,11 @@ $_b_cluster_information_printed = $true
 	##
 	$_header_filler_length = 0
 	
-	
-	## 11/21 - change start
 	$_cluster_id_seq_col_title = "Id"
 	$_cluster_id_seq_col_size = 2
-	## 11/21 - change end
-
 
 	if (!($_b_cluster_information_printed))
 	{
-		#$_console_msg = "|" 
-		#Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 		$_console_msg = " " 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 		# get the current header cursor position for repositioning later
@@ -353,9 +340,6 @@ $_b_cluster_information_printed = $true
 		#
 		Write-Host "" -ForegroundColor $_line_spacer_color
 		#
-		
-		
-		## 11/21 - change start
 		$_nats_server_header_title = $_cluster_id_seq_col_title
 		$_header_title = $_nats_server_header_title
 		$_console_msg = "|" 
@@ -363,8 +347,6 @@ $_b_cluster_information_printed = $true
 		$_header_filler_length += $_header_title.Length
 		$_console_msg = $_header_title
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		## 11/21 - change end
-		
 		
 		$_nats_server_header_title = "   Server Name   "
 		$_header_title = $_nats_server_header_title
@@ -380,14 +362,9 @@ $_b_cluster_information_printed = $true
 		#
 		Write-Host "" -ForegroundColor $_line_spacer_color
 		#
-		
-		
-		## 11/21 - change start
 		$_label_spacer = fBuildDynamicSpacer $_cluster_id_seq_col_size $_label_line_separator
 		$_console_msg = "|" + $_label_spacer
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		## 11/21 - change end
-		
 		
 		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
 		$_console_msg = "|" + $_label_spacer
@@ -402,9 +379,6 @@ $_b_cluster_information_printed = $true
 	[Console]::SetCursorPosition(0, ($_cluster_data_begin_row_pos.Y))
 	Write-Host "" -ForegroundColor $_line_spacer_color
 	#
-
-
-	## 11/21 - change start
 	$_console_msg = "|" 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	$_cluster_id_seq_disp = $script:_cluster_id_seq.toString()
@@ -412,8 +386,6 @@ $_b_cluster_information_printed = $true
 	$_console_msg = $_cluster_id_seq_disp
 	$script:_cluster_id_seq += 1
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-	## 11/21 - change end
-
 
 	$_console_msg = "|" 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -729,10 +701,8 @@ $_b_cluster_information_printed = $true
 		$_data_cache_CursorPosition = $host.UI.RawUI.CursorPosition
 	}
 	##
-	## 11/21 change start
 	if (!($script:_b_disable_farmer_display_at_cluster))
 	{
-	## 11/21 change end
 		##
 		if (!($_b_cluster_information_printed))
 		{
@@ -834,19 +804,6 @@ $_b_cluster_information_printed = $true
 							{	
 								$_hostname = $_host_friendly_name
 							}
-							#10/18/2024 - Start change
-							#if ($_ss_farmer_obj_arr_item.IP.toString() -eq $_host_ip)
-							#{
-							#	$_nats_farmer_hostname = $_hostname
-							#	$_ss_farmer_disp_name_length = $_nats_farmer_hostname.Length
-							#	break
-							#}
-							#
-							####11/12 change start
-							#$_tmp_process_state_arr = fGetProcessState $_process_type $_host_url $_hostname $script:_url_discord
-							#$_tmp_farmer_metrics_raw = $_tmp_process_state_arr[0]
-							#$_tmp_farmer_metrics_formatted_arr = fParseMetricsToObj $_tmp_farmer_metrics_raw
-							#$_tmp_disk_metrics_arr = fGetDiskSectorPerformance $_tmp_farmer_metrics_formatted_arr
 							[array]$_tmp_disk_metrics_arr = $null
 							foreach ($_farmer_disk_metrics_arr_obj in $script:_farmer_disk_metrics_arr)
 							{
@@ -860,13 +817,10 @@ $_b_cluster_information_printed = $true
 								}
 								else {break}
 							}
-							####11/12 change end
 							#
 							$_tmp_disk_UUId_arr = $_tmp_disk_metrics_arr[0].Id
 
-
 							$_nats_farmer_subscriptions_arr = $_ss_farmer_obj_arr_item.Subscriptions
-							#$_b_disk_plot_id_match_found = $false
 							foreach ($_tmp_disk_UUId_obj in $_tmp_disk_UUId_arr)
 							{
 								if ($_tmp_disk_UUId_obj) {
@@ -884,7 +838,6 @@ $_b_cluster_information_printed = $true
 								if ($_b_disk_plot_id_match_found) { break }
 							}
 							if ($_b_disk_plot_id_match_found) { break }
-							#10/18/2024 - End change
 						}
 					}
 				}
@@ -955,20 +908,16 @@ $_b_cluster_information_printed = $true
 			# get the current header data cursor position for repositioning later
 			$_data_farmer_CursorPosition = $host.UI.RawUI.CursorPosition
 		}
-	## 11/21 change start
 	}
-	## 11/21 change end
 	##
 	if (!($_b_cluster_information_printed))
 	{
 		# set cursor position to last header location
 		[Console]::SetCursorPosition($_header_farmer_CursorPosition.X, $_header_farmer_CursorPosition.Y)
-		## 11/21 change start
 		if ($script:_b_disable_farmer_display_at_cluster)
 		{
 			[Console]::SetCursorPosition($_header_cache_CursorPosition.X, $_header_cache_CursorPosition.Y)
 		}
-		## 11/21 change end
 		$_plotter_header_title = "     Plotter     "
 		$_header_title = $_plotter_header_title
 		$_console_msg = $_header_title
@@ -982,12 +931,10 @@ $_b_cluster_information_printed = $true
 		#
 		# set cursor position to last header line separator location
 		[Console]::SetCursorPosition($_line_separator_farmer_CursorPosition.X, $_line_separator_farmer_CursorPosition.Y)
-		## 11/21 change start
 		if ($script:_b_disable_farmer_display_at_cluster)
 		{
 			[Console]::SetCursorPosition($_line_separator_cache_CursorPosition.X, $_line_separator_cache_CursorPosition.Y)
 		}
-		## 11/21 change end
 		$_label_spacer = fBuildDynamicSpacer $_header_title.Length $_label_line_separator
 		$_console_msg = "|" + $_label_spacer + "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -1036,12 +983,10 @@ $_b_cluster_information_printed = $true
 			#
 			# set cursor position to first header data location
 			[Console]::SetCursorPosition($_data_farmer_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1+$_item_sequence_num))
-			## 11/21 change start
 			if ($script:_b_disable_farmer_display_at_cluster)
 			{
 				[Console]::SetCursorPosition($_data_cache_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1+$_item_sequence_num))
 			}
-			## 11/21 change end
 			#
 			$_console_msg = "|" 
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -1085,12 +1030,10 @@ $_b_cluster_information_printed = $true
 		#
 		# set cursor position to first header data location
 		[Console]::SetCursorPosition($_data_farmer_CursorPosition.X, ($_cluster_data_begin_row_pos.Y+1))
-		## 11/21 change start
 		if ($script:_b_disable_farmer_display_at_cluster)
 		{
 			[Console]::SetCursorPosition($_data_cache_CursorPosition.X, $_data_cache_CursorPosition.Y)
 		}
-		## 11/21 change end
 		#
 		$_console_msg = "|" 
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
@@ -1142,16 +1085,12 @@ $_b_cluster_information_printed = $true
 	$_console_msg = "|" 
 	for ($_cluster_header_column_num_pos = 0; $_cluster_header_column_num_pos -lt $_cluster_header_column_num; $_cluster_header_column_num_pos++)
 	{
-		## 11/21 - change start
 		if ($_cluster_header_column_num_pos -eq 0) 
 		{
 			$_console_msg += fBuildDynamicSpacer $_cluster_id_seq_col_size $_label_line_separator
 			$_console_msg += "|"
 		}
-		## 11/21 - change end
 		
-		## 11/21 change start
-		#$_console_msg += $_label_spacer + "|" 
 		if ($_cluster_header_column_num_pos -lt ($_cluster_header_column_num - 1))
 		{
 			$_console_msg += $_label_spacer + "|" 
@@ -1160,12 +1099,7 @@ $_b_cluster_information_printed = $true
 		{
 			$_console_msg += $_label_spacer + "|" 
 		}
-		## 11/21 change end
-		
 	}
-	#$_console_msg = " " 
-	#$_label_spacer = fBuildDynamicSpacer ($_cluster_header_column_size * $_cluster_header_column_num + ($_cluster_header_column_num - 1)) $_label_line_separator_upper
-	#$_console_msg += $_label_spacer 
 	Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	##
 	# get the nats finish line separator cursor position for repositioning later
@@ -1175,36 +1109,30 @@ $_b_cluster_information_printed = $true
 	for ($_new_rows_for_console_pos = 0; $_new_rows_for_console_pos -lt $_new_rows_for_console; $_new_rows_for_console_pos++)
 	{
 		try {
-		## 11/21 - change start
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*0), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		$_console_msg = "|"
-		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		## 11/21 - change end
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*0)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		$_console_msg = "|"
-		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*1)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		$_console_msg = "|"
-		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*2)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		$_console_msg = "|"
-		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*3)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		$_console_msg = "|"
-		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*4)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		$_console_msg = "|"
-		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		[Console]::SetCursorPosition((($_cluster_header_column_size+1)*5)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
-		## 11/21 change start
-		#$_console_msg = "|"
-		#Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		if (!($script:_b_disable_farmer_display_at_cluster))
-		{
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*0), ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
 			$_console_msg = "|"
 			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
-		}
-		## 11/21 change end
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*0)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+			$_console_msg = "|"
+			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*1)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+			$_console_msg = "|"
+			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*2)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+			$_console_msg = "|"
+			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*3)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+			$_console_msg = "|"
+			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*4)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+			$_console_msg = "|"
+			Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+			[Console]::SetCursorPosition((($_cluster_header_column_size+1)*5)+$_cluster_id_seq_col_size+1, ($_cluster_data_begin_row_pos.Y+1+$_new_rows_for_console_pos))
+			if (!($script:_b_disable_farmer_display_at_cluster))
+			{
+				$_console_msg = "|"
+				Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
+			}
 		}
 		catch {}
 	}
@@ -1214,15 +1142,11 @@ $_b_cluster_information_printed = $true
 	{
 		# set cursor position to last cluster header top line separator location
 		[Console]::SetCursorPosition($_upper_line_separator_nats_server_CursorPosition.X, $_upper_line_separator_nats_server_CursorPosition.Y)
-		#$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1) $_label_line_separator_upper
-		#$_console_msg = $_label_spacer  + "|"
 		$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + ($_cluster_header_column_num - 1) + $_cluster_id_seq_col_size - 1) $_label_line_separator
-		## 11/21 change start
 		if ($script:_b_disable_farmer_display_at_cluster)
 		{
 			$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + ($_cluster_header_column_num - 1) + $_cluster_id_seq_col_size - 2) $_label_line_separator
 		}
-		## 11/21 change end
 		$_console_msg = $_label_spacer
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 		# set cursor position to last cluster header location
@@ -1241,12 +1165,10 @@ $_b_cluster_information_printed = $true
 		[Console]::SetCursorPosition($_bottom_line_separator_nats_server_CursorPosition.X, $_bottom_line_separator_nats_server_CursorPosition.Y)
 		#
 		$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1 + $_cluster_id_seq_col_size - 1) $_label_line_separator
-		## 11/21 change start
 		if ($script:_b_disable_farmer_display_at_cluster)
 		{
 			$_label_spacer = fBuildDynamicSpacer ($_header_filler_length + $_cluster_header_column_num - 1 + $_cluster_id_seq_col_size - 2) $_label_line_separator
 		}
-		## 11/21 change end
 		$_console_msg = $_label_spacer + "|"
 		Write-Host $_console_msg -nonewline -ForegroundColor $_line_spacer_color
 	}
@@ -1275,4 +1197,3 @@ $_b_cluster_information_printed = $true
 	}
 	#
 }
-
