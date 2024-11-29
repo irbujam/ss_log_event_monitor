@@ -1280,26 +1280,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	#
 	####
 	
-	## display latest github version info
-	$_gitVersionDisp = " - "
-	$_gitVersionDispColor = $_html_red
-	if ($null -ne $_ss_git_version) {
-		$currentVersion = $_ss_git_version[0] -replace "[^.0-9]"
-		$_gitVersionDisp = $_ss_git_version[0]
-		$_gitVersionDispColor = $_html_green
-	}
-	
 	fDisplayHelpSummary
 
-	## display last refresh time 
-	$currentDate = (Get-Date).ToLocalTime().toString()
-	# Refresh
-	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ", Latest cli version: " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
-	Write-Host ", " -nonewline -Foregroundcolor $_info_label_color
-	Write-Host "Balance(AI3): " -nonewline -Foregroundcolor $_header_inner_color
-	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
+	fDisplayFooterInfo
 	$_num_rows += 1
 
 	$_num_rows += 1
@@ -2737,28 +2720,9 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 		$_num_rows += 1
 	}
 
-	
-	## display latest github version info
-	$_gitVersionDisp = " - "
-	$_gitVersionDispColor = $_html_red
-	if ($null -ne $_ss_git_version) {
-		$currentVersion = $_ss_git_version[0] -replace "[^.0-9]"
-		$_gitVersionDisp = $_ss_git_version[0]
-		$_gitVersionDispColor = $_html_green
-	}
-
 	fDisplayHelp
 
-	##
-	# display last refresh time 
-	$currentDate = (Get-Date).ToLocalTime().toString()
-	# Refresh
-	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ", Latest cli version: " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
-	Write-Host ", " -nonewline -Foregroundcolor $_info_label_color
-	Write-Host "Balance(AI3): " -nonewline -Foregroundcolor $_header_inner_color
-	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
+	fDisplayFooterInfo
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
@@ -4109,27 +4073,9 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 		$_num_rows += 1
 	}
 	
-	## display latest github version info
-	$_gitVersionDisp = " - "
-	$_gitVersionDispColor = $_html_red
-	if ($null -ne $_ss_git_version) {
-		$currentVersion = $_ss_git_version[0] -replace "[^.0-9]"
-		$_gitVersionDisp = $_ss_git_version[0]
-		$_gitVersionDispColor = $_html_green
-	}
-
 	fDisplayHelp
 
-
-	## display last refresh time 
-	$currentDate = (Get-Date).ToLocalTime().toString()
-	# Refresh
-	Write-Host "Last refresh: " -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
-	Write-Host ", Latest cli version: " -nonewline -ForegroundColor $_info_label_color
-	Write-Host "$($_gitVersionDisp)" -nonewline -ForegroundColor $_gitVersionDispColor
-	Write-Host ", " -nonewline -Foregroundcolor $_info_label_color
-	Write-Host "Balance(AI3): " -nonewline -Foregroundcolor $_header_inner_color
-	Write-Host $script:_vlt_balance -Foregroundcolor $_gitVersionDispColor
+	fDisplayFooterInfo
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
@@ -4183,6 +4129,39 @@ function fGetFarmerMatchInCluster ([string]$_io_host_url) {
 		if ($_b_disk_plot_id_match_found) { break }
 	}
 	return $_io_cluster_id_seq_disp
+}
+
+function fDisplayFooterInfo () {
+	## get latest cli github version info
+	$_git_version_disp = " - "
+	$_git_version_disp_color = $_html_red
+	if ($null -ne $_ss_git_version) {
+		$_git_version_disp = $_ss_git_version[0]
+		$_git_version_disp_color = $_html_green
+	}
+	## get last refresh datetime 
+	$currentDate = (Get-Date).ToLocalTime().toString()
+	# 
+	## display footer information
+	Write-Host "Last refresh:" -ForegroundColor $_info_label_color -nonewline; Write-Host "$currentDate" -nonewline -ForegroundColor $_info_label_data_color;
+	Write-Host ", Latest cli version:" -nonewline -ForegroundColor $_info_label_color
+	Write-Host "$($_git_version_disp)" -nonewline -ForegroundColor $_git_version_disp_color
+	Write-Host ", " -nonewline -Foregroundcolor $_info_label_color
+	Write-Host "Bal(AI3)/Rank:" -nonewline -Foregroundcolor $_header_inner_color
+	Write-Host $script:_vlt_balance -nonewline -Foregroundcolor $_git_version_disp_color
+	Write-Host "/" -nonewline -Foregroundcolor $_info_label_color
+	Write-Host $script:_current_rank -nonewline -Foregroundcolor $_git_version_disp_color
+	$_fg_color = $_html_gray
+	$_rank_direction_label = "--"
+	if ($script:_rank_direction.toLower() -eq "up") {
+		$_fg_color = $_html_green
+		$_rank_direction_label = "->"
+	}
+	elseif ($script:_rank_direction.toLower() -eq "down") {
+		$_fg_color = $_html_red
+		$_rank_direction_label = "<-"
+	}
+	Write-Host $_rank_direction_label -Foregroundcolor $_fg_color
 }
 
 function fDisplayHelpSummary() {

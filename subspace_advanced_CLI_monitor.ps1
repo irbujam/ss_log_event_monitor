@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.3.9"
+	$_monitor_file_name = "v0.4.0"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -84,6 +84,13 @@ function main {
 	$script:_vlt_balance = 0
 	$script:_vlt_balance_refresh_frequency = 3600	#defaults to hourly refresh
 	$_balance_refresh_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$script:_show_rank = "N"
+	$script:_current_rank = 0
+	$script:_rank_direction = ""
+	$script:_rank_refresh_frequency = 12
+	$_rank_refresh_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+	$script:_rank_filename = "rank.txt"
+	$script:_b_file_exists = $false
 	####
 	
 	$script:_b_windows_host = fCheckPlatformType
@@ -125,6 +132,7 @@ function main {
 				$_html_black = "black"
 				$_html_yellow = "yellow"
 				$_html_gray = "gray"
+				$_html_white = "white"
 				$_html_dark_blue = "darkblue"
 				$_html_dark_magenta = "darkmagenta"
 
@@ -1121,6 +1129,22 @@ function fReloadConfig() {
 	$script:_b_cluster_mode = $false
 	$script:_cluster_id_seq = 0
 	$script:_vlt_address = ""
+	$script:_b_file_exists = Test-Path ("./" + $script:_rank_filename)
+	if ($script:_b_file_exists)
+	{
+		$_rank_obj = fLoadPreviousRank $script:_rank_filename
+		$_previous_rank = $_rank_obj.CurrentRank
+		$script:_current_rank = $_previous_rank
+		if ([int]($_rank_obj.PreviousRank) -gt [int]($_rank_obj.CurrentRank))
+		{
+			$script:_rank_direction = "down"
+		}
+		elseif ([int]($_rank_obj.PreviousRank) -lt [int]($_rank_obj.CurrentRank))
+		{
+			$script:_rank_direction = "up"
+		}
+	}
+	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
 		if ($_process_ip_arr[$arrPos].toString().Trim(' ') -ne "" -and $_process_ip_arr[$arrPos].toString().IndexOf("#") -lt 0) {
@@ -1129,6 +1153,7 @@ function fReloadConfig() {
 			if ($_process_type.toLower().IndexOf("enable-api") -ge 0) { $script:_api_enabled = $_config[1].toString()}
 			elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$script:_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
 			elseif ($_process_type.toLower().IndexOf("balance-refresh") -ge 0) { $script:_vlt_balance_refresh_frequency = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("show-rank") -ge 0) { $script:_show_rank = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
@@ -1247,18 +1272,156 @@ function fReloadConfig() {
 function  fGetVltBalance([string]$_io_node_url, [string]$_io_vlt_address) {
 	$_balance = 0
 	try {
-		if ($script:_b_windows_host)
+		#if ($script:_b_first_time -or ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency)))
+		if ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency))
 		{
-			$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
+			if ($_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency)
+			{
+				$_rank_refresh_stopwatch.Restart()
+			}
+			$_balance = fGetVltRank $_io_node_url $_io_vlt_address
 		}
-		else 
+		else
 		{
-			$_balance = node ./getAcctBalance.js $_io_node_url $_io_vlt_address
+			if ($script:_b_windows_host)
+			{
+				$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
+			}
+			else 
+			{
+				$_balance = node ./getAcctBalance.js $_io_node_url $_io_vlt_address
+			}
 		}
 	}
 	catch {}
 	$_balance = [math]::Round($_balance / [math]::Pow(10, 18), 4)
 	return $_balance
+}
+
+function  fGetVltRank([string]$_io_node_url, [string]$_io_vlt_address) {
+$_balance = 0
+
+	Clear-Host
+	$_rank_obj = fLoadPreviousRank $script:_rank_filename
+	$_previous_rank = $_rank_obj.CurrentRank
+	$_msg = "Grab a treat and/or a cup of coffee while i get things ready..."
+	Write-Host $_msg
+	fPrintTree
+	####
+	$_my_accts_json = ""
+	if ($script:_vlt_address.Length -gt 0 -and $script:_vlt_address -ne $null) {
+		$_b_windows_host = fCheckPlatformType
+		try {
+			if ($_b_windows_host)
+			{
+				$_my_accts_json = node .\ranking_info.js $script:_node_url $script:_vlt_address
+			}
+			else
+			{
+				$_my_accts_json = node ./ranking_info.js $script:_node_url $script:_vlt_address
+			}
+		}
+		catch {}
+	}
+	Clear-Host
+	
+	####
+	## convert to ps object array from json
+	$_my_accts_obj_PS =  ConvertFrom-Json -InputObject $_my_accts_json
+	$_my_accts_obj = $_my_accts_obj_PS.Response
+	
+	$_unique_accounts = $_my_accts_obj.unique_accounts.toString()
+	$_balance = [double]($_my_accts_obj.balance)
+
+	$script:_current_rank = $_my_accts_obj.rank_id.toString()
+
+	$_rank_file_content = $script:_current_rank.ToString() + " " + $_previous_rank.ToString()
+	fWriteToRankFile $_rank_filename $_rank_file_content
+	if ([int]($_previous_rank) -gt [int]($script:_current_rank))
+	{
+		$script:_rank_direction = "down"
+	}
+	elseif ([int]($_previous_rank) -lt [int]($script:_current_rank))
+	{
+		$script:_rank_direction = "up"
+	}
+	#
+	return $_balance
+}
+
+function fLoadPreviousRank([string]$_io_filename) {
+[object]$_resp_obj = $null
+
+	$_file = "./" + $_io_filename
+	$_b_file_exists = Test-Path ("./" + $_io_filename)
+	if (!($_b_file_exists))
+	{
+		fWriteToRankFile $_io_filename "0 0"
+	}
+	$_temp_obj = Get-Content -Path $_file | ConvertFrom-String
+	$_tmp_rank_obj = [PSCustomObject]@{
+		CurrentRank		= $_temp_obj.P1
+		PreviousRank	= $_temp_obj.P2
+	}
+	$_resp_obj = $_tmp_rank_obj
+	#
+	return $_resp_obj
+}
+
+function fWriteToRankFile([string]$_io_filename, [string]$_io_file_content) {
+	$_b_file_exists = Test-Path ("./" + $_io_filename)
+	if ($_b_file_exists)
+	{
+		# update existing file with set values
+		$_path = "./" + $_io_filename
+		Set-Content -path $_path -value $_io_file_content
+	}
+	else
+	{
+		# create file with default values
+		New-Item -path "./" -name $_io_filename -type "file" -value $_io_file_content
+	}
+}
+
+function fPrintTree {
+$height = 11
+$Message = "Happy Holidays!!"
+
+	0..($height-1) | % { Write-Host ' ' -NoNewline }
+	Write-Host -ForegroundColor Yellow '*'
+	0..($height - 1) | %{
+		$width = $_ * 2 
+		1..($height - $_) | %{ Write-Host ' ' -NoNewline}
+
+		Write-Host '/' -NoNewline -ForegroundColor Green
+		while($Width -gt 0){
+			switch (Get-Random -Minimum 1 -Maximum 20) {
+				1       { Write-Host -BackgroundColor Green -ForegroundColor Red '@' -NoNewline }
+				2       { Write-Host -BackgroundColor Green -ForegroundColor Green '@' -NoNewline }
+				3       { Write-Host -BackgroundColor Green -ForegroundColor Blue '@' -NoNewline }
+				4       { Write-Host -BackgroundColor Green -ForegroundColor Yellow '@' -NoNewline }
+				5       { Write-Host -BackgroundColor Green -ForegroundColor Magenta '@' -NoNewline }
+				Default { Write-Host -BackgroundColor Green ' ' -NoNewline }
+			}
+			$Width--
+		}
+		 Write-Host '\' -ForegroundColor Green
+	}
+	0..($height*2) | %{ Write-Host -ForegroundColor Green '~' -NoNewline }
+	Write-Host -ForegroundColor Green '~'
+	0..($height-1) | % { Write-Host ' ' -NoNewline }
+	Write-Host -BackgroundColor Black -ForegroundColor Black ' '
+	$Padding = ($Height * 2 - $Message.Length) / 2
+	if($Padding -gt 0){
+		1..$Padding | % { Write-Host ' ' -NoNewline }
+	}
+	0..($Message.Length -1) | %{
+		$Index = $_
+		switch ($Index % 2 ){
+			0 { Write-Host -ForegroundColor Green $Message[$Index] -NoNewline }
+			1 { Write-Host -ForegroundColor Red $Message[$Index] -NoNewline }
+		}
+	} 
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
@@ -2256,13 +2419,13 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 	{
 		if ($_monitor_file_name -ne $_io_process_git_version[0])
 		{
-			#Write-Host ("New monitor release available: " + $_io_process_git_version[0].toString() + ", Dated: " + $_io_process_git_version[1].toString('yyyy-MM-dd') + ", ChangeLog: " + $_io_process_git_version[2].toString()) -NoNewline -ForegroundColor $_html_red -BackgroundColor $_line_spacer_color
-			Write-Host "New monitor release available: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_line_spacer_color
-			Write-Host $_io_process_git_version[0].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_line_spacer_color
-			Write-Host ", Dated: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_line_spacer_color
-			Write-Host $_io_process_git_version[1].toString('yyyy-MM-dd') -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_line_spacer_color
-			Write-Host ", ChangeLog: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_line_spacer_color
-			Write-Host $_io_process_git_version[2].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_line_spacer_color
+			$_bg_color = $_html_gray
+			Write-Host "New monitor release available: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_bg_color
+			Write-Host $_io_process_git_version[0].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
+			Write-Host ", Dated: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_bg_color
+			Write-Host $_io_process_git_version[1].toString('yyyy-MM-dd') -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
+			Write-Host ", ChangeLog: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_bg_color
+			Write-Host $_io_process_git_version[2].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
 			Write-Host
 		}
 		else 
