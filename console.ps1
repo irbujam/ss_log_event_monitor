@@ -4155,13 +4155,13 @@ function fDisplayFooterInfo () {
 	$_rank_direction_label = "--"
 	if ($script:_rank_direction.toLower() -eq "up") {
 		$_fg_color = $_html_green
-		$_rank_direction_label = "->"
+		$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
 	}
 	elseif ($script:_rank_direction.toLower() -eq "down") {
 		$_fg_color = $_html_red
-		$_rank_direction_label = "<-"
+		$_rank_direction_label = [char]::ConvertFromUtf32(0x2193)
 	}
-	Write-Host $_rank_direction_label -Foregroundcolor $_fg_color
+	Write-Host (" " + $_rank_direction_label) -Foregroundcolor $_fg_color
 }
 
 function fDisplayHelpSummary() {
