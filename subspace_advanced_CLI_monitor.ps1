@@ -1358,10 +1358,12 @@ function fLoadPreviousRank([string]$_io_filename) {
 	{
 		fWriteToRankFile $_io_filename "0 0"
 	}
-	$_temp_obj = Get-Content -Path $_file | ConvertFrom-String
+	#$_temp_obj = Get-Content -Path $_file | ConvertFrom-String
+	$_stored_rank_line = Get-Content -Path $_file
+	$_stored_ranks_arr = $_stored_rank_line.toString().split(" ").Trim(" ")
 	$_tmp_rank_obj = [PSCustomObject]@{
-		CurrentRank		= $_temp_obj.P1
-		PreviousRank	= $_temp_obj.P2
+		CurrentRank		= $_stored_ranks_arr[0]
+		PreviousRank	= $_stored_ranks_arr[1]
 	}
 	$_resp_obj = $_tmp_rank_obj
 	#
