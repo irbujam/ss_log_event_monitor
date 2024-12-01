@@ -7,10 +7,21 @@
 # Wallet balance display using address provided. This is an optional feature.
 #
 # defaults to hourly refresh (3600 seconds) if no value provided against balance-refresh frequency
+#
+#      ************************************************ <<< NEW >>> *******************************************************     
+#      *  Show-Rank: This is an optional add-on. Set to Y to see your account rank, N is default if nothing is supplied   *
+#      *             Rank refresh is set to refresh every 12 hours and is not provided as config option at this time      *
+#      ********************************************************************************************************************     
+#      ************                 -----------------------  Please note:   -----------------------              **********     
+#      ************  If set to Y initial run will take 3-5 minutes as it reads all account data from chain.      **********
+#      ************  Please be patient as subsequent in-between refresh should be faster                         **********
+#      ********************************************************************************************************************     
+# 
 #-------------------------------------------------------------------------------------------------------------------------
 
 wallet-address            : <your autonomys wallet address>
 balance-refresh (seconds) : 3600
+Show-Rank                 : N
 
 #-------------------------------------------------------------------------------------------------------------------------
 # http endpoint set-up (use Y-enabled, N-disabled for enable-api setting). "N" is default
