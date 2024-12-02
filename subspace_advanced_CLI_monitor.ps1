@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.0"
+	$_monitor_file_name = "v0.4.1"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -80,7 +80,10 @@ function main {
 	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
 	##
 	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"
+	$script:_vlt_addr_filename = ""
+	$script:_vlt_addr_arr = [System.Collections.ArrayList]@()
 	$script:_vlt_address = ""
+	$_b_remove_duplicate_address = $true
 	$script:_vlt_balance = 0
 	$script:_vlt_balance_refresh_frequency = 3600	#defaults to hourly refresh
 	$_balance_refresh_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -91,6 +94,15 @@ function main {
 	$_rank_refresh_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 	$script:_rank_filename = "rank.txt"
 	$script:_b_file_exists = $false
+	$script:_b_redo_rank = $false
+	##
+	$script:_node_cursor_pos = $null
+	$script:_num_rows = 0
+	$script:_num_cols = 0
+	#
+	[array]$script:_accts_obj_arr_showVltDetails = $null
+	$script:_rank_showVltDetails = ""
+	[array]$script:_rank_obj_arr_showVltDetails = $null
 	####
 	
 	$script:_b_windows_host = fCheckPlatformType
@@ -131,6 +143,7 @@ function main {
 				$_html_blue = "blue"
 				$_html_black = "black"
 				$_html_yellow = "yellow"
+				$_html_cyan = "cyan"
 				$_html_gray = "gray"
 				$_html_white = "white"
 				$_html_dark_blue = "darkblue"
@@ -383,6 +396,9 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									##
 									Write-Host
 									fGetSummaryDataForConsole $_farmers_ip_arr
+								}
+								F6 {
+									fDisplayVltDetails $script:_accts_obj_arr_showVltDetails $script:_rank_showVltDetails $script:_rank_obj_arr_showVltDetails
 								}
 								{ $script:_num_key_arr -contains $_ -or $script:_char_arr -contains $_ } {
 									$script:_individual_farmer_id_last_pos = -1
@@ -1000,6 +1016,9 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					fGetSummaryDataForConsole $_farmers_ip_arr
 					$_resp_last_display_type_request = "summary"
 				}
+				F6 {
+					fDisplayVltDetails $script:_accts_obj_arr_showVltDetails $script:_rank_showVltDetails $script:_rank_obj_arr_showVltDetails
+				}
 				{ $script:_num_key_arr -contains $_ -or $script:_char_arr -contains $_ } {
 					$script:_individual_farmer_id_last_pos = -1
 					if ( $script:_char_arr -contains $_key_value )
@@ -1129,21 +1148,10 @@ function fReloadConfig() {
 	$script:_b_cluster_mode = $false
 	$script:_cluster_id_seq = 0
 	$script:_vlt_address = ""
-	$script:_b_file_exists = Test-Path ("./" + $script:_rank_filename)
-	if ($script:_b_file_exists)
-	{
-		$_rank_obj = fLoadPreviousRank $script:_rank_filename
-		$_previous_rank = $_rank_obj.CurrentRank
-		$script:_current_rank = $_previous_rank
-		if ([int]($_rank_obj.PreviousRank) -gt [int]($_rank_obj.CurrentRank))
-		{
-			$script:_rank_direction = "down"
-		}
-		elseif ([int]($_rank_obj.PreviousRank) -lt [int]($_rank_obj.CurrentRank))
-		{
-			$script:_rank_direction = "up"
-		}
-	}
+	$script:_vlt_addr_filename = ""
+	$script:_b_file_exists = $false
+	$script:_b_redo_rank = $false
+	$script:_rank_direction = ""
 	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
@@ -1159,7 +1167,10 @@ function fReloadConfig() {
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
 			}
 			elseif ($_process_type.toLower().IndexOf("send-an-alert") -ge 0) { $script:_alert_category_txt = $_config[1].toString() }
-			elseif ($_process_type.toLower().IndexOf("wallet-address") -ge 0) { $script:_vlt_address = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("wallet-address") -ge 0) {
+				$script:_vlt_address = $_config[1].toString()
+				if ($script:_vlt_address.toLower().IndexOf(".txt") -ge 0) { $script:_vlt_addr_filename = $_config[1].toString() }
+			}
 			elseif ($_process_type.toLower().IndexOf("discord") -ge 0) { $script:_url_discord = "https:" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-api-token") -ge 0) { $script:_telegram_api_token = $_config[1].toString() + ":" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("telegram-chat-id") -ge 0) { $script:_telegram_chat_id = $_config[1].toString() }
@@ -1256,11 +1267,85 @@ function fReloadConfig() {
 	{
 		$script:_vlt_balance_refresh_frequency = 3600	#revert to default hourly refresh if config value was emptied
 	}
+	##
 	if ($script:_vlt_address.Length -gt 0 -and $script:_vlt_address -ne $null) {
-		if ($script:_b_first_time -or $script:_vlt_balance -eq 0 -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
+		if ($script:_vlt_addr_filename.Length -gt 0 -and $script:_vlt_addr_filename -ne $null) 
 		{
-			$_balance_refresh_stopwatch.Restart()
-			$script:_vlt_balance = fGetVltBalance $script:_node_url $script:_vlt_address
+			$script:_vlt_addr_arr = fLoadVltAddr $script:_vlt_addr_filename
+		}
+		else
+		{
+			$_tmp_vlt_addr_obj = [PSCustomObject]@{
+				AddressId		= $script:_vlt_address
+			}
+			[void]$script:_vlt_addr_arr.add($_tmp_vlt_addr_obj)
+		}
+		#
+		$script:_b_file_exists = Test-Path ("./" + $script:_rank_filename)
+		if ($script:_b_file_exists)
+		{
+			$_rank_obj_arr = fLoadPreviousRank $script:_rank_filename $script:_vlt_addr_arr
+			foreach ($_rank_obj in $_rank_obj_arr)
+			{
+				if ($_rank_obj.AddressId -eq "overall")
+				{
+					$_previous_rank = $_rank_obj.CurrentRank
+					$script:_current_rank = $_previous_rank
+
+					if ([int]($_rank_obj.PreviousRank) -gt [int]($_rank_obj.CurrentRank))
+					{
+						$script:_rank_direction = "up"
+					}
+					elseif ([int]($_rank_obj.PreviousRank) -lt [int]($_rank_obj.CurrentRank))
+					{
+						if ([int]($_rank_obj.PreviousRank) -eq 0 -and [int]($_rank_obj.CurrentRank) -gt 0)
+						{
+							$script:_rank_direction = "up"
+						}
+						else
+						{
+							$script:_rank_direction = "down"
+						}
+					}
+				}
+				else
+				{
+					# set flag to redo rank if rank has previous excess data compared with wallet file
+					$script:_b_redo_rank = $true
+					foreach ($_vlt_addr_obj in $script:_vlt_addr_arr)
+					{
+						if ($_vlt_addr_obj.AddressId -eq $_rank_obj.AddressId)
+						{ 
+							$script:_b_redo_rank = $false
+							break
+						}					
+					}
+				}
+			}
+			# set flag to redo rank if wallet file changed
+			if (!($script:_b_redo_rank))
+			{
+				foreach ($_vlt_addr_obj in $script:_vlt_addr_arr)
+				{
+					$script:_b_redo_rank = $true
+					foreach ($_rank_obj in $_rank_obj_arr)
+					{
+						if ($_vlt_addr_obj.AddressId -eq $_rank_obj.AddressId)
+						{ 
+							$script:_b_redo_rank = $false
+							break
+						}					
+					}
+				}
+			}
+		}
+		#
+		if (($script:_vlt_addr_arr | Measure-Object).Count -gt 0 -and $script:_vlt_addr_arr -ne $null) {
+			if ($script:_b_first_time -or [int]($script:_vlt_balance) -eq 0 -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
+			{
+				$_balance_refresh_stopwatch.Restart()
+				$script:_vlt_balance = fGetVltBalance $script:_node_url $script:_vlt_addr_arr
+			}
 		}
 	}
 	else { 	$script:_vlt_balance = 0 }
@@ -1269,27 +1354,51 @@ function fReloadConfig() {
 	return $_process_ip_arr
 }
 
-function  fGetVltBalance([string]$_io_node_url, [string]$_io_vlt_address) {
+function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 	$_balance = 0
+	$_vlt_addr_arrJS = fConverPSObjArrToJScriptArr $_io_vlt_address_arr
+	#
+	#
 	try {
 		#if ($script:_b_first_time -or ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency)))
-		if ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency))
+		if ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $script:_b_redo_rank -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency))
 		{
 			if ($_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency)
 			{
 				$_rank_refresh_stopwatch.Restart()
 			}
-			$_balance = fGetVltRank $_io_node_url $_io_vlt_address
+			$_balance = fGetVltRank $_io_node_url $_vlt_addr_arrJS
 		}
 		else
 		{
 			if ($script:_b_windows_host)
 			{
-				$_balance = node .\getAcctBalance.js $_io_node_url $_io_vlt_address
+				$_balance_resp_Json = node .\getAcctBalance.js $_io_node_url $_vlt_addr_arrJS
 			}
 			else 
 			{
-				$_balance = node ./getAcctBalance.js $_io_node_url $_io_vlt_address
+				$_balance_resp_Json = node ./getAcctBalance.js $_io_node_url $_vlt_addr_arrJS
+			}
+			$_balance_resp_PS =  ConvertFrom-Json -InputObject $_balance_resp_Json
+			$_balance_resp = $_balance_resp_PS.Response
+			foreach ($_balance_obj in $_balance_resp)
+			{
+				if ($_balance_obj.address_id.toLower() -eq "overall")
+				{
+					$_balance = [double]($_balance_obj.balance)
+					break
+				}
+			}
+			#fDisplayVltDetails $_balance_resp "balance" $null
+			if ($script:_rank_showVltDetails -eq "rank")
+			{
+				#do nothing
+			}
+			else
+			{
+				$script:_accts_obj_arr_showVltDetails = $_balance_resp
+				$script:_rank_showVltDetails = "balance"
+				$script:_rank_obj_arr_showVltDetails = $null
 			}
 		}
 	}
@@ -1298,27 +1407,28 @@ function  fGetVltBalance([string]$_io_node_url, [string]$_io_vlt_address) {
 	return $_balance
 }
 
-function  fGetVltRank([string]$_io_node_url, [string]$_io_vlt_address) {
+function  fGetVltRank([string]$_io_node_url, [string]$_io_vlt_address_arr) {
 $_balance = 0
 
 	Clear-Host
-	$_rank_obj = fLoadPreviousRank $script:_rank_filename
-	$_previous_rank = $_rank_obj.CurrentRank
+	$_rank_obj_arr = fLoadPreviousRank $script:_rank_filename $script:_vlt_addr_arr
+	#$_previous_rank = 0
+	####
 	$_msg = "Grab a treat and/or a cup of coffee while i get things ready..."
 	Write-Host $_msg
 	fPrintTree
 	####
 	$_my_accts_json = ""
-	if ($script:_vlt_address.Length -gt 0 -and $script:_vlt_address -ne $null) {
-		$_b_windows_host = fCheckPlatformType
+	
+	if (($script:_vlt_addr_arr | Measure-Object).Count -gt 0 -and $script:_vlt_addr_arr -ne $null) {
 		try {
-			if ($_b_windows_host)
+			if ($script:_b_windows_host)
 			{
-				$_my_accts_json = node .\ranking_info.js $script:_node_url $script:_vlt_address
+				$_my_accts_json = node .\ranking_info.js $_io_node_url $_io_vlt_address_arr
 			}
 			else
 			{
-				$_my_accts_json = node ./ranking_info.js $script:_node_url $script:_vlt_address
+				$_my_accts_json = node ./ranking_info.js $_io_node_url $_io_vlt_address_arr
 			}
 		}
 		catch {}
@@ -1328,61 +1438,429 @@ $_balance = 0
 	####
 	## convert to ps object array from json
 	$_my_accts_obj_PS =  ConvertFrom-Json -InputObject $_my_accts_json
-	$_my_accts_obj = $_my_accts_obj_PS.Response
-	
-	$_unique_accounts = $_my_accts_obj.unique_accounts.toString()
-	$_balance = [double]($_my_accts_obj.balance)
-
-	$script:_current_rank = $_my_accts_obj.rank_id.toString()
-
-	$_rank_file_content = $script:_current_rank.ToString() + " " + $_previous_rank.ToString()
-	fWriteToRankFile $_rank_filename $_rank_file_content
-	if ([int]($_previous_rank) -gt [int]($script:_current_rank))
+	$_my_accts_obj_arr = $_my_accts_obj_PS.Response
+	#
+	$_unique_accounts = 0
+	#$_balance = 0
+	foreach ($_my_accts_obj in $_my_accts_obj_arr)
 	{
-		$script:_rank_direction = "down"
+		if ($_my_accts_obj.address_id -eq "overall")
+		{
+			$_unique_accounts = $_my_accts_obj.unique_accounts.toString()
+			$_my_addr_ = $_my_accts_obj.address_id.toString()
+			$_balance = [double]($_my_accts_obj.balance)
+			#$_total_balance_disp = [math]::Round($_total_balance / [math]::Pow(10, 18), 4)
+			$script:_current_rank = $_my_accts_obj.rank_id
+			##
+			$_previous_rank = 0
+			foreach ($_rank_obj_ in $_rank_obj_arr)
+			{
+				if ($_rank_obj_.AddressId -eq "overall")
+				{
+					$_previous_rank = $_rank_obj_.CurrentRank
+					break
+				}
+			}
+			#
+			if ([int]($_previous_rank) -gt [int]($script:_current_rank))
+			{
+				$script:_rank_direction = "up"
+			}
+			elseif ([int]($_previous_rank) -lt [int]($script:_current_rank))
+			{
+				if ([int]($_previous_rank) -eq 0 -and [int]($script:_current_rank) -gt 0)
+				{
+					$script:_rank_direction = "up"
+				}
+				else
+				{
+					$script:_rank_direction = "down"
+				}
+			}
+			break
+		}
 	}
-	elseif ([int]($_previous_rank) -lt [int]($script:_current_rank))
-	{
-		$script:_rank_direction = "up"
-	}
+	##
+	$_rank_file_content = "0 0"				# only used in function if the file does not exists previously
+	fWriteToRankFile $script:_rank_filename $script:_vlt_addr_arr $_rank_file_content $_my_accts_obj_arr
+	#
+	#fDisplayVltDetails $_my_accts_obj_arr "rank" $_rank_obj_arr
+	$script:_accts_obj_arr_showVltDetails = $_my_accts_obj_arr
+	$script:_rank_showVltDetails = "rank"
+	$script:_rank_obj_arr_showVltDetails = $_rank_obj_arr
 	#
 	return $_balance
 }
 
-function fLoadPreviousRank([string]$_io_filename) {
-[object]$_resp_obj = $null
+function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_obj_type, [array]$_io_rank_obj_arr) {
+	$_spacer = " "
+	$_label_line_separator = "_"
+	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
+	#
+	#$_num_rows_ = $script:_num_rows
+	$_num_cols_ = $script:_num_cols
+	#
+	$_spacer_length = 1
+	$_leading_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+	$_trailing_spaces_filler = ""
+	$_data_length = 50
+	$_spacer_length = $_data_length
+	$_all_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+	$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
+	##
+	# get the current cursor position
+	$_Last_CursorPosition_ = $host.UI.RawUI.CursorPosition
+	$_cursor_position_ = $script:_node_cursor_pos
+	$_start_cursor_pos = $_cursor_position_.Y - 2
+	$_finish_cursor_pos = ($_io_accounts_obj_arr | Measure-Object).Count
+	$_cursor_pos_x = ($_num_cols_ - $_data_length) / 2
+	$_cursor_pos_y = $_start_cursor_pos
+	# set cursor position to write wallet balance/rank data as an overlay
+	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+	Write-Host $_all_line_filler -ForegroundColor $_html_cyan
+	$_cursor_pos_y += 1
+	#
+	# write header
+	$_lbl_addr = "    Address    "
+	$_lbl_bal = "   Bal (AI3)   "
+	$_lbl_rank = "    Rank    "
+	$_lbl_rank_direction = "  "
+	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+	Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+	Write-Host $_leading_spaces_filler -NoNewline
+	Write-Host $_lbl_addr -NoNewline -ForegroundColor $_html_cyan
+	Write-Host $_lbl_bal -NoNewline -ForegroundColor $_html_cyan
+	if ($_io_accounts_obj_type -eq "rank")
+	{
+		Write-Host $_lbl_rank -NoNewline -ForegroundColor $_html_cyan
+		Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
+		$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 1
+	}
+	else
+	{
+		$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - 1
+	}
+	$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+	Write-Host $_trailing_spaces_filler -NoNewline
+	Write-Host "|" -ForegroundColor $_html_cyan
+	$_cursor_pos_y += 1
+	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+	$_spacer_length = $_data_length - 2
+	$_header_separator_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
+	Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+	Write-Host $_header_separator_filler -NoNewline -ForegroundColor $_html_cyan
+	Write-Host "|" -ForegroundColor $_html_cyan
+	$_cursor_pos_y += 1
+	##
+	#
+	# determine input account object type and write data
+	if ($_io_accounts_obj_type -eq "rank")
+	{
+		$_unique_accounts = 0
+		$_rank_direction_ = ""
+		foreach ($_io_accounts_obj in $_io_accounts_obj_arr)
+		{
+			if ($_io_accounts_obj.address_id -eq "overall") { $_unique_accounts = $_io_accounts_obj.unique_accounts.toString(); continue; }
+			#
+			$_addr_ = $_io_accounts_obj.address_id.toString()
+			$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
+			$_balance_ = [double]($_io_accounts_obj.balance)
+			$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
+			$_rank_ = $_io_accounts_obj.rank_id
+			##
+			$_previous_rank = 0
+			foreach ($_rank_obj_ in $_io_rank_obj_arr)
+			{
+				if ($_rank_obj_.AddressId -eq $_io_accounts_obj.address_id)
+				{
+					$_previous_rank = $_rank_obj_.CurrentRank
+					break
+				}
+			}
+			#
+			if ([int]($_previous_rank) -gt [int]($_rank_))
+			{
+				$_rank_direction_ = "up"
+			}
+			elseif ([int]($_previous_rank) -lt [int]($_rank_))
+			{
+				if ([int]($_previous_rank) -eq 0 -and [int]($_rank_) -gt 0)
+				{
+					$_rank_direction_ = "up"
+				}
+				else
+				{
+					$_rank_direction_ = "down"
+				}
+			}
+			##
+			[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+			Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+			Write-Host $_leading_spaces_filler -NoNewline
+			Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
+			Write-Host "        " -NoNewline
+			Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
+			Write-Host "        " -NoNewline
+			Write-Host $_rank_.ToString() -NoNewline -ForegroundColor $_html_yellow
+			Write-Host "        " -NoNewline
+			if ($_rank_direction_.toLower() -eq "up") {
+				$_fg_color = $_html_green
+				$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
+			}
+			elseif ($_rank_direction_.toLower() -eq "down") {
+				$_fg_color = $_html_red
+				$_rank_direction_label = [char]::ConvertFromUtf32(0x2193)
+			}
+			Write-Host (" " + $_rank_direction_label) -Foregroundcolor $_fg_color
+			#
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_.ToString().Length - $_rank_direction_label.Length - 1 - (8 * 23)
+			$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+			Write-Host $_trailing_spaces_filler -NoNewline
+			Write-Host "|" -ForegroundColor $_html_cyan
+			$_cursor_pos_y += 1
+		}
+	}
+	elseif ($_io_accounts_obj_type -eq "balance")
+	{
+		foreach ($_io_accounts_obj in $_io_accounts_obj_arr)
+		{
+			if ($_io_accounts_obj.address_id -eq "overall") { continue; }
+			#
+			$_addr_ = $_io_accounts_obj.address_id.toString()
+			$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
+			$_balance_ = [double]($_io_accounts_obj.balance)
+			$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
+			##
+			[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+			Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+			Write-Host $_leading_spaces_filler -NoNewline
+			Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
+			Write-Host "        " -NoNewline
+			Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1 - (8 * 1)
+			$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+			Write-Host $_trailing_spaces_filler -NoNewline
+			Write-Host "|" -ForegroundColor $_html_cyan
+			$_cursor_pos_y += 1
+		}
+	}
+	##
+	# write footer
+	$_spacer_length = $_data_length
+	$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+	Write-Host $_all_line_filler -ForegroundColor $_html_cyan
+	$_cursor_pos_y += 1
+	##
+	# return to last know cursor position before function entry
+	[Console]::SetCursorPosition($_Last_CursorPosition_.X, $_Last_CursorPosition_.Y)
+}
+
+function fLoadPreviousRank([string]$_io_filename, [array]$_io_address_arr) {
+[array]$_resp_obj_arr = $null
 
 	$_file = "./" + $_io_filename
 	$_b_file_exists = Test-Path ("./" + $_io_filename)
 	if (!($_b_file_exists))
 	{
-		fWriteToRankFile $_io_filename "0 0"
+		fWriteToRankFile $_io_filename $_io_address_arr "0 0" $null
 	}
-	#$_temp_obj = Get-Content -Path $_file | ConvertFrom-String
+
 	$_stored_rank_line = Get-Content -Path $_file
-	$_stored_ranks_arr = $_stored_rank_line.toString().split(" ").Trim(" ")
-	$_tmp_rank_obj = [PSCustomObject]@{
-		CurrentRank		= $_stored_ranks_arr[0]
-		PreviousRank	= $_stored_ranks_arr[1]
+	for ($_line_index = 0; $_line_index -lt $_stored_rank_line.Count; $_line_index++)
+	{
+		if ($_stored_rank_line[$_line_index].toString().Trim(' ') -ne "" -and $_stored_rank_line[$_line_index].toString().IndexOf("#") -lt 0) 
+		{
+			$_stored_ranks_arr = $_stored_rank_line[$_line_index].toString().split(" ").Trim(" ")
+			$_tmp_rank_obj = [PSCustomObject]@{
+				AddressId		= $_stored_ranks_arr[0]
+				CurrentRank		= [int]($_stored_ranks_arr[1])
+				PreviousRank	= [int]($_stored_ranks_arr[2])
+			}
+			$_resp_obj_arr += $_tmp_rank_obj
+		}
 	}
-	$_resp_obj = $_tmp_rank_obj
 	#
-	return $_resp_obj
+	return $_resp_obj_arr
 }
 
-function fWriteToRankFile([string]$_io_filename, [string]$_io_file_content) {
-	$_b_file_exists = Test-Path ("./" + $_io_filename)
+function fWriteToRankFile([string]$_io_filename, [array]$_io_address_arr, [string]$_io_file_content, [array]$_io_accts_obj_arr) {
+[array]$_rank_obj_arr = $null
+
+	$_path = "./" + $_io_filename
+	$_b_file_exists = Test-Path ($_path)
 	if ($_b_file_exists)
 	{
 		# update existing file with set values
-		$_path = "./" + $_io_filename
-		Set-Content -path $_path -value $_io_file_content
+		
+		$_stored_rank_line = Get-Content -Path $_path
+		for ($_line_index = 0; $_line_index -lt $_stored_rank_line.Count; $_line_index++)
+		{
+			if ($_stored_rank_line[$_line_index].toString().Trim(' ') -ne "" -and $_stored_rank_line[$_line_index].toString().IndexOf("#") -lt 0) 
+			{
+				$_stored_ranks_arr = $_stored_rank_line[$_line_index].toString().split(" ").Trim(" ")
+				$_tmp_rank_obj = [PSCustomObject]@{
+					AddressId		= $_stored_ranks_arr[0]
+					CurrentRank		= [int]($_stored_ranks_arr[1])
+					PreviousRank	= [int]($_stored_ranks_arr[2])
+				}
+				$_rank_obj_arr += $_tmp_rank_obj
+			}
+		}
+		# rewrite file with modified contents
+		Clear-Content -path $_path
+		foreach ($_address_ in $_io_address_arr) 
+		{
+			$_current_rank = 0
+			foreach ($_acct_obj in $_io_accts_obj_arr)
+			{
+				if ($_acct_obj.address_id -eq $_address_.AddressId)
+				{
+					$_current_rank = $_acct_obj.rank_id
+					break
+				}
+			}
+			$_previous_rank = 0
+			foreach ($_rank_ in $_rank_obj_arr)
+			{
+				if ($_rank_.AddressId -eq $_address_.AddressId)
+				{
+					$_previous_rank = $_rank_.CurrentRank
+					break
+				}
+			}
+			$_content_ = $_address_.AddressId + " " + $_current_rank.toString() + " " + $_previous_rank.toString()
+			Add-Content -path $_path -value $_content_
+		}
+		#
+		## write overall rank data to file
+		$_current_rank = 0
+		foreach ($_acct_obj in $_io_accts_obj_arr)
+		{
+			if ($_acct_obj.address_id -eq "overall")
+			{
+				$_current_rank = $_acct_obj.rank_id
+				$_previous_rank = 0
+				foreach ($_rank_ in $_rank_obj_arr)
+				{
+					if ($_rank_.AddressId -eq "overall")
+					{
+						$_previous_rank = $_rank_.CurrentRank
+						break
+					}
+				}
+				$_content_ = $_acct_obj.address_id + " " + $_current_rank.toString() + " " + $_previous_rank.toString()
+				Add-Content -path $_path -value $_content_
+				break
+			}
+		}
 	}
 	else
 	{
-		# create file with default values
-		New-Item -path "./" -name $_io_filename -type "file" -value $_io_file_content
+		# create file with default initial values
+		New-Item -path "./" -name $_io_filename -type "file" -value ""
+		foreach ($_address_ in $_io_address_arr) 
+		{
+			$_content_ = $_address_.AddressId + " " + $_io_file_content
+			Add-Content -path $_path -value $_content_
+		}
+		$_content_ = "overall" + " " + $_io_file_content
+		Add-Content -path $_path -value $_content_
 	}
+}
+
+function fLoadVltAddr([string]$_io_vlt_addr_filename) {
+[array]$_resp_vlt_addr_arr = $null
+[array]$_vlt_addr_arr = $null
+
+	$_pattern_to_match = " "
+	$_vlt_addr_file = "./" + $_io_vlt_addr_filename
+	#$_vlt_addr_line = Get-Content -Path $_vlt_addr_file
+	ForEach ($line in Get-Content -Path $_vlt_addr_file) 
+	{ 
+		$_vlt_addr_line = $line 
+		if ($_vlt_addr_line.toString().Trim(' ') -ne "" -and $_vlt_addr_line.toString().IndexOf("#") -lt 0) {
+			$_vlt_addr_line_arr = $_vlt_addr_line.toString().split($_pattern_to_match).Trim(" ")
+			foreach ($_vlt_addr_line_arr_item in $_vlt_addr_line_arr)
+			{
+				$_tmp_vlt_addr_obj = [PSCustomObject]@{
+					AddressId		= $_vlt_addr_line_arr_item
+				}
+				$_vlt_addr_arr += $_tmp_vlt_addr_obj
+			}
+		}
+	}
+	$_resp_vlt_addr_arr = fSanitizeAddr $_vlt_addr_arr $_b_remove_duplicate_address
+	#
+	return $_resp_vlt_addr_arr
+}
+
+function fSanitizeAddr ([array]$_io_vlt_addr_arr, [array]$_io_b_remove_duplicates) {
+	[array]$_sanitized_arr = $null
+	#
+	$_sorted_arr = $_io_vlt_addr_arr
+	# sort array if more than one entry
+	if ($_io_vlt_addr_arr.Count -gt 1)
+	{
+		$_sorted_arr = $_io_vlt_addr_arr | Sort-Object @{Expression={$_.AddressId}; descending=$false}
+	}
+	# eliminate blank array elements
+	for ($_i = 0; $_i -lt $_sorted_arr.Count; $_i++)
+	{
+		if ($_sorted_arr[$_i].AddressId -ne "" -and $_sorted_arr[$_i].AddressId -ne $null)
+		{
+			$_sanitized_arr += $_sorted_arr[$_i]
+		}
+	}
+	# move array to hold for duplicate cleanup
+	if ($_sanitized_arr -and $_sanitized_arr.count -gt 0)
+	{
+		$_sorted_arr = $_sanitized_arr
+	}
+	# eliminate duplicate array elements
+	if ($_io_b_remove_duplicates)
+	{
+		$_sanitized_arr = $null
+		for ($_i = 0; $_i -lt $_sorted_arr.Count; $_i++)
+		{
+			if ($_i -eq 0) 
+			{
+				$_sanitized_arr += $_sorted_arr[$_i]
+			}
+			elseif ($_sorted_arr[$_i].AddressId -ne $_sorted_arr[$_i-1].AddressId)
+			{
+				$_sanitized_arr += $_sorted_arr[$_i]
+			}
+		}
+	}	
+	#
+	return $_sanitized_arr
+}
+
+function fConverPSObjArrToJScriptArr ([array]$_io_arr) {
+	$_resp_js = ''
+
+	$_resp_js += '['
+	for ($j=0; $j -lt $_io_arr.Count; $j++)
+	{
+		if ($j -eq 0) {
+			$_resp_js += '{'
+			$_resp_js += '\"acct_id\":' + ' \"' + $_io_arr[$j].AddressId + '\"'
+			$_resp_js += '}'
+			#$_resp_js += '\"' + $_io_arr[$j].AddressId + '\"'
+		}
+		else
+		{
+			$_resp_js += ',{'
+			$_resp_js += '\"acct_id\":' + ' \"' + $_io_arr[$j].AddressId + '\"'
+			$_resp_js += '}'
+			#$_resp_js += ','
+			#$_resp_js += '\"' + $_io_arr[$j].AddressId + '\"'
+		}
+	}
+	$_resp_js += ']'
+	
+	return $_resp_js
 }
 
 function fPrintTree {
