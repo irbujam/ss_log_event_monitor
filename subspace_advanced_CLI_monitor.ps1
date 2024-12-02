@@ -199,14 +199,18 @@ function main {
 					$script:_b_first_time = $false
 				}
 				else{
-					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
+					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 					if ($script:_b_write_process_summary_to_console)
 					{
-						Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+						Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
+						Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 					}
 					else {
 						Write-Host
@@ -287,14 +291,17 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 			Write-Host
-			Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+			Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-			Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 			if ($script:_b_write_process_summary_to_console)
 			{
-				Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+				Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
+				Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 			}
 			else {
 				Write-Host
@@ -357,11 +364,13 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									Write-Host
@@ -384,12 +393,15 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-									Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+									Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -431,16 +443,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 										Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 										Write-Host
-										Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+										#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+										Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 										Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-										Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+										Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 										Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+										Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
 										##
 										## check monitor git version and display variance in console
 										fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -455,16 +469,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+									#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-									Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+									Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -487,16 +503,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+									#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-									Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+									Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] to loop thru single farmer" -ForegroundColor $_html_gray
+									Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -978,11 +996,14 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					##
 					$script:_b_write_process_details_to_console = $true
 					$script:_b_write_process_summary_to_console = $false
-					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host
 					##
 					## check monitor git version and display variance in console
@@ -1002,12 +1023,16 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					##
 					$script:_b_write_process_details_to_console = $false
 					$script:_b_write_process_summary_to_console = $true
-					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					Write-Host " Press number key to view single farmer detail." -ForegroundColor $_html_gray
+					Write-Host "]-everything. [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
+					Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1047,16 +1072,18 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					if ($script:_individual_farmer_id_last_pos -ge 0 -and $script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 					{
 						Clear-Host
-						Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+						#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+						Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+						Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+						Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 						Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-						Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+						Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+						Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
 						##
 						## check monitor git version and display variance in console
 						fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1068,16 +1095,18 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				}
 				LeftArrow {
 					Clear-Host
-					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] to loop thru single farmer." -ForegroundColor $_html_gray
+					Write-Host "] to loop thru individual farmer." -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1097,16 +1126,18 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				}
 				RightArrow {
 					Clear-Host
-					Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything." -NoNewLine -ForegroundColor $_html_gray
-					Write-Host " Arrow keys [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] to loop thru single farmer" -ForegroundColor $_html_gray
+					Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name

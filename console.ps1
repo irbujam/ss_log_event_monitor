@@ -4177,14 +4177,14 @@ function fDisplayFooterInfo () {
 
 function fDisplayHelpSummary() {
 	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,EX=Expired,"
-	$_help_text_2 = "RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed"
+	$_help_text_2 = "RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }
 
 function fDisplayHelp() {
-	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,"
-	$_help_text_2 = "PL=Plotted,EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed"
+	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,"
+	$_help_text_2 = "EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }
