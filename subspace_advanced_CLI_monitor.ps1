@@ -1372,7 +1372,7 @@ function fReloadConfig() {
 		}
 		#
 		if (($script:_vlt_addr_arr | Measure-Object).Count -gt 0 -and $script:_vlt_addr_arr -ne $null) {
-			if ($script:_b_first_time -or [int]($script:_vlt_balance) -eq 0 -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
+			if ($script:_b_first_time -or $script:_vlt_balance -eq 0 -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
 			{
 				$_balance_refresh_stopwatch.Restart()
 				$script:_vlt_balance = fGetVltBalance $script:_node_url $script:_vlt_addr_arr
@@ -1876,14 +1876,28 @@ function fConverPSObjArrToJScriptArr ([array]$_io_arr) {
 	{
 		if ($j -eq 0) {
 			$_resp_js += '{'
-			$_resp_js += '\"acct_id\":' + ' \"' + $_io_arr[$j].AddressId + '\"'
+			if ($script:_b_windows_host)
+			{
+				$_resp_js += '\"acct_id\":' + ' \"' + $_io_arr[$j].AddressId + '\"'
+			}
+			else
+			{
+				$_resp_js += '"acct_id":' + ' "' + $_io_arr[$j].AddressId + '"'
+			}
 			$_resp_js += '}'
 			#$_resp_js += '\"' + $_io_arr[$j].AddressId + '\"'
 		}
 		else
 		{
 			$_resp_js += ',{'
-			$_resp_js += '\"acct_id\":' + ' \"' + $_io_arr[$j].AddressId + '\"'
+			if ($script:_b_windows_host)
+			{
+				$_resp_js += '\"acct_id\":' + ' \"' + $_io_arr[$j].AddressId + '\"'
+			}
+			else
+			{
+				$_resp_js += '"acct_id":' + ' "' + $_io_arr[$j].AddressId + '"'
+			}
 			$_resp_js += '}'
 			#$_resp_js += ','
 			#$_resp_js += '\"' + $_io_arr[$j].AddressId + '\"'
