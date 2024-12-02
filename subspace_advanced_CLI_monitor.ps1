@@ -1644,7 +1644,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 			}
 			Write-Host (" " + $_rank_direction_label) -Foregroundcolor $_fg_color
 			#
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_.ToString().Length - $_rank_direction_label.Length - 1 - (8 * 23)
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_.ToString().Length - $_rank_direction_label.Length - 1 - 1 - (8 * 23)
 			$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 			Write-Host $_trailing_spaces_filler -NoNewline
 			Write-Host "|" -ForegroundColor $_html_cyan
