@@ -47,7 +47,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day = "   PL TiB   "
 	$_label_process_disks = "  Plots   "
 	$_label_process_replot_disks = "    Replots    "
-	$_label_process_rewards = "         Rewards        "
+	$_label_process_rewards = "          Rewards          "
 	$_label_process_misses = "  Miss  "
 	# node extra columns
 	$_label_process_sync_status = "Synced:    "
@@ -65,7 +65,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day_row2 = "------------"
 	$_label_process_disks_row2 = "----------"
 	$_label_process_replot_disks_row2 = "---------------"
-	$_label_process_rewards_row2 = "------------------------"
+	$_label_process_rewards_row2 = "---------------------------"
 	$_label_process_misses_row2 = "--------"
 	# node extra columns
 	$_label_process_sync_status_row2 = "      "
@@ -82,7 +82,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day_row3 = "Tot/PD      "
 	$_label_process_disks_row3 = "#/Cmpl/RM "
 	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl   "
-	$_label_process_rewards_row3 = "Tot/PH/Est PD/PPTiB PD  "
+	$_label_process_rewards_row3 = "Tot/PH/Est PD/PPTiB PD     "
 	$_label_process_misses_row3 = "TO/RJ/FL"
 	# node extra columns
 	$_label_process_sync_status_row3 = "      "
@@ -307,6 +307,7 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				$_line_separator = "|" + $_line_separator 
 				Write-Host $_line_separator -nonewline -Foregroundcolor $_header_color
 				Write-Host $_temp_label_ -nonewline -Foregroundcolor $_header_inner_color
+				$script:_node_cursor_pos = $host.UI.RawUI.CursorPosition
 				$_end_filler_length = $_label_line_separator_length_node - ($_spacer_length + $_temp_label_.Length)
 				$_spacer_length = $_end_filler_length
 				$_line_separator = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -854,16 +855,16 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 			$_process_rewards_per_day_estimated = "-"
 			if ($_process_uptime_seconds -gt 0 -and $_process_uptime_seconds -ne "-" -and $_process_rewards -ne "-")
 			{
-				$_process_rewards_per_hour = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600, 1)
+				$_process_rewards_per_hour = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600, 2)
 				$_all_process_rewards_per_hour += $_process_rewards_per_hour
-				$_process_rewards_per_day_estimated = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600 * 24, 1)
+				$_process_rewards_per_day_estimated = [math]::Round(([int]($_process_rewards) / $_process_uptime_seconds) * 3600 * 24, 2)
 			}
 			$_process_rewards_disp = "-"
 			if ($_process_rewards -ne "-" -and $_plotted_size_TiB -gt 0)
 			{
 				if ($_process_rewards_per_day_estimated -ne "-")
 				{
-					$_daily_avg_process_rewards_per_TiB = [math]::Round([int]($_process_rewards_per_day_estimated) / $_plotted_size_TiB, 1)
+					$_daily_avg_process_rewards_per_TiB = [math]::Round([int]($_process_rewards_per_day_estimated) / $_plotted_size_TiB, 2)
 				}
 				$_process_rewards_per_TiB = [math]::Round([int]($_process_rewards) / $_plotted_size_TiB, 1)
 				#$_process_rewards_disp = $_process_rewards + "/" + $_process_rewards_per_TiB.ToString() + "/" + $_process_rewards_per_hour.ToString() + "/" + $_process_rewards_per_day_estimated.ToString() + "/" + $_daily_avg_process_rewards_per_TiB.ToString()
@@ -1287,6 +1288,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 
 	$_num_rows += 1
 	#
+	$script:_num_rows = $_num_rows
+	$script:_num_cols = $_num_cols
 	fResizePSWindow $_num_rows $_num_cols
 	#
 }
@@ -1499,6 +1502,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_console_msg = "Farm #" + $_individual_farmer_count_disp + ":"
 				}
 				Write-Host $_console_msg -nonewline -ForegroundColor $_farmer_header_color
+				if ($_process_type.toLower() -eq "node")
+				{
+					$script:_node_cursor_pos = $host.UI.RawUI.CursorPosition
+				}
 				$_process_header_filler_length += $_console_msg.Length
 				#
 				$_console_msg = ""
@@ -1617,8 +1624,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_uptime_disp = fConvertTimeSpanToString $_uptime
 						#
 						if ($_uptime.TotalHours) {
-							$_rewards_per_hour = [math]::Round([double]($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours), 1)
-							$_rewards_per_day_estimated = [math]::Round([double](($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 1)
+							$_rewards_per_hour = [math]::Round([double]($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours), 2)
+							$_rewards_per_day_estimated = [math]::Round([double](($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 2)
 						}
 						#
 
@@ -1896,7 +1903,7 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 				$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_plotted_size_TiB, 1)
 				if ($_rewards_per_day_estimated -ne "-")
 				{
-					$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 1)
+					$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 2)
 				}
 			}
 			#$_farm_rewards_disp_label = "Rewards(Tot/PPTiB/PH/Est PD/PPTiB PD):"
@@ -2726,6 +2733,8 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
+	$script:_num_rows = $_num_rows
+	$script:_num_cols = $_num_cols
 	fResizePSWindow $_num_rows $_num_cols
 	[Console]::SetCursorPosition(0, 0)
 	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
@@ -2969,8 +2978,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 					$_uptime_disp = fConvertTimeSpanToString $_uptime
 					#
 					if ($_uptime.TotalHours) {
-						$_rewards_per_hour = [math]::Round([double]($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours), 1)
-						$_rewards_per_day_estimated = [math]::Round([double](($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 1)
+						$_rewards_per_hour = [math]::Round([double]($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours), 2)
+						$_rewards_per_day_estimated = [math]::Round([double](($_disk_sector_performance_obj.TotalRewards / $_uptime.TotalHours) * 24), 2)
 					}
 					#
 
@@ -3254,7 +3263,7 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 			$_rewards_per_TiB = [math]::Round($_rewards_total / $_farm_plotted_size_TiB, 1)
 			if ($_rewards_per_day_estimated -ne "-")
 			{
-				$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 1)
+				$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 2)
 			}
 		}
 		#$_farm_rewards_disp_label = "Rewards(Tot/PPTiB/PH/Est PD/PPTiB PD):"
@@ -4079,6 +4088,8 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_num_rows += 1
 	#
 	$_last_cursor_position = $host.UI.RawUI.CursorPosition
+	$script:_num_rows = $_num_rows
+	$script:_num_cols = $_num_cols
 	fResizePSWindow $_num_rows $_num_cols
 	[Console]::SetCursorPosition(0, 0)
 	[Console]::SetCursorPosition($_last_cursor_position.X, $_last_cursor_position.Y)
@@ -4152,7 +4163,7 @@ function fDisplayFooterInfo () {
 	Write-Host "/" -nonewline -Foregroundcolor $_info_label_color
 	Write-Host $script:_current_rank -nonewline -Foregroundcolor $_git_version_disp_color
 	$_fg_color = $_html_gray
-	$_rank_direction_label = "--"
+	$_rank_direction_label = " "
 	if ($script:_rank_direction.toLower() -eq "up") {
 		$_fg_color = $_html_green
 		$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
@@ -4166,14 +4177,14 @@ function fDisplayFooterInfo () {
 
 function fDisplayHelpSummary() {
 	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,EX=Expired,"
-	$_help_text_2 = "RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed"
+	$_help_text_2 = "RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }
 
 function fDisplayHelp() {
-	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,"
-	$_help_text_2 = "PL=Plotted,EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed"
+	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,"
+	$_help_text_2 = "EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }

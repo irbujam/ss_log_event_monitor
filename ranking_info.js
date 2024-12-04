@@ -1,14 +1,15 @@
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const { encodeAddress } = require('@polkadot/util-crypto');
-
-// Save the original process.stdout.write function to restore later
-const originalStdoutWrite = process.stdout.write;
-
-// Redirect stdout and stderr to null to suppress all logs
-//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
-process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
 
 async function fRetrieveAccounts(io_nodeUrl, io_vlt_address_arr) {
+	const { ApiPromise, WsProvider } = require('@polkadot/api');
+	const { encodeAddress } = require('@polkadot/util-crypto');
+
+	// Save the original process.stdout.write function to restore later
+	const originalStdoutWrite = process.stdout.write;
+
+	// Redirect stdout and stderr to null to suppress all logs
+	//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
+	process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
+
 	// Substrate node we are connected to and listening to remarks
     const provider = new WsProvider(io_nodeUrl);
     const api = await ApiPromise.create({ provider });
@@ -24,11 +25,6 @@ async function fRetrieveAccounts(io_nodeUrl, io_vlt_address_arr) {
     let limit = 100;
     let result = [];
     let last_key = "";
-	
-	//convert base58 to substrate addr
-	const substrate_addr_prefix = 42;
-	base58Addr = io_vlt_address_arr
-	encoded_addr = encodeAddress(io_vlt_address_arr, substrate_addr_prefix)
 	
 	// get all accounts from chain and store in array
 	while (true) {
@@ -54,21 +50,63 @@ async function fRetrieveAccounts(io_nodeUrl, io_vlt_address_arr) {
 	});
 	// rerieve array element and position for address from config
 	let unique_accounts = result.length;
-	
-	let my_addr_obj = result.find(oAddr => oAddr.address === encoded_addr);
-	let my_addr_obj_index = result.map(oAddr => oAddr.address).indexOf(encoded_addr);
-	let rank = my_addr_obj_index + 1;
 
-	//prepare response
-	_balance = 0;
-	_reserved_balance = 0;
-	if (my_addr_obj_index >= 0)
-	{
-		_balance = my_addr_obj.balance;
-		_reserved_balance = my_addr_obj.reserved_balance;
-	}
+	//define response
 	var resp_json = '{"Response":';
-	resp_json += '[{"address_id":' + '"' + base58Addr.toString() + '","unique_accounts":"' + unique_accounts.toString() + '","rank_id":"' + rank.toString() + '","balance":"' + _balance.toString() + '","reserved":"' + _reserved_balance.toString() + '"}]';
+	var _total_balance = 0;
+	var _total_reserved_balance = 0;
+	var rank = 0;
+	//convert base58 to substrate addr
+	const substrate_addr_prefix = 42;
+	var iterator = 0;
+	for (const io_vlt_address_arr_item of io_vlt_address_arr) {
+		_vlt_addr_ = io_vlt_address_arr_item.acct_id.toString();
+		//process.stdout.write(_vlt_addr_.toString());
+		
+		base58Addr = _vlt_addr_;
+		encoded_addr = encodeAddress(_vlt_addr_, substrate_addr_prefix);
+
+		let my_addr_obj = result.find(oAddr => oAddr.address === encoded_addr);
+		let my_addr_obj_index = result.map(oAddr => oAddr.address).indexOf(encoded_addr);
+		rank = my_addr_obj_index + 1;
+
+		//prepare response
+		_balance = 0;
+		_reserved_balance = 0;
+		if (my_addr_obj_index >= 0)
+		{
+			_balance = my_addr_obj.balance;
+			_reserved_balance = my_addr_obj.reserved_balance;
+		}
+		_total_balance += Number(_balance);
+		if (iterator == 0) {
+			resp_json += '[{"address_id":' + '"' + base58Addr.toString() + '","unique_accounts":"' + unique_accounts.toString() + '","rank_id":"' + rank.toString() + '","balance":"' + _balance.toString() + '","reserved":"' + _reserved_balance.toString() + '"}';
+		}
+		else {
+			resp_json += ',{"address_id":' + '"' + base58Addr.toString() + '","unique_accounts":"' + unique_accounts.toString() + '","rank_id":"' + rank.toString() + '","balance":"' + _balance.toString() + '","reserved":"' + _reserved_balance.toString() + '"}';
+		}
+		iterator += 1;
+	}
+
+	if (iterator > 0) {
+		// add overall balance and rank info
+		let _overall_rank = 0;
+		if (iterator > 1) {
+			for( var _i = 0, len = result.length; _i < len; _i++ ) {
+				if( result[_i].balance < _total_balance ) {
+					_overall_rank = _i + 1;
+					break;
+				}
+			}
+		}
+		else {
+			_overall_rank = rank;
+		}
+		//add overall balance and rank to response
+		resp_json += ',{"address_id":' + '"' + 'overall' + '","unique_accounts":"' + unique_accounts.toString() + '","rank_id":"' + _overall_rank.toString() + '","balance":"' + _total_balance.toString() + '","reserved":"' + _total_reserved_balance.toString() + '"}';
+		resp_json += ']';
+	}
+	//finalize response
 	resp_json += '}';
 
 	// Restore stdout to display the balance
@@ -81,6 +119,15 @@ async function fRetrieveAccounts(io_nodeUrl, io_vlt_address_arr) {
 }
 
 const nodeUrl = process.argv[2];
-const vltAddress = process.argv[3];
+//console.log('Node url:', nodeUrl);  // Logs any regular argument passed
 
-fRetrieveAccounts(nodeUrl, vltAddress).catch(console.error);
+const vltAddJsonString = process.argv[3]; // Assume the first argument is a JSON string
+
+try {
+	const vltAddressArr = JSON.parse(vltAddJsonString);
+	//console.log('Address:', vltAddressArr);
+	fRetrieveAccounts(nodeUrl, vltAddressArr).catch(console.error);
+}
+catch (error) {
+	console.error('Error parsing address JSON:', error);
+}

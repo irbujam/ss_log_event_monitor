@@ -3,25 +3,33 @@
 #### '#' in front of the line indicates a comment line and is just there for readability and can be deleted
 #### please stick to using below format
 #
-#-------------------------------------------------------------------------------------------------------------------------
-# Wallet balance display using address provided. This is an optional feature.
+#-----------------------------------------------------[Optional]------------------------------------------------------
+# Display wallet balance/rank - This option is 'off' by default
+#      To see balance:
+#            - Provide a valid wallet address against "wallet-address :" and uncomment the line
+#            - For multi-wallet, save all the addresses in a separate text file with each address separated by space. Name
+#                   the address file as <file-name>.txt, where <file-name> can be any file name. For example vlt_addr.txt
+#            - Use either wallet file name OR a single wallet address. Both can not be used at the same time
 #
-# defaults to hourly refresh (3600 seconds) if no value provided against balance-refresh frequency
+#      Refresh interval: balance is set to refresh hourly (3600 seconds) by default, change to suit your needs
 #
-#      ************************************************ <<< NEW >>> *******************************************************     
-#      *  Show-Rank: This is an optional add-on. Set to Y to see your account rank, N is default if nothing is supplied   *
-#      *             Rank refresh is set to refresh every 12 hours and is not provided as config option at this time      *
-#      ********************************************************************************************************************     
-#      ************                 -----------------------  Please note:   -----------------------              **********     
-#      ************  If set to Y initial run will take 3-5 minutes as it reads all account data from chain.      **********
-#      ************  Please be patient as subsequent in-between refresh should be faster                         **********
-#      ********************************************************************************************************************     
+#      Rank: This option is a separate add-on and is 'off' by default
+#            - Change value to Y against "show-rank :" and uncomment the line
+#            - If turned on, rank will refresh every 12 hours plus the duration set for balance refresh interval
+#
+#                              **************************************************************************
+#                              [Rank refresh ships with a fixed non-configurable value for reasons below]
+#                              **************************************************************************
+#
+#            - If turned on initial load run will take a few (~3 to 5) minutes as all account data is read from chain.
+#              Subsequent in-between refresh loads should be faster                   
 # 
 #-------------------------------------------------------------------------------------------------------------------------
 
-wallet-address            : <your autonomys wallet address>
+#wallet-address            : <your autonomys wallet address>
+#wallet-address            : <file-name.txt>
 balance-refresh (seconds) : 3600
-Show-Rank                 : N
+#Show-Rank                 : N
 
 #-------------------------------------------------------------------------------------------------------------------------
 # http endpoint set-up (use Y-enabled, N-disabled for enable-api setting). "N" is default
@@ -50,17 +58,16 @@ Telegram-chat-id: 1010000000
 
 Alert-frequency(seconds) : 3600
 
-#-------------------------------------------------------------------------------------------------------------------------
-## This is an optional feature. You can now customize alert notification generation for individual components
-## 
-## Examples below:
-##         - to generate alerts for node and farmer only, set value to 'node, farmer'
-##         - to generate alerts for all cluster components only set value to 'Cluster'
-##         - to generate  alerts for node, farmer, nats and controller only set value to 'farmer, node, controller, nats'
-##         - to receive alerts for everything set value to 'everything' OR 'all'
-##         - to receive alerts for nothing set value to 'none'
-##
-## the default value is preset to: 'all' and alerts will be sent for everything
+#-----------------------------------------------------[Optional]------------------------------------------------------
+# Customizable alert notification generation for individual components
+#  
+# To generate individual alerts, set values as shown in example below against "send-an-alert :" and uncomment the line
+#          - alerts for node and farmer only, set value to 'node, farmer'
+#          - alerts for all cluster components only set value to 'Cluster'
+#          - alerts for node, farmer, nats and controller only set value to 'farmer, node, controller, nats'
+#          - alerts for nothing set value to 'none'
+# 
+# the default value is preset to: 'all' and alerts will be sent for everything
 #-------------------------------------------------------------------------------------------------------------------------
 
 # Send-an-Alert : all
@@ -87,7 +94,7 @@ Start-up-View (S/D) : S
 #-------------------------------------------------------------------------------------------------------------------------
 
 ## comment below line(s) if not using cluster
-Nats-server: 192.168.2.203:18080
+Nats-server: 192.168.2.203:8080
 
 #-------------------------------------------------------------------------------------------------------------------------
 ## insert a new line for each node like shown in sample below
