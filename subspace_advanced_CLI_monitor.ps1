@@ -209,9 +209,10 @@ function main {
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
 					if ($script:_b_write_process_summary_to_console)
 					{
+						Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 					}
@@ -300,9 +301,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-			Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
 			if ($script:_b_write_process_summary_to_console)
 			{
+				Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
 				Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
 				Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 			}
