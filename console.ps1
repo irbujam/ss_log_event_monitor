@@ -92,6 +92,13 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_count_node = 3
 	$_label_total_length_node = $script:_process_alt_name_max_length + $_label_process_sync_status.Length + $_label_process_peers.Length
 	$_label_separator_count_node = 4
+	#override previous header space/values if additional node details are requested
+	if ($script:_b_disp_node_details) 
+	{
+		$_label_count_node = 5
+		$_label_total_length_node = $script:_process_alt_name_max_length + $_label_process_sync_status.Length + $_label_process_peers.Length + ("Best: ").Length + $script:_response_node_details_obj_arr[0].Response.currentBlock.ToString().Length + ("Highest: ").Length + $script:_response_node_details_obj_arr[0].Response.highestBlock.ToString().Length
+		$_label_separator_count_node = 6
+	}
 	$_label_line_separator_length_node = $_label_total_length_node + $_label_separator_count_node
 	#
 	## farmer label sizing assessment
@@ -327,7 +334,26 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_console_data_log -nonewline
 				Write-Host $_console_data_log_process_sync_state_filler -nonewline 
 				Write-Host $_process_sync_state -nonewline -ForegroundColor $_process_fg_color
-				Write-Host $_console_data_log_end
+				if ($script:_b_disp_node_details)
+				{
+					foreach ($_response_ in $script:_response_node_details_obj_arr)
+					{
+						$_tmp_node_ip_ = $_process_name.split(":")
+						if($_tmp_node_ip_[0] -eq $_response_.IP)
+						{
+							Write-Host "|" -nonewline
+							Write-Host ("Best: " + $_response_.Response.currentBlock.toString()) -nonewline
+							Write-Host "|" -nonewline
+							Write-Host ("Highest: " + $_response_.Response.highestBlock.toString()) -nonewline
+							Write-Host $_console_data_log_end
+							break
+						}
+					}
+				}
+				else
+				{
+					Write-Host $_console_data_log_end
+				}
 				$_num_rows += 1
 				$_b_process_header_printed = $true
 			}
@@ -339,7 +365,26 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 				Write-Host $_console_data_log -nonewline
 				Write-Host $_console_data_log_process_sync_state_filler -nonewline 
 				Write-Host $_process_sync_state -nonewline -ForegroundColor $_process_fg_color
-				Write-Host $_console_data_log_end
+				if ($script:_b_disp_node_details)
+				{
+					foreach ($_response_ in $script:_response_node_details_obj_arr)
+					{
+						$_tmp_node_ip_ = $_process_name.split(":")
+						if($_tmp_node_ip_[0] -eq $_response_.IP)
+						{
+							Write-Host "|" -nonewline
+							Write-Host ("Best: " + $_response_.Response.currentBlock.toString()) -nonewline
+							Write-Host "|" -nonewline
+							Write-Host ("Highest: " + $_response_.Response.highestBlock.toString()) -nonewline
+							Write-Host $_console_data_log_end
+							break
+						}
+					}
+				}
+				else
+				{
+					Write-Host $_console_data_log_end
+				}
 				$_num_rows += 1
 			}
 	}
@@ -1136,8 +1181,8 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 		$_all_process_total_TiB_per_day_disp = $_all_process_total_tiB_per_day.toString()
 	}
 	## farm aggregate rewards
-	$_all_process_rewards_per_day_estimated = [math]::Round($_all_process_rewards_per_hour * 24, 1)
-	$_all_process_rewards_per_hour = [math]::Round($_all_process_rewards_per_hour, 1)
+	$_all_process_rewards_per_day_estimated = [math]::Round($_all_process_rewards_per_hour * 24, 2)
+	$_all_process_rewards_per_hour = [math]::Round($_all_process_rewards_per_hour, 2)
 	#
 	#
 	if ($_all_process_misses -eq 0) {
@@ -1152,9 +1197,9 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	{
 		if ($_all_process_rewards_per_day_estimated -ne "-")
 		{
-			$_all_process_daily_avg_rewards_per_TiB = [math]::Round([int]($_all_process_rewards_per_day_estimated) / $_all_process_plotted_size_TiB_disp, 1)
+			$_all_process_daily_avg_rewards_per_TiB = [math]::Round([int]($_all_process_rewards_per_day_estimated) / $_all_process_plotted_size_TiB_disp, 2)
 		}
-		$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_plotted_size_TiB_disp), 1)
+		$_all_process_rewards_per_TiB = [math]::Round([int]($_all_process_rewards) / [int]($_all_process_plotted_size_TiB_disp), 2)
 	}
 	###
 	#
@@ -1553,7 +1598,27 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 						$_b_not_used_alert_status = fNotifyProcessOutOfSyncState $_process_type $_hostname
 					}
 					Write-Host $_node_sync_state_disp -nonewline -ForegroundColor $_node_sync_state_disp_color
-					Write-Host " " -nonewline
+					#Write-Host " " -nonewline
+					##
+					Write-Host ", " -nonewline
+					if ($script:_b_disp_node_details)
+					{
+						$_response_ = $script:_response_node_details_obj
+						foreach ($_response_ in $script:_response_node_details_obj_arr)
+						{
+							if($_host_ip -eq $_response_.IP)
+							{
+								Write-Host "Best: " -nonewline -ForegroundColor $_farmer_header_color
+								Write-Host $_response_.Response.currentBlock.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+								Write-Host ", " -nonewline
+								Write-Host "Highest: " -nonewline -ForegroundColor $_farmer_header_color
+								Write-Host $_response_.Response.highestBlock.toString() -nonewline -ForegroundColor $_farmer_header_data_color
+								Write-Host ", " -nonewline
+								break
+							}
+						}
+					}
+					##
 					Write-Host "Peers:" -nonewline -ForegroundColor $_farmer_header_color
 					Write-Host $_node_peers_connected -ForegroundColor $_farmer_header_data_color
 					$_num_rows += 1

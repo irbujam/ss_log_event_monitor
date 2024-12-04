@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.1"
+	$_monitor_file_name = "v0.4.2"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -95,6 +95,9 @@ function main {
 	$script:_rank_filename = "rank.txt"
 	$script:_b_file_exists = $false
 	$script:_b_redo_rank = $false
+	$script:_local_node_rpc_port = ""
+	$script:_b_disp_node_details = $false
+	[array]$script:_response_node_details_obj_arr = $null
 	##
 	$script:_node_cursor_pos = $null
 	$script:_num_rows = 0
@@ -206,9 +209,10 @@ function main {
 					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
+					Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
 					if ($script:_b_write_process_summary_to_console)
 					{
+						Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 					}
@@ -297,9 +301,10 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
 			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
 			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-			Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
+			Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
 			if ($script:_b_write_process_summary_to_console)
 			{
+				Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
 				Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
 				Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
 			}
@@ -454,7 +459,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 										Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 										Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
+										Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
 										##
 										## check monitor git version and display variance in console
 										fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -480,7 +485,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
+									Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -514,7 +519,7 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
+									Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1083,7 +1088,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 						Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 						Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
+						Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
 						##
 						## check monitor git version and display variance in console
 						fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1106,7 +1111,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] to loop thru individual farmer." -ForegroundColor $_html_gray
+					Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1137,7 +1142,7 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
 					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
 					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] to loop thru individual farmer" -ForegroundColor $_html_gray
+					Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1183,6 +1188,9 @@ function fReloadConfig() {
 	$script:_b_file_exists = $false
 	$script:_b_redo_rank = $false
 	$script:_rank_direction = ""
+	$script:_local_node_rpc_port = ""
+	$script:_b_disp_node_details = $false
+	$script:_response_node_details_obj_arr = $null
 	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
@@ -1193,6 +1201,7 @@ function fReloadConfig() {
 			elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$script:_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
 			elseif ($_process_type.toLower().IndexOf("balance-refresh") -ge 0) { $script:_vlt_balance_refresh_frequency = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("show-rank") -ge 0) { $script:_show_rank = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("local-node-rpc-port") -ge 0) { $script:_local_node_rpc_port = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
@@ -1263,6 +1272,18 @@ function fReloadConfig() {
 							ProcessResp		= $_tmp_process_state_arr[0]
 						}
 						$script:_process_status_arr += $_tmp_process_status_arr_obj
+						##
+						if ($script:_local_node_rpc_port -ne "" -and $script:_local_node_rpc_port.Length -gt 0) {
+							$script:_b_disp_node_details = $true
+							$_local_node_ip = $_process_ip
+							$_response_node_details_ps_obj = fGetLocalNodeDetailedSyncState $_local_node_ip $script:_local_node_rpc_port
+							$_tmp_response_node_details_ps_obj = [PSCustomObject]@{
+								IP				= $_local_node_ip
+								Response	 	= $_response_node_details_ps_obj.Response
+							}
+							$script:_response_node_details_obj_arr += $_tmp_response_node_details_ps_obj
+						}
+						##
 					}
 					"farmer" {
 						if ($_process_hostname.Length -gt $script:_process_farmer_alt_name_max_length) 
@@ -2896,6 +2917,73 @@ function fGetProcessState ([string]$_io_process_type, [string]$_io_host_ip, [str
 	[void]$_resp_process_state_arr.add($_b_process_running_state)
 
 	return $_resp_process_state_arr
+}
+
+function fGetLocalNodeDetailedSyncState ([string]$_io_node_ip, [string]$_io_node_rpc_port) {
+$_response_PS = $null
+#
+$_resp_Json = $null
+
+	# build websocket url for supplied node details
+	$_io_node_ws = "ws://" + $_io_node_ip + ":" + $_io_node_rpc_port
+	
+	# Define the function name to be called
+	$functionName = "fCheckNodeSyncStatus"
+	
+	# Run the Node.js script with the function name as an argument
+	try {
+		$_resp_Json = node -e "
+			// Define functions inside the script
+			async function fCheckNodeSyncStatus() {
+				const { ApiPromise, WsProvider } = require('@polkadot/api');
+
+				// Save the original process.stdout.write function to restore later
+				const originalStdoutWrite = process.stdout.write;
+
+				// Redirect stdout and stderr to null to suppress all logs
+				//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
+				process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
+
+				// Define the WebSocket provider (connect to a local node)
+				const wsProvider = new WsProvider('$_io_node_ws');
+
+				// Create an API instance
+				const api = await ApiPromise.create({ provider: wsProvider });
+
+				// Fetch sync status
+				const syncStatus = await api.rpc.system.syncState();
+
+				// Restore stdout to display the balance
+				process.stdout.write = originalStdoutWrite;
+				
+				// Print the sync status to the console
+				/*
+				console.log('SyncStatus Object: ' + syncStatus);
+				console.log('Sync Status:');
+				console.log('- Is synced: ' + (Number(syncStatus.currentBlock) == Number(syncStatus.highestBlock) ? 'Yes' : 'No'));
+				console.log('- Current block: ' + syncStatus.currentBlock.toString());
+				console.log('- Highest block: ' + syncStatus.highestBlock.toString());
+				*/
+				
+				//build response
+				var resp = '{Response:' + syncStatus + '}';
+				//send response
+				process.stdout.write(resp);
+				//console.log(resp);
+				
+				// Close the connection
+				await api.disconnect();
+			};
+
+			// Call the function dynamically by name
+			eval('$functionName()');
+		"
+		#
+		$_response_PS =  ConvertFrom-Json -InputObject $_resp_Json
+	}
+	catch {}
+	#
+	return $_response_PS
 }
 
 function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_hostname) {
