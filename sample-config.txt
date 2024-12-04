@@ -6,7 +6,7 @@
 #-----------------------------------------------------[Optional]----------------------------------------------------------
 # Display wallet balance/rank - This option is 'off' by default
 #
-# Please follow instructions in readme for installing required dependencies for this feature to work, before uncommenting
+#      - To use this feature install dependenncies as outlined in instructions_install-dependencies-for-balance.md
 #
 #      To see balance:
 #            - Provide a valid wallet address against "wallet-address :" and uncomment the line
@@ -37,7 +37,7 @@ balance-refresh (seconds) : 3600
 #-----------------------------------------------------[Optional]----------------------------------------------------------
 # Local node synced block height v/s highest block height display - This option is 'off' by default unless uncommented
 #
-# Please follow instructions in readme for installing required dependencies for this feature to work, before uncommenting
+#      - To use this feature install dependenncies as outlined in instructions_install-dependencies-for-balance.md
 #-------------------------------------------------------------------------------------------------------------------------
 
 #local-node-rpc-port        : 9944
