@@ -3,8 +3,11 @@
 #### '#' in front of the line indicates a comment line and is just there for readability and can be deleted
 #### please stick to using below format
 #
-#-----------------------------------------------------[Optional]------------------------------------------------------
+#-----------------------------------------------------[Optional]----------------------------------------------------------
 # Display wallet balance/rank - This option is 'off' by default
+#
+# Please follow instructions in readme for installing required dependencies for this feature to work, before uncommenting
+#
 #      To see balance:
 #            - Provide a valid wallet address against "wallet-address :" and uncomment the line
 #            - For multi-wallet, save all the addresses in a separate text file with each address separated by space. Name
@@ -30,6 +33,14 @@
 #wallet-address            : <file-name.txt>
 balance-refresh (seconds) : 3600
 #Show-Rank                 : N
+
+#-----------------------------------------------------[Optional]----------------------------------------------------------
+# Local node synced block height v/s highest block height display - This option is 'off' by default unless uncommented
+#
+# Please follow instructions in readme for installing required dependencies for this feature to work, before uncommenting
+#-------------------------------------------------------------------------------------------------------------------------
+
+#local-node-rpc-port        : 9944
 
 #-------------------------------------------------------------------------------------------------------------------------
 # http endpoint set-up (use Y-enabled, N-disabled for enable-api setting). "N" is default
@@ -58,7 +69,7 @@ Telegram-chat-id: 1010000000
 
 Alert-frequency(seconds) : 3600
 
-#-----------------------------------------------------[Optional]------------------------------------------------------
+#-----------------------------------------------------[Optional]----------------------------------------------------------
 # Customizable alert notification generation for individual components
 #  
 # To generate individual alerts, set values as shown in example below against "send-an-alert :" and uncomment the line
