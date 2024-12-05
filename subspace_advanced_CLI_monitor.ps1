@@ -1279,7 +1279,7 @@ function fReloadConfig() {
 		}
 		#
 		if (($script:_vlt_addr_arr | Measure-Object).Count -gt 0 -and $script:_vlt_addr_arr -ne $null) {
-			if ($script:_b_first_time -or $script:_vlt_balance -eq 0 -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
+			if ($script:_b_first_time -or $script:_vlt_balance -eq 0 -or $script:_b_redo_rank -or $_balance_refresh_stopwatch.Elapsed.TotalSeconds -ge $script:_vlt_balance_refresh_frequency)
 			{
 				$_balance_refresh_stopwatch.Restart()
 				$script:_vlt_balance = fGetVltBalance $script:_node_url $script:_vlt_addr_arr
@@ -1302,7 +1302,7 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 	$_vlt_addr_arrJS = fConverPSObjArrToJScriptArr $_io_vlt_address_arr
 	#
 	#
-	#try {
+	try {
 		#if ($script:_b_first_time -or ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency)))
 		if ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $script:_b_redo_rank -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency))
 		{
@@ -1338,8 +1338,8 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 				$script:_rank_obj_arr_showVltDetails = $null
 			}
 		}
-	#}
-	#catch {}
+	}
+	catch {}
 	$_balance = [math]::Round($_balance / [math]::Pow(10, 18), 4)
 	return $_balance
 }
@@ -1359,12 +1359,12 @@ $_balance = 0
 	$_my_accts_obj_PS = $null
 	
 	if (($script:_vlt_addr_arr | Measure-Object).Count -gt 0 -and $script:_vlt_addr_arr -ne $null) {
-		#try {
+		try {
 			##
 			$_my_accts_obj_PS = fGetRank $_io_node_url $_io_vlt_address_arr
 			##
-		#}
-		#catch {}
+		}
+		catch {}
 	}
 	Clear-Host
 	
@@ -1540,6 +1540,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				Write-Host $_delimiter -NoNewline
 				Write-Host $_rank_.ToString() -NoNewline -ForegroundColor $_html_yellow
 				#Write-Host " " -NoNewline
+				$_fg_color = $_html_gray
 				if ($_rank_direction_.toLower() -eq "up") {
 					$_fg_color = $_html_green
 					$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
@@ -2817,7 +2818,7 @@ $_resp_Json = $null
 	$functionName = "fCheckNodeSyncStatus"
 	
 	# Run the Node.js script with the function name as an argument
-	#try {
+	try {
 		$_resp_Json = node -e "
 			// Define functions inside the script
 			async function fCheckNodeSyncStatus() {
@@ -2866,8 +2867,8 @@ $_resp_Json = $null
 		"
 		#
 		$_response_PS =  ConvertFrom-Json -InputObject $_resp_Json
-	#}
-	#catch {}
+	}
+	catch {}
 	#
 	return $_response_PS
 }
@@ -2881,7 +2882,7 @@ $_resp_Json = $null
 	$functionName = "fRetrieveAccounts"
 	
 	# Run the Node.js script with the function name as an argument
-	#try {
+	try {
 		$_resp_Json = node -e "
 			// Define functions inside the script
 
@@ -3010,8 +3011,8 @@ $_resp_Json = $null
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
-	#}
-	#catch {}
+	}
+	catch {}
 	#
 	return $_response_obj_arr_PS
 }
@@ -3025,7 +3026,7 @@ $_resp_Json = $null
 	$functionName = "fGetBalance"
 	
 	# Run the Node.js script with the function name as an argument
-	#try {
+	try {
 		$_resp_Json = node -e "
 			// Define functions inside the script
 
@@ -3089,8 +3090,8 @@ $_resp_Json = $null
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
-	#}
-	#catch {}
+	}
+	catch {}
 	#
 	return $_response_obj_arr_PS
 }
