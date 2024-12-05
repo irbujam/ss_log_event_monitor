@@ -4207,6 +4207,41 @@ function fGetFarmerMatchInCluster ([string]$_io_host_url) {
 	return $_io_cluster_id_seq_disp
 }
 
+function fDisplayHeaderInfo ([boolean]$_io_individual_farmer_view_mode) {
+	if ($script:_vlt_addr_arr -ne $null)
+	{
+		Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+		Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
+		Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
+	}
+	else
+	{
+		Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
+	}
+	Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow
+	Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
+	Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
+	Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
+	if ($_io_individual_farmer_view_mode)
+	{
+		Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
+		Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
+		Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
+		Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
+		Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+	}
+	elseif ($script:_b_write_process_summary_to_console)
+	{
+		Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
+		Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
+		Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
+	}
+	else 
+	{
+		Write-Host
+	}
+}
+
 function fDisplayFooterInfo () {
 	## get latest cli github version info
 	$_git_version_disp = " - "
@@ -4224,9 +4259,19 @@ function fDisplayFooterInfo () {
 	Write-Host "$($_git_version_disp)" -nonewline -ForegroundColor $_git_version_disp_color
 	Write-Host ", " -nonewline -Foregroundcolor $_info_label_color
 	Write-Host "Bal(AI3)/Rank:" -nonewline -Foregroundcolor $_header_inner_color
-	Write-Host $script:_vlt_balance -nonewline -Foregroundcolor $_git_version_disp_color
+	$_balance_disp = $script:_vlt_balance.toString()
+	if ($script:_vlt_balance -eq 0)
+	{
+		$_balance_disp = "-"
+	}
+	Write-Host $_balance_disp -nonewline -Foregroundcolor $_git_version_disp_color
 	Write-Host "/" -nonewline -Foregroundcolor $_info_label_color
-	Write-Host $script:_current_rank -nonewline -Foregroundcolor $_git_version_disp_color
+	$_current_rank_disp = $script:_current_rank.toString()
+	if ($script:_current_rank -eq 0)
+	{
+		$_current_rank_disp = "-"
+	}
+	Write-Host $_current_rank_disp -nonewline -Foregroundcolor $_git_version_disp_color
 	$_fg_color = $_html_gray
 	$_rank_direction_label = " "
 	if ($script:_rank_direction.toLower() -eq "up") {

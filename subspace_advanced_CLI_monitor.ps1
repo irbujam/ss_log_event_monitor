@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.2"
+	$_monitor_file_name = "v0.4.3"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -81,7 +81,8 @@ function main {
 	##
 	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"
 	$script:_vlt_addr_filename = ""
-	$script:_vlt_addr_arr = [System.Collections.ArrayList]@()
+	#$script:_vlt_addr_arr = [System.Collections.ArrayList]@()
+	[array]$script:_vlt_addr_arr = $null
 	$script:_vlt_address = ""
 	$_b_remove_duplicate_address = $true
 	$script:_vlt_balance = 0
@@ -202,23 +203,8 @@ function main {
 					$script:_b_first_time = $false
 				}
 				else{
-					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
-					if ($script:_b_write_process_summary_to_console)
-					{
-						Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
-					}
-					else {
-						Write-Host
-					}
+					$_b_individual_farmer_view_mode = $false
+					fDisplayHeaderInfo $_b_individual_farmer_view_mode
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -295,22 +281,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 			$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 			Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 			Write-Host
-			Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-			Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-			Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-			Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-			Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-			Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-			Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
-			if ($script:_b_write_process_summary_to_console)
-			{
-				Write-Host ", [" -NoNewLine -ForegroundColor $_html_gray
-				Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
-				Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
-			}
-			else {
-				Write-Host
-			}
+			$_b_individual_farmer_view_mode = $false
+			fDisplayHeaderInfo $_b_individual_farmer_view_mode
 			##
 			## check monitor git version and report on variance
 			fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -369,13 +341,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
+									$_b_individual_farmer_view_mode = $false
+									fDisplayHeaderInfo $_b_individual_farmer_view_mode
 									##
 									## check monitor git version and display variance in console
 									Write-Host
@@ -398,15 +365,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
+									$_b_individual_farmer_view_mode = $false
+									fDisplayHeaderInfo $_b_individual_farmer_view_mode
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -448,18 +408,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 										Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 										Write-Host
-										#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-										Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
-										Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-										Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+										$_b_individual_farmer_view_mode = $true
+										fDisplayHeaderInfo $_b_individual_farmer_view_mode
 										##
 										## check monitor git version and display variance in console
 										fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -474,18 +424,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+									$_b_individual_farmer_view_mode = $true
+									fDisplayHeaderInfo $_b_individual_farmer_view_mode
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -508,18 +448,8 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 									$_prompt_listening_mode = "Listening at: " + $_url_prefix_listener + "summary"
 									Write-Host -NoNewline ("`r {0} " -f $_prompt_listening_mode) -ForegroundColor White
 									Write-Host
-									#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-									Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
-									Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-									Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+									$_b_individual_farmer_view_mode = $true
+									fDisplayHeaderInfo $_b_individual_farmer_view_mode
 									##
 									## check monitor git version and display variance in console
 									fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1001,15 +931,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					##
 					$script:_b_write_process_details_to_console = $true
 					$script:_b_write_process_summary_to_console = $false
-					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host
+					$_b_individual_farmer_view_mode = $false
+					fDisplayHeaderInfo $_b_individual_farmer_view_mode
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1028,16 +951,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					##
 					$script:_b_write_process_details_to_console = $false
 					$script:_b_write_process_summary_to_console = $true
-					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything. [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "Number key" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] for individual farmer detail" -ForegroundColor $_html_gray
+					$_b_individual_farmer_view_mode = $false
+					fDisplayHeaderInfo $_b_individual_farmer_view_mode
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1077,18 +992,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 					if ($script:_individual_farmer_id_last_pos -ge 0 -and $script:_individual_farmer_id_last_pos -lt $script:_individual_farmer_id_arr.Count)
 					{
 						Clear-Host
-						#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-						Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
-						Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-						Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+						$_b_individual_farmer_view_mode = $true
+						fDisplayHeaderInfo $_b_individual_farmer_view_mode
 						##
 						## check monitor git version and display variance in console
 						fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1100,18 +1005,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				}
 				LeftArrow {
 					Clear-Host
-					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+					$_b_individual_farmer_view_mode = $true
+					fDisplayHeaderInfo $_b_individual_farmer_view_mode
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1131,18 +1026,8 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 				}
 				RightArrow {
 					Clear-Host
-					#Write-Host "Press to view: [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "[" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F6" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-wallet details, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F9" -NoNewLine -ForegroundColor $_html_yellow 
-					Write-Host "]-summary, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "F12" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "]-everything, [" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "->" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "/" -NoNewLine -ForegroundColor $_html_gray
-					Write-Host "<-" -NoNewLine -ForegroundColor $_html_yellow
-					Write-Host "] to loop through individual farmer" -ForegroundColor $_html_gray
+					$_b_individual_farmer_view_mode = $true
+					fDisplayHeaderInfo $_b_individual_farmer_view_mode
 					##
 					## check monitor git version and display variance in console
 					fDisplayMonitorGitVersionVariance $_monitor_git_version $_monitor_file_curr_local_path $_monitor_file_name
@@ -1330,7 +1215,8 @@ function fReloadConfig() {
 			$_tmp_vlt_addr_obj = [PSCustomObject]@{
 				AddressId		= $script:_vlt_address
 			}
-			[void]$script:_vlt_addr_arr.add($_tmp_vlt_addr_obj)
+			#[void]$script:_vlt_addr_arr.add($_tmp_vlt_addr_obj)
+			$script:_vlt_addr_arr += $_tmp_vlt_addr_obj
 		}
 		#
 		$script:_b_file_exists = Test-Path ("./" + $script:_rank_filename)
@@ -1400,7 +1286,12 @@ function fReloadConfig() {
 			}
 		}
 	}
-	else { 	$script:_vlt_balance = 0 }
+	else 
+	{
+		$script:_vlt_balance = 0
+		$script:_current_rank = 0
+		$script:_vlt_addr_arr = $null
+	}
 	#
 	## return from function
 	return $_process_ip_arr
@@ -1411,7 +1302,7 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 	$_vlt_addr_arrJS = fConverPSObjArrToJScriptArr $_io_vlt_address_arr
 	#
 	#
-	try {
+	#try {
 		#if ($script:_b_first_time -or ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency)))
 		if ($script:_show_rank.toLower() -eq "y" -and (!($script:_b_file_exists) -or $script:_b_redo_rank -or $_rank_refresh_stopwatch.Elapsed.TotalHours -ge $script:_rank_refresh_frequency))
 		{
@@ -1423,15 +1314,9 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 		}
 		else
 		{
-			if ($script:_b_windows_host)
-			{
-				$_balance_resp_Json = node .\getAcctBalance.js $_io_node_url $_vlt_addr_arrJS
-			}
-			else 
-			{
-				$_balance_resp_Json = node ./getAcctBalance.js $_io_node_url $_vlt_addr_arrJS
-			}
-			$_balance_resp_PS =  ConvertFrom-Json -InputObject $_balance_resp_Json
+			##
+			$_balance_resp_PS = fGetWalletBalance $_io_node_url $_vlt_addr_arrJS
+			##
 			$_balance_resp = $_balance_resp_PS.Response
 			foreach ($_balance_obj in $_balance_resp)
 			{
@@ -1453,8 +1338,8 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 				$script:_rank_obj_arr_showVltDetails = $null
 			}
 		}
-	}
-	catch {}
+	#}
+	#catch {}
 	$_balance = [math]::Round($_balance / [math]::Pow(10, 18), 4)
 	return $_balance
 }
@@ -1471,25 +1356,21 @@ $_balance = 0
 	fPrintTree
 	####
 	$_my_accts_json = ""
+	$_my_accts_obj_PS = $null
 	
 	if (($script:_vlt_addr_arr | Measure-Object).Count -gt 0 -and $script:_vlt_addr_arr -ne $null) {
-		try {
-			if ($script:_b_windows_host)
-			{
-				$_my_accts_json = node .\ranking_info.js $_io_node_url $_io_vlt_address_arr
-			}
-			else
-			{
-				$_my_accts_json = node ./ranking_info.js $_io_node_url $_io_vlt_address_arr
-			}
-		}
-		catch {}
+		#try {
+			##
+			$_my_accts_obj_PS = fGetRank $_io_node_url $_io_vlt_address_arr
+			##
+		#}
+		#catch {}
 	}
 	Clear-Host
 	
 	####
 	## convert to ps object array from json
-	$_my_accts_obj_PS =  ConvertFrom-Json -InputObject $_my_accts_json
+	#$_my_accts_obj_PS =  ConvertFrom-Json -InputObject $_my_accts_json
 	$_my_accts_obj_arr = $_my_accts_obj_PS.Response
 	#
 	$_unique_accounts = 0
@@ -1545,167 +1426,172 @@ $_balance = 0
 }
 
 function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_obj_type, [array]$_io_rank_obj_arr) {
-	$_spacer = " "
-	$_label_line_separator = "_"
-	$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
-	#
-	#$_num_rows_ = $script:_num_rows
-	$_num_cols_ = $script:_num_cols
-	#
-	$_spacer_length = 1
-	$_leading_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-	$_trailing_spaces_filler = ""
-	$_data_length = 50
-	$_spacer_length = $_data_length
-	$_all_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-	$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
-	##
-	# get the current cursor position
-	$_Last_CursorPosition_ = $host.UI.RawUI.CursorPosition
-	$_cursor_position_ = $script:_node_cursor_pos
-	$_start_cursor_pos = $_cursor_position_.Y - 2
-	$_finish_cursor_pos = ($_io_accounts_obj_arr | Measure-Object).Count
-	$_cursor_pos_x = ($_num_cols_ - $_data_length) / 2
-	$_cursor_pos_y = $_start_cursor_pos
-	# set cursor position to write wallet balance/rank data as an overlay
-	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-	Write-Host $_all_line_filler -ForegroundColor $_html_cyan
-	$_cursor_pos_y += 1
-	#
-	# write header
-	$_lbl_addr = "    Address    "
-	$_lbl_bal = "   Bal (AI3)   "
-	$_lbl_rank = "    Rank    "
-	$_lbl_rank_direction = "  "
-	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-	Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
-	Write-Host $_leading_spaces_filler -NoNewline
-	Write-Host $_lbl_addr -NoNewline -ForegroundColor $_html_cyan
-	Write-Host $_lbl_bal -NoNewline -ForegroundColor $_html_cyan
-	if ($_io_accounts_obj_type -eq "rank")
+	if ($script:_vlt_addr_arr -ne $null)
 	{
-		Write-Host $_lbl_rank -NoNewline -ForegroundColor $_html_cyan
-		Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
-		$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 1
-	}
-	else
-	{
-		$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - 1
-	}
-	$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-	Write-Host $_trailing_spaces_filler -NoNewline
-	Write-Host "|" -ForegroundColor $_html_cyan
-	$_cursor_pos_y += 1
-	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-	$_spacer_length = $_data_length - 2
-	$_header_separator_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
-	Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
-	Write-Host $_header_separator_filler -NoNewline -ForegroundColor $_html_cyan
-	Write-Host "|" -ForegroundColor $_html_cyan
-	$_cursor_pos_y += 1
-	##
-	#
-	# determine input account object type and write data
-	if ($_io_accounts_obj_type -eq "rank")
-	{
-		$_unique_accounts = 0
-		$_rank_direction_ = ""
-		foreach ($_io_accounts_obj in $_io_accounts_obj_arr)
+		$_spacer = " "
+		$_label_line_separator = "_"
+		$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
+		#
+		#$_num_rows_ = $script:_num_rows
+		$_num_cols_ = $script:_num_cols
+		#
+		$_spacer_length = 1
+		$_leading_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+		$_trailing_spaces_filler = ""
+		$_data_length = 50
+		$_spacer_length = $_data_length
+		$_all_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+		$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
+		##
+		# get the current cursor position
+		$_Last_CursorPosition_ = $host.UI.RawUI.CursorPosition
+		$_cursor_position_ = $script:_node_cursor_pos
+		$_start_cursor_pos = $_cursor_position_.Y - 2
+		$_finish_cursor_pos = ($_io_accounts_obj_arr | Measure-Object).Count
+		$_cursor_pos_x = ($_num_cols_ - $_data_length) / 2
+		$_cursor_pos_y = $_start_cursor_pos
+		# set cursor position to write wallet balance/rank data as an overlay
+		[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+		Write-Host $_all_line_filler -ForegroundColor $_html_cyan
+		$_cursor_pos_y += 1
+		#
+		# write header
+		$_lbl_addr = "    Address    "
+		$_lbl_bal = "   Bal (AI3)   "
+		$_lbl_rank = "    Rank    "
+		$_lbl_rank_direction = "  "
+		[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+		Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+		Write-Host $_leading_spaces_filler -NoNewline
+		Write-Host $_lbl_addr -NoNewline -ForegroundColor $_html_cyan
+		Write-Host $_lbl_bal -NoNewline -ForegroundColor $_html_cyan
+		if ($_io_accounts_obj_type -eq "rank")
 		{
-			if ($_io_accounts_obj.address_id -eq "overall") { $_unique_accounts = $_io_accounts_obj.unique_accounts.toString(); continue; }
-			#
-			$_addr_ = $_io_accounts_obj.address_id.toString()
-			$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
-			$_balance_ = [double]($_io_accounts_obj.balance)
-			$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
-			$_rank_ = $_io_accounts_obj.rank_id
-			##
-			$_previous_rank = 0
-			foreach ($_rank_obj_ in $_io_rank_obj_arr)
+			Write-Host $_lbl_rank -NoNewline -ForegroundColor $_html_cyan
+			Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 1
+		}
+		else
+		{
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - 1
+		}
+		$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+		Write-Host $_trailing_spaces_filler -NoNewline
+		Write-Host "|" -ForegroundColor $_html_cyan
+		$_cursor_pos_y += 1
+		[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+		$_spacer_length = $_data_length - 2
+		$_header_separator_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
+		Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+		Write-Host $_header_separator_filler -NoNewline -ForegroundColor $_html_cyan
+		Write-Host "|" -ForegroundColor $_html_cyan
+		$_cursor_pos_y += 1
+		##
+		#
+		# determine input account object type and write data
+		if ($_io_accounts_obj_type -eq "rank")
+		{
+			$_unique_accounts = 0
+			$_rank_direction_ = ""
+			foreach ($_io_accounts_obj in $_io_accounts_obj_arr)
 			{
-				if ($_rank_obj_.AddressId -eq $_io_accounts_obj.address_id)
+				if ($_io_accounts_obj.address_id -eq "overall") { $_unique_accounts = $_io_accounts_obj.unique_accounts.toString(); continue; }
+				#
+				$_addr_ = $_io_accounts_obj.address_id.toString()
+				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
+				$_balance_ = [double]($_io_accounts_obj.balance)
+				$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
+				$_rank_ = $_io_accounts_obj.rank_id
+				##
+				$_previous_rank = 0
+				foreach ($_rank_obj_ in $_io_rank_obj_arr)
 				{
-					$_previous_rank = $_rank_obj_.CurrentRank
-					break
+					if ($_rank_obj_.AddressId -eq $_io_accounts_obj.address_id)
+					{
+						$_previous_rank = $_rank_obj_.CurrentRank
+						break
+					}
 				}
-			}
-			#
-			if ([int]($_previous_rank) -gt [int]($_rank_))
-			{
-				$_rank_direction_ = "up"
-			}
-			elseif ([int]($_previous_rank) -lt [int]($_rank_))
-			{
-				if ([int]($_previous_rank) -eq 0 -and [int]($_rank_) -gt 0)
+				#
+				if ([int]($_previous_rank) -gt [int]($_rank_))
 				{
 					$_rank_direction_ = "up"
 				}
-				else
+				elseif ([int]($_previous_rank) -lt [int]($_rank_))
 				{
-					$_rank_direction_ = "down"
+					if ([int]($_previous_rank) -eq 0 -and [int]($_rank_) -gt 0)
+					{
+						$_rank_direction_ = "up"
+					}
+					else
+					{
+						$_rank_direction_ = "down"
+					}
 				}
+				##
+				[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+				$_delimiter = "        "
+				$_delimiter_repeat_count = 2
+				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+				Write-Host $_leading_spaces_filler -NoNewline
+				Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
+				Write-Host $_delimiter -NoNewline
+				Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
+				Write-Host $_delimiter -NoNewline
+				Write-Host $_rank_.ToString() -NoNewline -ForegroundColor $_html_yellow
+				#Write-Host " " -NoNewline
+				if ($_rank_direction_.toLower() -eq "up") {
+					$_fg_color = $_html_green
+					$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
+				}
+				elseif ($_rank_direction_.toLower() -eq "down") {
+					$_fg_color = $_html_red
+					$_rank_direction_label = [char]::ConvertFromUtf32(0x2193)
+				}
+				Write-Host (" " + $_rank_direction_label) -NoNewline -Foregroundcolor $_fg_color
+				#
+				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_.ToString().Length - $_rank_direction_label.Length - 1 - ($_delimiter.Length * $_delimiter_repeat_count) - 1
+				$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+				Write-Host $_trailing_spaces_filler -NoNewline
+				Write-Host "|" -ForegroundColor $_html_cyan
+				$_cursor_pos_y += 1
 			}
-			##
-			[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-			Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
-			Write-Host $_leading_spaces_filler -NoNewline
-			Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
-			Write-Host "        " -NoNewline
-			Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
-			Write-Host "        " -NoNewline
-			Write-Host $_rank_.ToString() -NoNewline -ForegroundColor $_html_yellow
-			Write-Host "        " -NoNewline
-			if ($_rank_direction_.toLower() -eq "up") {
-				$_fg_color = $_html_green
-				$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
-			}
-			elseif ($_rank_direction_.toLower() -eq "down") {
-				$_fg_color = $_html_red
-				$_rank_direction_label = [char]::ConvertFromUtf32(0x2193)
-			}
-			Write-Host (" " + $_rank_direction_label) -Foregroundcolor $_fg_color
-			#
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_.ToString().Length - $_rank_direction_label.Length - 1 - 1 - (8 * 23)
-			$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-			Write-Host $_trailing_spaces_filler -NoNewline
-			Write-Host "|" -ForegroundColor $_html_cyan
-			$_cursor_pos_y += 1
 		}
-	}
-	elseif ($_io_accounts_obj_type -eq "balance")
-	{
-		foreach ($_io_accounts_obj in $_io_accounts_obj_arr)
+		elseif ($_io_accounts_obj_type -eq "balance")
 		{
-			if ($_io_accounts_obj.address_id -eq "overall") { continue; }
-			#
-			$_addr_ = $_io_accounts_obj.address_id.toString()
-			$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
-			$_balance_ = [double]($_io_accounts_obj.balance)
-			$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
-			##
-			[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-			Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
-			Write-Host $_leading_spaces_filler -NoNewline
-			Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
-			Write-Host "        " -NoNewline
-			Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1 - (8 * 1)
-			$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-			Write-Host $_trailing_spaces_filler -NoNewline
-			Write-Host "|" -ForegroundColor $_html_cyan
-			$_cursor_pos_y += 1
+			foreach ($_io_accounts_obj in $_io_accounts_obj_arr)
+			{
+				if ($_io_accounts_obj.address_id -eq "overall") { continue; }
+				#
+				$_addr_ = $_io_accounts_obj.address_id.toString()
+				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
+				$_balance_ = [double]($_io_accounts_obj.balance)
+				$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
+				##
+				[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+				Write-Host $_leading_spaces_filler -NoNewline
+				Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
+				Write-Host "        " -NoNewline
+				Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
+				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1 - (8 * 1)
+				$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+				Write-Host $_trailing_spaces_filler -NoNewline
+				Write-Host "|" -ForegroundColor $_html_cyan
+				$_cursor_pos_y += 1
+			}
 		}
+		##
+		# write footer
+		$_spacer_length = $_data_length
+		$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
+		[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+		Write-Host $_all_line_filler -ForegroundColor $_html_cyan
+		$_cursor_pos_y += 1
+		##
+		# return to last know cursor position before function entry
+		[Console]::SetCursorPosition($_Last_CursorPosition_.X, $_Last_CursorPosition_.Y)
 	}
-	##
-	# write footer
-	$_spacer_length = $_data_length
-	$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator_upper
-	[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-	Write-Host $_all_line_filler -ForegroundColor $_html_cyan
-	$_cursor_pos_y += 1
-	##
-	# return to last know cursor position before function entry
-	[Console]::SetCursorPosition($_Last_CursorPosition_.X, $_Last_CursorPosition_.Y)
 }
 
 function fLoadPreviousRank([string]$_io_filename, [array]$_io_address_arr) {
@@ -2931,7 +2817,7 @@ $_resp_Json = $null
 	$functionName = "fCheckNodeSyncStatus"
 	
 	# Run the Node.js script with the function name as an argument
-	try {
+	#try {
 		$_resp_Json = node -e "
 			// Define functions inside the script
 			async function fCheckNodeSyncStatus() {
@@ -2980,10 +2866,233 @@ $_resp_Json = $null
 		"
 		#
 		$_response_PS =  ConvertFrom-Json -InputObject $_resp_Json
-	}
-	catch {}
+	#}
+	#catch {}
 	#
 	return $_response_PS
+}
+
+function fGetRank ([string]$io_node_url, [array]$io_vlt_address_arr) {
+$_response_PS = $null
+#
+$_resp_Json = $null
+
+	# Define the function name to be called
+	$functionName = "fRetrieveAccounts"
+	
+	# Run the Node.js script with the function name as an argument
+	#try {
+		$_resp_Json = node -e "
+			// Define functions inside the script
+
+			async function fRetrieveAccounts() {
+				const { ApiPromise, WsProvider } = require('@polkadot/api');
+				const { encodeAddress } = require('@polkadot/util-crypto');
+
+				// Save the original process.stdout.write function to restore later
+				const originalStdoutWrite = process.stdout.write;
+
+				// Redirect stdout and stderr to null to suppress all logs
+				//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
+				process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
+
+				// Substrate node we are connected to and listening to remarks
+				const provider = new WsProvider('$io_node_url');
+				const api = await ApiPromise.create({ provider });
+
+				// Get general information about the node we are connected to
+				const [chain, nodeName, nodeVersion] = await Promise.all([
+					api.rpc.system.chain(),
+					api.rpc.system.name(),
+					api.rpc.system.version()
+				]);
+
+				// Adjust how many accounts to query at once.
+				let limit = 100;
+				let result = [];
+				let last_key = '';
+				
+				// get all accounts from chain and store in array
+				while (true) {
+					let query = await api.query.system.account.entriesPaged({ args: [], pageSize: limit, startKey: last_key });
+					if (query.length == 0) {
+						break;
+					};
+
+					for (const user of query) {
+						let b_match_found = false;
+						let address = encodeAddress(user[0].slice(-32));
+						let balance = user[1].data.free.toString();
+						let reserved_balance = user[1].data.reserved.toString();
+						result.push({ address, balance, reserved_balance });
+						
+						last_key = user[0];
+					};
+				};
+				
+				//sort accounts by balance - descending
+				result.sort(function(a, b) {
+					return parseFloat(b.balance) - parseFloat(a.balance);
+				});
+				// rerieve array element and position for address from config
+				let unique_accounts = result.length;
+
+				//define response
+				var resp_json = '{=Response=:';
+				var _total_balance = 0;
+				var _total_reserved_balance = 0;
+				var rank = 0;
+				//convert base58 to substrate addr
+				const substrate_addr_prefix = 42;
+				var iterator = 0;
+				for (const io_vlt_address_arr_item of $io_vlt_address_arr) {
+					_vlt_addr_ = io_vlt_address_arr_item.acct_id.toString();
+					//process.stdout.write(_vlt_addr_.toString());
+					
+					base58Addr = _vlt_addr_;
+					encoded_addr = encodeAddress(_vlt_addr_, substrate_addr_prefix);
+
+					let my_addr_obj = result.find(oAddr => oAddr.address === encoded_addr);
+					let my_addr_obj_index = result.map(oAddr => oAddr.address).indexOf(encoded_addr);
+					rank = my_addr_obj_index + 1;
+
+					//prepare response
+					_balance = 0;
+					_reserved_balance = 0;
+					if (my_addr_obj_index >= 0)
+					{
+						_balance = my_addr_obj.balance;
+						_reserved_balance = my_addr_obj.reserved_balance;
+					}
+					_total_balance += Number(_balance);
+					if (iterator == 0) {
+						resp_json += '[{=address_id=:' + '=' + base58Addr.toString() + '=,=unique_accounts=:=' + unique_accounts.toString() + '=,=rank_id=:=' + rank.toString() + '=,=balance=:=' + _balance.toString() + '=,=reserved=:=' + _reserved_balance.toString() + '=}';
+					}
+					else {
+						resp_json += ',{=address_id=:' + '=' + base58Addr.toString() + '=,=unique_accounts=:=' + unique_accounts.toString() + '=,=rank_id=:=' + rank.toString() + '=,=balance=:=' + _balance.toString() + '=,=reserved=:=' + _reserved_balance.toString() + '=}';
+					}
+					iterator += 1;
+				}
+
+				if (iterator > 0) {
+					// add overall balance and rank info
+					let _overall_rank = 0;
+					if (iterator > 1) {
+						for( var _i = 0, len = result.length; _i < len; _i++ ) {
+							if( result[_i].balance < _total_balance ) {
+								_overall_rank = _i + 1;
+								break;
+							}
+						}
+					}
+					else {
+						_overall_rank = rank;
+					}
+					//add overall balance and rank to response
+					resp_json += ',{=address_id=:' + '=' + 'overall' + '=,=unique_accounts=:=' + unique_accounts.toString() + '=,=rank_id=:=' + _overall_rank.toString() + '=,=balance=:=' + _total_balance.toString() + '=,=reserved=:=' + _total_reserved_balance.toString() + '=}';
+					resp_json += ']';
+				}
+				//finalize response
+				resp_json += '}';
+
+				// Restore stdout to display the balance
+				process.stdout.write = originalStdoutWrite;
+				
+				// send response
+				process.stdout.write(resp_json);
+				
+				await api.disconnect();
+			}
+
+			//call function by name
+			eval('$functionName().catch(console.error)');
+		"
+		#
+		$_resp_Json = $_resp_Json.Replace('=','"')
+		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
+	#}
+	#catch {}
+	#
+	return $_response_obj_arr_PS
+}
+
+function fGetWalletBalance ([string]$io_node_url, [array]$io_vlt_address_arr) {
+$_response_PS = $null
+#
+$_resp_Json = $null
+
+	# Define the function name to be called
+	$functionName = "fGetBalance"
+	
+	# Run the Node.js script with the function name as an argument
+	#try {
+		$_resp_Json = node -e "
+			// Define functions inside the script
+
+			async function fGetBalance() {
+				const { ApiPromise, WsProvider } = require('@polkadot/api');
+				const { encodeAddress } = require('@polkadot/util-crypto');
+
+				// Save the original process.stdout.write function to restore later
+				const originalStdoutWrite = process.stdout.write;
+
+				// Redirect stdout and stderr to null to suppress all logs
+				//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
+				process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
+
+				// Connect to a node (replace with your desired node URL)
+				const provider = new WsProvider('$io_node_url');
+				const api = await ApiPromise.create({ provider });
+
+				// Fetch the account balance
+				var resp_json = '{=Response=:';
+				var _total_balance = 0;
+				var iterator = 0;
+				for (const io_vlt_address_arr_item of $io_vlt_address_arr) {
+					_vlt_addr_ = io_vlt_address_arr_item.acct_id.toString();
+					//process.stdout.write(_vlt_addr_.toString());
+					
+					base58Addr = _vlt_addr_;
+					//encoded_addr = encodeAddress(_vlt_addr_, substrate_addr_prefix);
+
+					const { data: { free: balance } } = await api.query.system.account(base58Addr);
+					_total_balance += Number(balance);
+
+					if (iterator == 0) {
+						resp_json += '[{=address_id=:=' + base58Addr.toString() + '=,=balance=:' + balance.toString() + '}';
+					}
+					else {
+						resp_json += ',{=address_id=:=' + base58Addr.toString() + '=,=balance=:' + balance.toString() + '}';
+					}
+					iterator += 1;
+				}
+				
+				if (iterator > 0) {
+					//add overall balance to response
+					resp_json += ',{=address_id=:' + '=overall=' + ',=balance=:' + _total_balance.toString() + '}';
+					resp_json += ']';
+				}
+				//finalize response
+				resp_json += '}';
+
+				// Restore stdout to display the balance
+				process.stdout.write = originalStdoutWrite;
+
+				process.stdout.write(resp_json);  // Output balance
+
+				// Disconnect from the node after querying
+				await api.disconnect();
+			}
+			//call function by name
+			eval('$functionName().catch(console.error)');
+		"
+		#
+		$_resp_Json = $_resp_Json.Replace('=','"')
+		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
+	#}
+	#catch {}
+	#
+	return $_response_obj_arr_PS
 }
 
 function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_hostname) {
