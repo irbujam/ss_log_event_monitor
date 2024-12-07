@@ -64,7 +64,7 @@ function main {
 	$script:_cluster_id_seq = 0
 	$script:_nats_server_name = ""
 	$script:_b_cluster_mode = $false
-	$script:_b_disable_farmer_display_at_cluster = $true	#disabled by default
+	$script:_b_disable_farmer_display_at_cluster = $true					#disabled by default - DO NOT CHANGE
 	[array]$script:_ss_controller_obj_arr = $null
 	[array]$script:_ss_cache_obj_arr = $null
 	[array]$script:_ss_farmer_obj_arr = $null
@@ -74,12 +74,20 @@ function main {
 	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
 	#$script:_b_ps_window_resize_enabled = "N"
-	$script:_alert_category_txt = "all"				#default set to send  alerts for all components
+	$script:_alert_category_txt = "all"										#default set to send  alerts for all components, if not provided in config
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
 	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
 	##
-	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"
+	$script:_block_speed = 6.5												# default if not provided in config
+	$script:_rewards_activated_at_block = (213696 - 1)  					# rewards initiation block minus 1 to accomdate airdrop only in AI3 balance  - DO NOT CHANGE
+	$script:_rewards_activated_date_ymd = "2024/11/22"
+	#
+	$script:_show_earnings = $true											# defaults to $true if not provided in config
+	$script:_earnings_duration = "daily"
+	$script:_earnings_info = $null
+	##
+	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"			# default if not provided in config
 	$script:_vlt_addr_filename = ""
 	#$script:_vlt_addr_arr = [System.Collections.ArrayList]@()
 	[array]$script:_vlt_addr_arr = $null
@@ -1076,6 +1084,7 @@ function fReloadConfig() {
 	$script:_local_node_rpc_port = ""
 	$script:_b_disp_node_details = $false
 	$script:_response_node_details_obj_arr = $null
+	$script:_show_earnings = $true
 	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
@@ -1086,6 +1095,11 @@ function fReloadConfig() {
 			elseif ($_process_type.toLower().IndexOf("api-host") -ge 0) {$script:_api_host = $_config[1].toString() + ":" + $_config[2].toString()}
 			elseif ($_process_type.toLower().IndexOf("balance-refresh") -ge 0) { $script:_vlt_balance_refresh_frequency = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("show-rank") -ge 0) { $script:_show_rank = $_config[1].toString() }
+			elseif ($_process_type.toLower().IndexOf("disable-earnings") -ge 0) {
+				if ($_config[1].toString().toLower() -eq 'y') { $script:_show_earnings = $false }
+			}
+			elseif ($_process_type.toLower().IndexOf("block-speed") -ge 0) { $script:_block_speed = [double]($_config[1].toString()) }
+			elseif ($_process_type.toLower().IndexOf("rpc-node-url") -ge 0) { $script:_node_url = "wss:" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("local-node-rpc-port") -ge 0) { $script:_local_node_rpc_port = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
@@ -1311,12 +1325,23 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 				$_rank_refresh_stopwatch.Restart()
 			}
 			$_balance = fGetVltRank $_io_node_url $_vlt_addr_arrJS
+			#if ($script:_show_earnings)
+			#{
+				$script:_earnings_info = fGetEarningsInfo $_io_node_url $_vlt_addr_arrJS
+			#}
+			Clear-Host
 		}
 		else
 		{
 			##
+			Write-Host "Quering node, please wait..."
 			$_balance_resp_PS = fGetWalletBalance $_io_node_url $_vlt_addr_arrJS
+			#if ($script:_show_earnings)
+			#{
+				$script:_earnings_info = fGetEarningsInfo $_io_node_url $_vlt_addr_arrJS
+			#}
 			##
+			Clear-Host
 			$_balance_resp = $_balance_resp_PS.Response
 			foreach ($_balance_obj in $_balance_resp)
 			{
@@ -1366,7 +1391,7 @@ $_balance = 0
 		}
 		catch {}
 	}
-	Clear-Host
+	#Clear-Host
 	
 	####
 	## convert to ps object array from json
@@ -1431,6 +1456,13 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_spacer = " "
 		$_label_line_separator = "_"
 		$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
+		## define header labels
+		$_lbl_addr				= "  Address    "
+		$_lbl_bal 				= "  Bal (AI3)   "
+		$_lbl_rank 				= "  Rank  "
+		$_lbl_rank_direction 	= "  "
+		$_lbl_earnings			= "  Earnings (AI3)  "
+		$_lbl_date				= "  Date      "
 		#
 		#$_num_rows_ = $script:_num_rows
 		$_num_cols_ = $script:_num_cols
@@ -1438,7 +1470,15 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_spacer_length = 1
 		$_leading_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_trailing_spaces_filler = ""
-		$_data_length = 50
+		#$_data_length = 50
+		if ($_io_accounts_obj_type -eq "rank")
+		{
+			$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+		}
+		else
+		{
+			$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+		}
 		$_spacer_length = $_data_length
 		$_all_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_all_line_filler = fBuildDynamicSpacer $_spacer_length $_label_line_separator
@@ -1456,10 +1496,6 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_cursor_pos_y += 1
 		#
 		# write header
-		$_lbl_addr = "    Address    "
-		$_lbl_bal = "   Bal (AI3)   "
-		$_lbl_rank = "    Rank    "
-		$_lbl_rank_direction = "  "
 		[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
 		Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 		Write-Host $_leading_spaces_filler -NoNewline
@@ -1468,12 +1504,16 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		if ($_io_accounts_obj_type -eq "rank")
 		{
 			Write-Host $_lbl_rank -NoNewline -ForegroundColor $_html_cyan
-			Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 1
+			#Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
+			Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
+			Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1 - 1
 		}
 		else
 		{
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - 1
+			Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
+			Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
 		}
 		$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_trailing_spaces_filler -NoNewline
@@ -1489,6 +1529,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		##
 		#
 		# determine input account object type and write data
+		$_delimiter = "    "
 		if ($_io_accounts_obj_type -eq "rank")
 		{
 			$_unique_accounts = 0
@@ -1499,9 +1540,18 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				#
 				$_addr_ = $_io_accounts_obj.address_id.toString()
 				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
+				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length - 1
+				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_addr_disp_ = $_addr_disp_ + $_filler_
+				
 				$_balance_ = [double]($_io_accounts_obj.balance)
-				$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
+				$_balance_disp = ([math]::Round($_balance_ / [math]::Pow(10, 18), 4)).ToString()
+				$_spacer_length = $_lbl_bal.Length - $_balance_disp.Length - 1
+				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_balance_disp = $_balance_disp + $_filler_
 				$_rank_ = $_io_accounts_obj.rank_id
+				$_rank_disp = $_rank_.ToString()
+				#
 				##
 				$_previous_rank = 0
 				foreach ($_rank_obj_ in $_io_rank_obj_arr)
@@ -1530,17 +1580,19 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				}
 				##
 				[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
-				$_delimiter = "        "
-				$_delimiter_repeat_count = 2
 				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_leading_spaces_filler -NoNewline
 				Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
 				Write-Host $_delimiter -NoNewline
-				Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
-				Write-Host $_delimiter -NoNewline
-				Write-Host $_rank_.ToString() -NoNewline -ForegroundColor $_html_yellow
-				#Write-Host " " -NoNewline
+				Write-Host $_balance_disp -NoNewline -ForegroundColor $_html_yellow
+				#Write-Host $_delimiter -NoNewline
+				
+				$_delimiter_repeat_count = 1
+				
+				##
+				# write rank
 				$_fg_color = $_html_gray
+				$_rank_direction_label = " "
 				if ($_rank_direction_.toLower() -eq "up") {
 					$_fg_color = $_html_green
 					$_rank_direction_label = [char]::ConvertFromUtf32(0x2191)
@@ -1549,13 +1601,62 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 					$_fg_color = $_html_red
 					$_rank_direction_label = [char]::ConvertFromUtf32(0x2193)
 				}
-				Write-Host (" " + $_rank_direction_label) -NoNewline -Foregroundcolor $_fg_color
+				$_rank_direction_disp = " " + $_rank_direction_label
+				$_spacer_length = $_lbl_rank.Length - $_rank_disp.Length - $_rank_direction_disp.Length
+				$_rank_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+				Write-Host $_rank_disp -NoNewline -ForegroundColor $_html_yellow
+				Write-Host $_rank_direction_disp -NoNewline -Foregroundcolor $_fg_color
+				Write-Host $_rank_filler_ -NoNewline -ForegroundColor $_html_yellow
+				##
 				#
-				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_.ToString().Length - $_rank_direction_label.Length - 1 - ($_delimiter.Length * $_delimiter_repeat_count) - 1
-				$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-				Write-Host $_trailing_spaces_filler -NoNewline
-				Write-Host "|" -ForegroundColor $_html_cyan
-				$_cursor_pos_y += 1
+				$_earnings_cursor_pos = $host.UI.RawUI.CursorPosition
+				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration $_cursor_pos_x $_cursor_pos_y
+				##
+				# write detailed earnings data
+				foreach ($_earnings_obj in $_earnings_obj_arr)
+				{
+					#
+					if ($_earnings_obj.Visible)
+					{
+						$_earnings_ = [double]($_earnings_obj.Earnings)
+						$_earnings_disp = ([math]::Round($_earnings_, 4)).ToString()
+						$_spacer_length = $_lbl_earnings.Length - $_earnings_disp.Length - 1
+						$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+						$_earnings_disp = $_earnings_disp + $_filler_
+						#
+						$_date_earned = $_earnings_obj.DateEarned.toString()
+						##
+						if ($_addr_ -eq $_earnings_obj.AddressId.toString())
+						{
+							[Console]::SetCursorPosition($_earnings_cursor_pos.X, $_cursor_pos_y)
+							Write-Host $_earnings_disp -NoNewline -ForegroundColor $_html_yellow
+							Write-Host $_date_earned -NoNewline -ForegroundColor $_html_yellow
+							#
+							$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_disp.Length - $_rank_direction_label.Length - 1 - $_lbl_earnings.Length - $_lbl_date.Length - 1 - 1 - ($_delimiter.Length * $_delimiter_repeat_count)
+							$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+							Write-Host $_trailing_spaces_filler -NoNewline
+							Write-Host "|" -ForegroundColor $_html_cyan
+							$_cursor_pos_y += 1
+							#
+							[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+							Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+							Write-Host $_leading_spaces_filler -NoNewline
+							$_spacer_length = $_addr_disp_.Length + $_balance_disp.Length + $_rank_disp.Length + $_rank_direction_label.Length + $_rank_filler_.Length + 1 + ($_delimiter.Length * $_delimiter_repeat_count)
+							$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+							Write-Host $_filler_ -NoNewline
+						}
+					}
+				}
+				##
+				#
+				if (!($script:_show_earnings))
+				{
+					$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_disp.Length - $_rank_direction_label.Length - 1 - ($_delimiter.Length * $_delimiter_repeat_count) - 1
+					$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+					Write-Host $_trailing_spaces_filler -NoNewline
+					Write-Host "|" -ForegroundColor $_html_cyan
+					$_cursor_pos_y += 1
+				}
 			}
 		}
 		elseif ($_io_accounts_obj_type -eq "balance")
@@ -1566,20 +1667,74 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				#
 				$_addr_ = $_io_accounts_obj.address_id.toString()
 				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
+				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length - 1
+				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_addr_disp_ = $_addr_disp_ + $_filler_
+						
 				$_balance_ = [double]($_io_accounts_obj.balance)
-				$_balance_disp = [math]::Round($_balance_ / [math]::Pow(10, 18), 4)
+				$_balance_disp = ([math]::Round($_balance_ / [math]::Pow(10, 18), 4)).toString()
+				$_spacer_length = $_lbl_bal.Length - $_balance_disp.Length - 1
+				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+				$_balance_disp = $_balance_disp + $_filler_
 				##
 				[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
 				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_leading_spaces_filler -NoNewline
 				Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
-				Write-Host "        " -NoNewline
-				Write-Host $_balance_disp.ToString() -NoNewline -ForegroundColor $_html_yellow
-				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1 - (8 * 1)
-				$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
-				Write-Host $_trailing_spaces_filler -NoNewline
-				Write-Host "|" -ForegroundColor $_html_cyan
-				$_cursor_pos_y += 1
+				Write-Host $_delimiter -NoNewline
+				Write-Host $_balance_disp -NoNewline -ForegroundColor $_html_yellow
+
+				$_delimiter_repeat_count = 1
+				##
+				#
+				$_earnings_cursor_pos = $host.UI.RawUI.CursorPosition
+				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration $_cursor_pos_x $_cursor_pos_y
+				##
+				# write detailed earnings data
+				foreach ($_earnings_obj in $_earnings_obj_arr)
+				{
+					#
+					if ($_earnings_obj.Visible)
+					{
+						$_earnings_ = [double]($_earnings_obj.Earnings)
+						$_earnings_disp = ([math]::Round($_earnings_, 4)).ToString()
+						$_spacer_length = $_lbl_earnings.Length - $_earnings_disp.Length - 1
+						$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+						$_earnings_disp = $_earnings_disp + $_filler_
+						#
+						$_date_earned = $_earnings_obj.DateEarned.toString()
+						##
+						if ($_addr_ -eq $_earnings_obj.AddressId.toString())
+						{
+							[Console]::SetCursorPosition($_earnings_cursor_pos.X, $_cursor_pos_y)
+							Write-Host $_earnings_disp -NoNewline -ForegroundColor $_html_yellow
+							Write-Host $_date_earned -NoNewline -ForegroundColor $_html_yellow
+							#
+							$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_lbl_earnings.Length - $_lbl_date.Length - 1 - 1 #- ($_delimiter.Length * $_delimiter_repeat_count)
+							$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+							Write-Host $_trailing_spaces_filler -NoNewline
+							Write-Host "|" -ForegroundColor $_html_cyan
+							$_cursor_pos_y += 1
+							#
+							[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+							Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+							Write-Host $_leading_spaces_filler -NoNewline
+							$_spacer_length = $_addr_disp_.Length + $_balance_disp.Length + $_delimiter.Length
+							$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+							Write-Host $_filler_ -NoNewline
+						}
+					}
+				}
+				##
+				#
+				if (!($script:_show_earnings))
+				{
+					$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1 - ($_delimiter.Length * $_delimiter_repeat_count)
+					$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
+					Write-Host $_trailing_spaces_filler -NoNewline
+					Write-Host "|" -ForegroundColor $_html_cyan
+					$_cursor_pos_y += 1
+				}
 			}
 		}
 		##
@@ -3094,6 +3249,299 @@ $_resp_Json = $null
 	catch {}
 	#
 	return $_response_obj_arr_PS
+}
+
+function fGetEarningsInfo ([string]$io_node_url, [array]$io_vlt_address_arr) {
+$_response_obj_arr_PS = $null
+#
+$_resp_Json = $null
+
+	# Define the function name to be called
+	$functionName = "fGetEarnings"
+	# Run the Node.js script with the function name as an argument
+	try {
+		$_resp_Json = node -e "
+			// Define functions inside the script
+
+			function fGetLastDayOfWeekOrMonth(io_durationType) {
+				let today = new Date();
+				let lastReportDateTimestampRetVal = today.getFullYear().toString() + '/' + ('0' + (today.getMonth()+1).toString()).slice(-2) + '/' + ('0' + today.getDate().toString()).slice(-2);
+				let _lastReportDateTimestamp_ = '';
+				
+				switch (io_durationType) {
+					case 'weekly':
+						function getFirstDayOfWeek(io_date) {
+							return new Date(io_date.setDate(io_date.getDate() - io_date.getDay() + (io_date.getDay() === 0 ? -6 : 1)));
+						}
+						function getLastDayOfWeek(io_date) {
+							return new Date(io_date.setDate(io_date.getDate() - io_date.getDay() + 7));
+						}
+						function getLastDayOfPreviousWeek(io_date) {
+							first_date_of_week = getFirstDayOfWeek (io_date);
+							return new Date(io_date.setDate(first_date_of_week.getDate() - 1));
+						}
+						_lastReportDateTimestamp_ = getLastDayOfPreviousWeek(today);
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+					case 'monthly':
+						var lastDayOfPreviousMonth = new Date(today.getFullYear(), today.getMonth(), 0);	
+						_lastReportDateTimestamp_ = lastDayOfPreviousMonth;
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+					case 'yearly':
+						var lastDayOfPreviousYear = new Date(today.getFullYear() - 1, 12, 0);
+						_lastReportDateTimestamp_ = lastDayOfPreviousYear;
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+				}
+				return lastReportDateTimestampRetVal;
+			}
+
+			async function fGetEarnings() {
+				const { ApiPromise, WsProvider } = require('@polkadot/api');
+
+				// Save the original process.stdout.write function to restore later
+				const originalStdoutWrite = process.stdout.write;
+
+				// Redirect stdout and stderr to null to suppress all logs
+				//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
+				process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
+
+				const _provider = new WsProvider('$io_node_url'); // WebSocket connection to the Polkadot network
+				const api = await ApiPromise.create({ provider: _provider });
+
+				//define response
+				var resp_json = '{=Response=:[';
+				var _iterator = 0;
+
+				// Get the current block hash
+				const currentBlockHash = await api.rpc.chain.getBlockHash();  // Get the current block hash
+				const currentBlockHeader = await api.rpc.chain.getHeader(currentBlockHash);  // Get the block header
+				const currentBlockNumber = currentBlockHeader.number.toNumber();  // Get the block number
+				//console.log('Current Block:' + currentBlockNumber);
+
+				// Query balances over a period
+				const block_speed = Math.floor(Number($script:_block_speed));				//seconds per block, from config file
+				var blocks_per_day = Math.floor((60 / block_speed) * 60 * 24); 				// [1 block in 6s = (60/6)*60*24 per day] ~ 14440
+				var max_history_days = Math.floor(currentBlockNumber / blocks_per_day);
+				var remainder = currentBlockNumber % blocks_per_day;
+				if (remainder > 0) { max_history_days += 1 };
+				var upper_range = max_history_days;
+				var multiplier = 1;
+				
+
+				const duration_arr = ['daily', 'weekly', 'monthly', 'yearly'];
+				for (let k = 0; k < duration_arr.length; k++) 
+				{
+					_duration_ = duration_arr[k];
+				
+					switch (_duration_) 
+					{
+						case 'daily':
+							upper_range = 7;
+							multiplier = 1;
+							break;
+						case 'weekly':
+							upper_range = Math.floor(max_history_days / 7) - 1;			//7 days in a week, subtracting genesis week from total weeks since genesis for calc
+							multiplier = 7;												//7 days in a week
+							break;
+						case 'monthly':
+							upper_range = Math.floor(max_history_days / 30) - 1;			//assuming 30 day in a month - 1 month for current month
+							multiplier = 7 * Math.floor(30 / 7); 						//week in a month ~ 4
+							break;
+						case 'yearly':
+							upper_range = Math.floor(max_history_days / 365);  			//365 days of a year
+							multiplier = 7 * 52;										//52 weeks in a year
+							break;
+						default :
+							upper_range = max_history_days - 1;
+							multiplier = 1;
+							break;
+					}
+
+					// Call the date function
+					lastReportDateTimestamp = fGetLastDayOfWeekOrMonth(_duration_);
+
+					var b_at_least_one_block_found = false;
+					for (const io_vlt_address_arr_item of $io_vlt_address_arr) 
+					{
+						b_at_least_one_block_found = false;
+						base58Addr = io_vlt_address_arr_item.acct_id.toString();
+						
+						// Query the balance of the account at the current block
+						const { data: { free: currentBalance } } = await api.query.system.account(base58Addr);
+
+						//iterate for all days in a month and break the loop once last report date desired matches and hold the block info
+						let LastReportingPeriodBlockNumber = currentBlockNumber;
+						let sLastRewardDate = ''
+						for (let i = 0; i <= 30; i++) 				//iterate for maximum number of calendar days in any month
+						{				
+							LastReportingPeriodBlockNumber = currentBlockNumber - (i  * blocks_per_day);
+							const _temp_BlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber);
+
+							// Use the .at() method on the API instance to query at the specific block hash
+							const apiAt = await api.at(_temp_BlockHash);  // Get API instance for a specific block hash
+							
+							// Query balance at the specific block
+							const { data: { free: pastBalance } } = await apiAt.query.system.account(base58Addr);
+
+							// Query the timestamp for the specific block
+							const _temp_blockTimestamp = await apiAt.query.timestamp.now(); // Retrieves the block timestamp (milliseconds)
+						
+							// Convert timestamp to Date
+							const timestampDate = new Date(_temp_blockTimestamp.toNumber());
+							const sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+
+							const previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
+							const previousBlockNumber = previousBlockHeader.number.toNumber();  // Get previous block number
+
+							if (i==0) 		//write to response only once for current block in this section as we will process prior period blocks later on
+							{		
+								if (_iterator >= 1) { resp_json += '},'; }
+								resp_json += '{=address_id=:=' + base58Addr + '=,=Duration=:=' + _duration_ + '=,=data=:['; 
+								resp_json += '{=Block=:=' + previousBlockNumber + '=,=Balance=:=' + pastBalance + '=,=Date=:=' + sDate + '=,=Timestamp=:=' + timestampDate + '=}';
+							}
+
+							b_at_least_one_block_found = true;
+							_iterator += 1;
+
+							if (sDate <= lastReportDateTimestamp || lastReportDateTimestamp < '$script:_rewards_activated_date_ymd') 
+							{
+								sLastRewardDate = sDate;
+								break;
+							}
+						}
+						
+						if (sLastRewardDate != '' && sLastRewardDate > '$script:_rewards_activated_date_ymd')
+						{
+							for (let i = 0; i <= upper_range; i++) 
+							{
+								//const previousBlockHash = await api.rpc.chain.getBlockHash(currentBlockNumber - (i * blocks_per_day * multiplier));
+								const previousBlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber - (i * blocks_per_day * multiplier));
+
+								// Use the .at() method on the API instance to query at the specific block hash
+								const apiAt = await api.at(previousBlockHash);  // Get API instance for a specific block hash
+
+								// Query balance at the specific block
+								const { data: { free: pastBalance } } = await apiAt.query.system.account(base58Addr);
+
+								// Query the timestamp for the specific block
+								const blockTimestamp = await apiAt.query.timestamp.now(); // Retrieves the block timestamp (milliseconds)
+								
+								// Convert timestamp to Date
+								const timestampDate = new Date(blockTimestamp.toNumber());
+								//const sDate = timestampDate.toLocaleDateString();
+								const sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+
+								const previousBlockHeader = await api.rpc.chain.getHeader(previousBlockHash);
+								const previousBlockNumber = previousBlockHeader.number.toNumber();  // Get previous block number
+
+								resp_json += ',{=Block=:=' + previousBlockNumber + '=,=Balance=:=' + pastBalance + '=,=Date=:=' + sDate + '=,=Timestamp=:=' + timestampDate + '=}';
+								
+								b_at_least_one_block_found = true;
+							}
+						}
+						//
+						//get blockhash when rewards were enabled
+						const rewardsEnabledBlockNumber = $script:_rewards_activated_at_block;
+						const rewardsBlockHash = await api.rpc.chain.getBlockHash(rewardsEnabledBlockNumber);
+
+						// Use the .at() method on the API instance to query at the specific block hash
+						const apiAt = await api.at(rewardsBlockHash);  			// Get API instance for a specific block hash
+
+						// Query balance at the specific block
+						const { data: { free: startBalance } } = await apiAt.query.system.account(base58Addr);
+						if (b_at_least_one_block_found) {
+							resp_json += ',{=Block=:=' + rewardsEnabledBlockNumber + '=,=Balance=:=' + startBalance + '=,=Date=:=' + '$script:_rewards_activated_date_ymd' + '=,=Timestamp=:=' + '' + '=}';
+						}
+						else {
+							resp_json += '{=Block=:=' + rewardsEnabledBlockNumber + '=,=Balance=:=' + startBalance + '=,=Date=:=' + '$script:_rewards_activated_date_ymd' + '=,=Timestamp=:=' + '' + '=}';
+						}
+						if (_iterator >= 1) { resp_json += ']'; }
+					}
+				}
+				//if (b_at_least_one_block_found == true) { resp_json += ']' } ;
+				if (b_at_least_one_block_found == true) { resp_json += '}' } ;
+				resp_json += ']}';
+				
+				// Restore stdout to display the balance
+				process.stdout.write = originalStdoutWrite;
+				
+				process.stdout.write(resp_json);
+
+				await api.disconnect();
+			}
+
+			//call function by name
+			eval('$functionName().catch(console.error)');
+		"
+		#
+		$_resp_Json = $_resp_Json.Replace('=','"')
+		#Write-Host "DELETE:"
+		#Write-Host "DELETE: _resp_Json=" $_resp_Json
+		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
+		#Write-Host "DELETE: _response_obj_arr_PS=" $_response_obj_arr_PS
+	}
+	catch {}
+	#
+	return $_response_obj_arr_PS
+}
+
+function fDisplayEarningsTrend ([string]$_io_earnings_duration_type, [int]$_io_cursor_pos_x, [int]$_io_cursor_pos_y) {
+[array]$_bal_earned_obj_arr = $null
+$_html_cyan = "cyan"
+$_html_yellow = "yellow"
+	#
+	if ($script:_vlt_addr_arr -ne $null -and $script:_show_earnings)
+	{
+		##
+		# build earnings type object based on duration requested
+		$_earning_chart_display_type = $_io_earnings_duration_type
+		
+		$_sorted_earnings_info = $null
+		if ($script:_earnings_info) {
+			$_sorted_earnings_info = $script:_earnings_info.Response | Sort-Object @{Expression={$_.address_id}; descending=$false}, @{Expression={$_.Duration}; descending=$false}
+		}
+
+		[object]$_prev_bal_obj = $null
+		foreach ($_sorted_earnings_info_obj in $_sorted_earnings_info)
+		{
+			if ($_sorted_earnings_info_obj.Duration -eq $_earning_chart_display_type)
+			{
+				$_prev_bal_obj = $null
+				$_sorted_bal_data_info_obj = $_sorted_earnings_info_obj.data | Sort-Object @{Expression={$_.Date}; descending=$true}, @{Expression={$_.Block}; descending=$true}
+
+				$_bal_info_arr_count = ($_sorted_bal_data_info_obj | Measure-Object).count
+				foreach ($_sorted_bal_data_obj in $_sorted_bal_data_info_obj)
+				{
+					if ($_prev_bal_obj)
+					{
+						if ($_prev_bal_obj.Date -eq $_sorted_bal_data_obj.Date) { continue }
+						#
+						$_earnings_ = [double]($_prev_bal_obj.Balance) - [double]($_sorted_bal_data_obj.Balance)
+						$_earnings_ = [math]::Round($_earnings_ / [math]::Pow(10, 18), 8)
+						
+						$_b_show = $true
+						if ($_sorted_bal_data_obj.Date -eq $script:_rewards_activated_date_ymd -and $_sorted_earnings_info_obj.Duration -eq "daily") { $_b_show = $false }
+
+						$_tmp_bal_earrned_obj = [PSCustomObject]@{
+							AddressId		= $_sorted_earnings_info_obj.address_id
+							EarningPeriod	= $_bal_info_arr_count
+							Earnings		= $_earnings_
+							DateEarned		= $_prev_bal_obj.Date
+							Visible			= $_b_show
+						}
+						$_bal_earned_obj_arr += $_tmp_bal_earrned_obj
+						
+						$_bal_info_arr_count = $_bal_info_arr_count - 1
+					}
+					$_prev_bal_obj= $_sorted_bal_data_obj
+				}
+			}
+		}
+	}
+	#
+	return $_bal_earned_obj_arr
 }
 
 function fNotifyProcessOutOfSyncState ([string]$_io_process_type, [string]$_io_hostname) {
