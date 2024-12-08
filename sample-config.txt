@@ -33,6 +33,13 @@
 #wallet-address            : <file-name.txt>
 balance-refresh (seconds) : 3600
 #Show-Rank                 : N
+rpc-node-url              : wss://rpc.mainnet.subspace.foundation/ws
+
+#-------------------------------------------------------------------------------------------------------------------------
+# current chain block production rate for single block, defaults to 6.5 if not provided
+#-------------------------------------------------------------------------------------------------------------------------
+
+block-speed (seconds)     = 6.5
 
 #-----------------------------------------------------[Optional]----------------------------------------------------------
 # Local node synced block height v/s highest block height display - This option is 'off' by default unless uncommented
