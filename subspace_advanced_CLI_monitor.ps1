@@ -1566,7 +1566,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 			#Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
 			Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
 			Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1 - 1
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_earnings.Length - $_lbl_date.Length - 2 - 1
 		}
 		else
 		{
