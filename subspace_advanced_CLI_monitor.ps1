@@ -85,7 +85,7 @@ function main {
 	#
 	$script:_show_earnings = $true											# defaults to $true if not provided in config
 	$script:_earnings_duration = "daily"
-	[array]$script:_duration_arr = @("daily","weekly","monthly","yearly")
+	[array]$script:_duration_arr = @("Daily","Weekly","Monthly","Yearly")
 	$script:_earnings_info = $null
 	$script:_earnings_row_max_count = 0
 	##
@@ -1521,6 +1521,13 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_lbl_rank_direction 	= "  "
 		$_lbl_earnings			= "  Earnings (AI3)  "
 		$_lbl_date				= "  Date      "
+
+		$_up_arrow_label = [char]::ConvertFromUtf32(0x2191)
+		$_down_arrow_label = [char]::ConvertFromUtf32(0x2193)
+		$_lbl_date_navigation_padding = "[" + $_up_arrow_label + $_down_arrow_label + "]"
+		$_spacer_length_ = $_lbl_date.Length - $script:_earnings_duration.Length - $_lbl_date_navigation_padding.Length - 1
+		$_lbl_date_header_filler = fBuildDynamicSpacer  $_spacer_length_ $_spacer
+		$_lbl_date = " " + $script:_earnings_duration + $_lbl_date_navigation_padding + $_lbl_date_header_filler
 		#
 		#$_num_rows_ = $script:_num_rows
 		$_num_cols_ = $script:_num_cols
@@ -3698,7 +3705,9 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 			Write-Host ", Dated: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_bg_color
 			Write-Host $_io_process_git_version[1].toString('yyyy-MM-dd') -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
 			Write-Host ", ChangeLog: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_bg_color
-			Write-Host $_io_process_git_version[2].toString() -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
+			$_change_log_ = $_io_process_git_version[2].toString()
+			$_change_log_disp_ = $_change_log_.Substring(0, 35)
+			Write-Host $_change_log_disp_ -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
 			Write-Host
 		}
 		else 
