@@ -85,7 +85,9 @@ function main {
 	#
 	$script:_show_earnings = $true											# defaults to $true if not provided in config
 	$script:_earnings_duration = "daily"
+	[array]$script:_duration_arr = @("daily","weekly","monthly","yearly")
 	$script:_earnings_info = $null
+	$script:_earnings_row_max_count = 0
 	##
 	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"			# default if not provided in config
 	$script:_vlt_addr_filename = ""
@@ -474,6 +476,34 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 										$_individual_farmer_id_requested = $script:_individual_farmer_id_arr[$script:_individual_farmer_id_last_pos]
 										fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 									}
+								}
+								DownArrow {
+									$_duration_arr_index = 0		#default index position points to "daily"
+									#set to array value at next index
+									switch ($script:_earnings_duration)
+									{
+										"daily"   { $_duration_arr_index = 1 }
+										"weekly"  { $_duration_arr_index = 2 }
+										"monthly" { $_duration_arr_index = 3 }
+										"yearly"  { $_duration_arr_index = 0 }
+									}
+									$script:_earnings_duration = $script:_duration_arr[$_duration_arr_index]
+									fDisplayVltDetails $script:_accts_obj_arr_showVltDetails $script:_rank_showVltDetails $script:_rank_obj_arr_showVltDetails
+									
+								}
+								UpArrow {
+									$_duration_arr_index = 0		#default index position points to "daily"
+									#set to array value at previous index
+									switch ($script:_earnings_duration)
+									{
+										"daily"   { $_duration_arr_index = 3 }
+										"weekly"  { $_duration_arr_index = 0 }
+										"monthly" { $_duration_arr_index = 1 }
+										"yearly"  { $_duration_arr_index = 2 }
+									}
+									$script:_earnings_duration = $script:_duration_arr[$_duration_arr_index]
+									fDisplayVltDetails $script:_accts_obj_arr_showVltDetails $script:_rank_showVltDetails $script:_rank_obj_arr_showVltDetails
+									
 								}
 							}
 						} 
@@ -1053,6 +1083,34 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 						fWriteIndividualProcessDataToConsole $_individual_farmer_id_requested $script:_individual_farmer_id_last_pos
 					}
 				}
+				DownArrow {
+					$_duration_arr_index = 0		#default index position points to "daily"
+					#set to array value at next index
+					switch ($script:_earnings_duration)
+					{
+						"daily"   { $_duration_arr_index = 1 }
+						"weekly"  { $_duration_arr_index = 2 }
+						"monthly" { $_duration_arr_index = 3 }
+						"yearly"  { $_duration_arr_index = 0 }
+					}
+					$script:_earnings_duration = $script:_duration_arr[$_duration_arr_index]
+					fDisplayVltDetails $script:_accts_obj_arr_showVltDetails $script:_rank_showVltDetails $script:_rank_obj_arr_showVltDetails
+					
+				}
+				UpArrow {
+					$_duration_arr_index = 0		#default index position points to "daily"
+					#set to array value at previous index
+					switch ($script:_earnings_duration)
+					{
+						"daily"   { $_duration_arr_index = 3 }
+						"weekly"  { $_duration_arr_index = 0 }
+						"monthly" { $_duration_arr_index = 1 }
+						"yearly"  { $_duration_arr_index = 2 }
+					}
+					$script:_earnings_duration = $script:_duration_arr[$_duration_arr_index]
+					fDisplayVltDetails $script:_accts_obj_arr_showVltDetails $script:_rank_showVltDetails $script:_rank_obj_arr_showVltDetails
+					
+				}
 			}
 		} 
 		####
@@ -1334,7 +1392,7 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 		else
 		{
 			##
-			Write-Host "Quering node, please wait..."
+			Write-Host "Querying node, please wait..."
 			$_balance_resp_PS = fGetWalletBalance $_io_node_url $_vlt_addr_arrJS
 			#if ($script:_show_earnings)
 			#{
@@ -1471,6 +1529,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_leading_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 		$_trailing_spaces_filler = ""
 		#$_data_length = 50
+		$_data_length = 0
 		if ($_io_accounts_obj_type -eq "rank")
 		{
 			$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
@@ -1530,6 +1589,9 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		#
 		# determine input account object type and write data
 		$_delimiter = "    "
+		$_accounts_row_count = 0
+		$_earnings_row_count  = 0
+		$_b_has_earnings  = $false
 		if ($_io_accounts_obj_type -eq "rank")
 		{
 			$_unique_accounts = 0
@@ -1538,6 +1600,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 			{
 				if ($_io_accounts_obj.address_id -eq "overall") { $_unique_accounts = $_io_accounts_obj.unique_accounts.toString(); continue; }
 				#
+				$_accounts_row_count += 1
 				$_addr_ = $_io_accounts_obj.address_id.toString()
 				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
 				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length - 1
@@ -1611,6 +1674,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				#
 				$_earnings_cursor_pos = $host.UI.RawUI.CursorPosition
 				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration $_cursor_pos_x $_cursor_pos_y
+				if ($_earnings_obj_arr)  { $_b_has_earnings  = $true }
 				##
 				# write detailed earnings data
 				foreach ($_earnings_obj in $_earnings_obj_arr)
@@ -1628,6 +1692,8 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 						##
 						if ($_addr_ -eq $_earnings_obj.AddressId.toString())
 						{
+							$_earnings_row_count  += 1
+							
 							[Console]::SetCursorPosition($_earnings_cursor_pos.X, $_cursor_pos_y)
 							Write-Host $_earnings_disp -NoNewline -ForegroundColor $_html_yellow
 							Write-Host $_date_earned -NoNewline -ForegroundColor $_html_yellow
@@ -1665,6 +1731,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 			{
 				if ($_io_accounts_obj.address_id -eq "overall") { continue; }
 				#
+				$_accounts_row_count += 1
 				$_addr_ = $_io_accounts_obj.address_id.toString()
 				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
 				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length - 1
@@ -1689,6 +1756,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				#
 				$_earnings_cursor_pos = $host.UI.RawUI.CursorPosition
 				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration $_cursor_pos_x $_cursor_pos_y
+				if ($_earnings_obj_arr)  { $_b_has_earnings  = $true }
 				##
 				# write detailed earnings data
 				foreach ($_earnings_obj in $_earnings_obj_arr)
@@ -1706,6 +1774,8 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 						##
 						if ($_addr_ -eq $_earnings_obj.AddressId.toString())
 						{
+							$_earnings_row_count  += 1
+							
 							[Console]::SetCursorPosition($_earnings_cursor_pos.X, $_cursor_pos_y)
 							Write-Host $_earnings_disp -NoNewline -ForegroundColor $_html_yellow
 							Write-Host $_date_earned -NoNewline -ForegroundColor $_html_yellow
@@ -1715,7 +1785,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 							Write-Host $_trailing_spaces_filler -NoNewline
 							Write-Host "|" -ForegroundColor $_html_cyan
 							$_cursor_pos_y += 1
-							#
+							# empty out previous screen data upto earnings for each row under a single address
 							[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
 							Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 							Write-Host $_leading_spaces_filler -NoNewline
@@ -1735,6 +1805,20 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 					Write-Host "|" -ForegroundColor $_html_cyan
 					$_cursor_pos_y += 1
 				}
+			}
+		}
+		#  write filler rows for earnings data to clear out previous screen when looping through earnings period types - common for rank / balance display
+		if ($_b_has_earnings)
+		{
+			$_data_row_written_count = $_earnings_row_count
+			for ($_k = $_data_row_written_count+1; $_k -le $script:_earnings_row_max_count; $_k++)
+			{
+				[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
+				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
+				$_all_spaces_filler = fBuildDynamicSpacer ($_data_length - 2) $_spacer
+				Write-Host $_all_spaces_filler -NoNewline
+				Write-Host "|" -ForegroundColor $_html_cyan
+				$_cursor_pos_y += 1
 			}
 		}
 		##
@@ -3477,10 +3561,7 @@ $_resp_Json = $null
 		"
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
-		#Write-Host "DELETE:"
-		#Write-Host "DELETE: _resp_Json=" $_resp_Json
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
-		#Write-Host "DELETE: _response_obj_arr_PS=" $_response_obj_arr_PS
 	}
 	catch {}
 	#
@@ -3491,6 +3572,13 @@ function fDisplayEarningsTrend ([string]$_io_earnings_duration_type, [int]$_io_c
 [array]$_bal_earned_obj_arr = $null
 $_html_cyan = "cyan"
 $_html_yellow = "yellow"
+	#
+	$_b_duration_type_daily = $false
+	if ($_io_earnings_duration_type.toLower() -eq "daily")
+	{
+		$_b_duration_type_daily = $true
+		$script:_earnings_row_max_count = 0
+	}
 	#
 	if ($script:_vlt_addr_arr -ne $null -and $script:_show_earnings)
 	{
@@ -3522,7 +3610,21 @@ $_html_yellow = "yellow"
 						$_earnings_ = [math]::Round($_earnings_ / [math]::Pow(10, 18), 8)
 						
 						$_b_show = $true
-						if ($_sorted_bal_data_obj.Date -eq $script:_rewards_activated_date_ymd -and $_sorted_earnings_info_obj.Duration -eq "daily") { $_b_show = $false }
+						if ($_b_duration_type_daily)
+						{
+							$script:_earnings_row_max_count += 1
+						}
+						#if ($_sorted_bal_data_obj.Date -eq $script:_rewards_activated_date_ymd -and $_sorted_earnings_info_obj.Duration -eq "daily") { $_b_show = $false; $script:_earnings_row_max_count = $script:_earnings_row_max_count - 1 }
+						if ($_sorted_bal_data_obj.Date -le $script:_rewards_activated_date_ymd) {
+							if ($_b_duration_type_daily)
+							{
+								$_b_show = $false;
+								$script:_earnings_row_max_count = $script:_earnings_row_max_count - 1
+							}
+							elseif ($_sorted_bal_data_obj.Date -lt $script:_rewards_activated_date_ymd) {
+								$_b_show = $false;
+							}
+						}
 
 						$_tmp_bal_earrned_obj = [PSCustomObject]@{
 							AddressId		= $_sorted_earnings_info_obj.address_id
