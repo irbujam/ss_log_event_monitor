@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.3"
+	$_monitor_file_name = "v0.4.4"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -74,22 +74,24 @@ function main {
 	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
 	#$script:_b_ps_window_resize_enabled = "N"
-	$script:_alert_category_txt = "all"										#default set to send  alerts for all components, if not provided in config
+	$script:_alert_category_txt = "all"										#default set to send  alerts for all components, if not supplied in config
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
 	$script:_label_all_dash = "---------------------------------------------------------------------------------------------------------"
 	##
-	$script:_block_speed = 6.5												# default if not provided in config
+	$script:_additional_block_increments = 10								# default if not supplied in config
+	$script:_block_speed = 6.5												# default if not supplied in config
 	$script:_rewards_activated_at_block = (213696 - 1)  					# rewards initiation block minus 1 to accomdate airdrop only in AI3 balance  - DO NOT CHANGE
 	$script:_rewards_activated_date_ymd = "2024/11/22"
 	#
-	$script:_show_earnings = $true											# defaults to $true if not provided in config
+	$script:_show_earnings = $true											# defaults to $true if not supplied in config
 	$script:_earnings_duration = "daily"
 	[array]$script:_duration_arr = @("Daily","Weekly","Monthly","Yearly")
+	$script:_curr_earnings_info = $null
 	$script:_earnings_info = $null
 	$script:_earnings_row_max_count = 0
 	##
-	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"			# default if not provided in config
+	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"			# default if not supplied in config
 	$script:_vlt_addr_filename = ""
 	#$script:_vlt_addr_arr = [System.Collections.ArrayList]@()
 	[array]$script:_vlt_addr_arr = $null
@@ -1143,6 +1145,8 @@ function fReloadConfig() {
 	$script:_b_disp_node_details = $false
 	$script:_response_node_details_obj_arr = $null
 	$script:_show_earnings = $true
+	$script:_additional_block_increments = 10
+	$script:_block_speed = 6.5
 	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
@@ -1157,6 +1161,7 @@ function fReloadConfig() {
 				if ($_config[1].toString().toLower() -eq 'y') { $script:_show_earnings = $false }
 			}
 			elseif ($_process_type.toLower().IndexOf("block-speed") -ge 0) { $script:_block_speed = [double]($_config[1].toString()) }
+			elseif ($_process_type.toLower().IndexOf("earning-accuracy") -ge 0) { $script:_additional_block_increments = [double]($_config[1].toString()) }
 			elseif ($_process_type.toLower().IndexOf("rpc-node-url") -ge 0) { $script:_node_url = "wss:" + $_config[2].toString() }
 			elseif ($_process_type.toLower().IndexOf("local-node-rpc-port") -ge 0) { $script:_local_node_rpc_port = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("refresh") -ge 0) {
@@ -1383,10 +1388,14 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 				$_rank_refresh_stopwatch.Restart()
 			}
 			$_balance = fGetVltRank $_io_node_url $_vlt_addr_arrJS
-			#if ($script:_show_earnings)
-			#{
-				$script:_earnings_info = fGetEarningsInfo $_io_node_url $_vlt_addr_arrJS
-			#}
+			if ($script:_show_earnings)
+			{
+				$script:_curr_earnings_info = fGetLatestBalanceForEarningsInfo $_io_node_url $_vlt_addr_arrJS
+				if ($script:_b_first_time)
+				{
+					$script:_earnings_info = fGetEarningsInfo $_io_node_url $_vlt_addr_arrJS
+				}
+			}
 			Clear-Host
 		}
 		else
@@ -1394,10 +1403,14 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 			##
 			Write-Host "Querying node, please wait..."
 			$_balance_resp_PS = fGetWalletBalance $_io_node_url $_vlt_addr_arrJS
-			#if ($script:_show_earnings)
-			#{
-				$script:_earnings_info = fGetEarningsInfo $_io_node_url $_vlt_addr_arrJS
-			#}
+			if ($script:_show_earnings)
+			{
+				$script:_curr_earnings_info = fGetLatestBalanceForEarningsInfo $_io_node_url $_vlt_addr_arrJS
+				if ($script:_b_first_time)
+				{
+					$script:_earnings_info = fGetEarningsInfo $_io_node_url $_vlt_addr_arrJS
+				}
+			}
 			##
 			Clear-Host
 			$_balance_resp = $_balance_resp_PS.Response
@@ -1539,11 +1552,25 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_data_length = 0
 		if ($_io_accounts_obj_type -eq "rank")
 		{
-			$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+			if ($script:_show_earnings)
+			{
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+			}
+			else
+			{
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + 3		#leading and trailing characters
+			}
 		}
 		else
 		{
-			$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+			if ($script:_show_earnings)
+			{
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+			}
+			else
+			{
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + 3		#leading and trailing characters
+			}
 		}
 		$_spacer_length = $_data_length
 		$_all_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1554,7 +1581,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_cursor_position_ = $script:_node_cursor_pos
 		$_start_cursor_pos = $_cursor_position_.Y - 2
 		$_finish_cursor_pos = ($_io_accounts_obj_arr | Measure-Object).Count
-		$_cursor_pos_x = ($_num_cols_ - $_data_length) / 2
+		$_cursor_pos_x = ($_num_cols_ - $_data_length) / 2 + 1
 		$_cursor_pos_y = $_start_cursor_pos
 		# set cursor position to write wallet balance/rank data as an overlay
 		[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
@@ -1571,15 +1598,23 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		{
 			Write-Host $_lbl_rank -NoNewline -ForegroundColor $_html_cyan
 			#Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
-			Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
-			Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_earnings.Length - $_lbl_date.Length - 2 - 1
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 2 - 1
+			if ($script:_show_earnings)
+			{
+				Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
+				Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
+				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_earnings.Length - $_lbl_date.Length - 2 - 1
+			}
 		}
 		else
 		{
-			Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
-			Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - 1
+			if ($script:_show_earnings)
+			{
+				Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
+				Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
+				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
+			}
 		}
 		$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 		Write-Host $_trailing_spaces_filler -NoNewline
@@ -1985,7 +2020,8 @@ function fSanitizeAddr ([array]$_io_vlt_addr_arr, [array]$_io_b_remove_duplicate
 	#
 	$_sorted_arr = $_io_vlt_addr_arr
 	# sort array if more than one entry
-	if ($_io_vlt_addr_arr.Count -gt 1)
+	#if ($_io_vlt_addr_arr.Count -gt 1)
+	if (($_io_vlt_addr_arr | Measure-Object).count -gt 1)
 	{
 		$_sorted_arr = $_io_vlt_addr_arr | Sort-Object @{Expression={$_.AddressId}; descending=$false}
 	}
@@ -3342,216 +3378,64 @@ $_resp_Json = $null
 	return $_response_obj_arr_PS
 }
 
-function fGetEarningsInfo ([string]$io_node_url, [array]$io_vlt_address_arr) {
+function fGetLatestBalanceForEarningsInfo ([string]$io_node_url, [array]$io_vlt_address_arr) {
 $_response_obj_arr_PS = $null
 #
 $_resp_Json = $null
 
 	# Define the function name to be called
-	$functionName = "fGetEarnings"
+	$functionName = "fGetLatestBalanceForEarnings"
 	# Run the Node.js script with the function name as an argument
 	try {
 		$_resp_Json = node -e "
 			// Define functions inside the script
 
-			function fGetLastDayOfWeekOrMonth(io_durationType) {
-				let today = new Date();
-				let lastReportDateTimestampRetVal = today.getFullYear().toString() + '/' + ('0' + (today.getMonth()+1).toString()).slice(-2) + '/' + ('0' + today.getDate().toString()).slice(-2);
-				let _lastReportDateTimestamp_ = '';
-				
-				switch (io_durationType) {
-					case 'weekly':
-						function getFirstDayOfWeek(io_date) {
-							return new Date(io_date.setDate(io_date.getDate() - io_date.getDay() + (io_date.getDay() === 0 ? -6 : 1)));
-						}
-						function getLastDayOfWeek(io_date) {
-							return new Date(io_date.setDate(io_date.getDate() - io_date.getDay() + 7));
-						}
-						function getLastDayOfPreviousWeek(io_date) {
-							first_date_of_week = getFirstDayOfWeek (io_date);
-							return new Date(io_date.setDate(first_date_of_week.getDate() - 1));
-						}
-						_lastReportDateTimestamp_ = getLastDayOfPreviousWeek(today);
-						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
-						break;
-					case 'monthly':
-						var lastDayOfPreviousMonth = new Date(today.getFullYear(), today.getMonth(), 0);	
-						_lastReportDateTimestamp_ = lastDayOfPreviousMonth;
-						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
-						break;
-					case 'yearly':
-						var lastDayOfPreviousYear = new Date(today.getFullYear() - 1, 12, 0);
-						_lastReportDateTimestamp_ = lastDayOfPreviousYear;
-						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
-						break;
-				}
-				return lastReportDateTimestampRetVal;
-			}
-
-			async function fGetEarnings() {
+			async function fGetLatestBalanceForEarnings() {
 				const { ApiPromise, WsProvider } = require('@polkadot/api');
 
 				// Save the original process.stdout.write function to restore later
 				const originalStdoutWrite = process.stdout.write;
 
 				// Redirect stdout and stderr to null to suppress all logs
-				//process.stdout.write = function() {};  // Suppresses all stdout (info/debug)
-				process.stderr.write = function() {};  // Suppresses all stderr (error/warnings)
+				//process.stdout.write = function() {};  																	// Suppresses all stdout (info/debug)
+				process.stderr.write = function() {};  																		// Suppresses all stderr (error/warnings)
 
-				const _provider = new WsProvider('$io_node_url'); // WebSocket connection to the Polkadot network
+				const _provider = new WsProvider('$io_node_url'); 															// WebSocket connection to the Polkadot network
 				const api = await ApiPromise.create({ provider: _provider });
+
+				// Get the current block hash
+				const currentBlockHash = await api.rpc.chain.getBlockHash();  												// Get the current block hash
+				const currentBlockHeader = await api.rpc.chain.getHeader(currentBlockHash);  								// Get the block header
+				const currentBlockNumber = currentBlockHeader.number.toNumber();  											// Get the block number
+				// Query the timestamp for the current block
+				const currBlockTimestamp = await api.query.timestamp.now(); 												// Retrieves the block timestamp (milliseconds)
+				// Convert timestamp to Date
+				const currBlockTimestampDate = new Date(currBlockTimestamp.toNumber());
+				const sCurrBlockDate = currBlockTimestampDate.getFullYear().toString() + '/' + ('0' + (currBlockTimestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + currBlockTimestampDate.getDate().toString()).slice(-2);
 
 				//define response
 				var resp_json = '{=Response=:[';
 				var _iterator = 0;
 
-				// Get the current block hash
-				const currentBlockHash = await api.rpc.chain.getBlockHash();  // Get the current block hash
-				const currentBlockHeader = await api.rpc.chain.getHeader(currentBlockHash);  // Get the block header
-				const currentBlockNumber = currentBlockHeader.number.toNumber();  // Get the block number
-				//console.log('Current Block:' + currentBlockNumber);
-
-				// Query balances over a period
-				const block_speed = Math.floor(Number($script:_block_speed));				//seconds per block, from config file
-				var blocks_per_day = Math.floor((60 / block_speed) * 60 * 24); 				// [1 block in 6s = (60/6)*60*24 per day] ~ 14440
-				var max_history_days = Math.floor(currentBlockNumber / blocks_per_day);
-				var remainder = currentBlockNumber % blocks_per_day;
-				if (remainder > 0) { max_history_days += 1 };
-				var upper_range = max_history_days;
-				var multiplier = 1;
 				
-
-				const duration_arr = ['daily', 'weekly', 'monthly', 'yearly'];
-				for (let k = 0; k < duration_arr.length; k++) 
+				var b_at_least_one_block_found = false;
+				for (const io_vlt_address_arr_item of $io_vlt_address_arr) 
 				{
-					_duration_ = duration_arr[k];
-				
-					switch (_duration_) 
-					{
-						case 'daily':
-							upper_range = 7;
-							multiplier = 1;
-							break;
-						case 'weekly':
-							upper_range = Math.floor(max_history_days / 7) - 1;			//7 days in a week, subtracting genesis week from total weeks since genesis for calc
-							multiplier = 7;												//7 days in a week
-							break;
-						case 'monthly':
-							upper_range = Math.floor(max_history_days / 30) - 1;			//assuming 30 day in a month - 1 month for current month
-							multiplier = 7 * Math.floor(30 / 7); 						//week in a month ~ 4
-							break;
-						case 'yearly':
-							upper_range = Math.floor(max_history_days / 365);  			//365 days of a year
-							multiplier = 7 * 52;										//52 weeks in a year
-							break;
-						default :
-							upper_range = max_history_days - 1;
-							multiplier = 1;
-							break;
-					}
+					b_at_least_one_block_found = false;
+					base58Addr = io_vlt_address_arr_item.acct_id.toString();
+					
+					// Query the balance of the account at the current block
+					const { data: { free: currentBalance } } = await api.query.system.account(base58Addr);
 
-					// Call the date function
-					lastReportDateTimestamp = fGetLastDayOfWeekOrMonth(_duration_);
-
-					var b_at_least_one_block_found = false;
-					for (const io_vlt_address_arr_item of $io_vlt_address_arr) 
-					{
-						b_at_least_one_block_found = false;
-						base58Addr = io_vlt_address_arr_item.acct_id.toString();
-						
-						// Query the balance of the account at the current block
-						const { data: { free: currentBalance } } = await api.query.system.account(base58Addr);
-
-						//iterate for all days in a month and break the loop once last report date desired matches and hold the block info
-						let LastReportingPeriodBlockNumber = currentBlockNumber;
-						let sLastRewardDate = ''
-						for (let i = 0; i <= 30; i++) 				//iterate for maximum number of calendar days in any month
-						{				
-							LastReportingPeriodBlockNumber = currentBlockNumber - (i  * blocks_per_day);
-							const _temp_BlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber);
-
-							// Use the .at() method on the API instance to query at the specific block hash
-							const apiAt = await api.at(_temp_BlockHash);  // Get API instance for a specific block hash
-							
-							// Query balance at the specific block
-							const { data: { free: pastBalance } } = await apiAt.query.system.account(base58Addr);
-
-							// Query the timestamp for the specific block
-							const _temp_blockTimestamp = await apiAt.query.timestamp.now(); // Retrieves the block timestamp (milliseconds)
-						
-							// Convert timestamp to Date
-							const timestampDate = new Date(_temp_blockTimestamp.toNumber());
-							const sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
-
-							const previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
-							const previousBlockNumber = previousBlockHeader.number.toNumber();  // Get previous block number
-
-							if (i==0) 		//write to response only once for current block in this section as we will process prior period blocks later on
-							{		
-								if (_iterator >= 1) { resp_json += '},'; }
-								resp_json += '{=address_id=:=' + base58Addr + '=,=Duration=:=' + _duration_ + '=,=data=:['; 
-								resp_json += '{=Block=:=' + previousBlockNumber + '=,=Balance=:=' + pastBalance + '=,=Date=:=' + sDate + '=,=Timestamp=:=' + timestampDate + '=}';
-							}
-
-							b_at_least_one_block_found = true;
-							_iterator += 1;
-
-							if (sDate <= lastReportDateTimestamp || lastReportDateTimestamp < '$script:_rewards_activated_date_ymd') 
-							{
-								sLastRewardDate = sDate;
-								break;
-							}
-						}
-						
-						if (sLastRewardDate != '' && sLastRewardDate > '$script:_rewards_activated_date_ymd')
-						{
-							for (let i = 0; i <= upper_range; i++) 
-							{
-								//const previousBlockHash = await api.rpc.chain.getBlockHash(currentBlockNumber - (i * blocks_per_day * multiplier));
-								const previousBlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber - (i * blocks_per_day * multiplier));
-
-								// Use the .at() method on the API instance to query at the specific block hash
-								const apiAt = await api.at(previousBlockHash);  // Get API instance for a specific block hash
-
-								// Query balance at the specific block
-								const { data: { free: pastBalance } } = await apiAt.query.system.account(base58Addr);
-
-								// Query the timestamp for the specific block
-								const blockTimestamp = await apiAt.query.timestamp.now(); // Retrieves the block timestamp (milliseconds)
-								
-								// Convert timestamp to Date
-								const timestampDate = new Date(blockTimestamp.toNumber());
-								//const sDate = timestampDate.toLocaleDateString();
-								const sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
-
-								const previousBlockHeader = await api.rpc.chain.getHeader(previousBlockHash);
-								const previousBlockNumber = previousBlockHeader.number.toNumber();  // Get previous block number
-
-								resp_json += ',{=Block=:=' + previousBlockNumber + '=,=Balance=:=' + pastBalance + '=,=Date=:=' + sDate + '=,=Timestamp=:=' + timestampDate + '=}';
-								
-								b_at_least_one_block_found = true;
-							}
-						}
-						//
-						//get blockhash when rewards were enabled
-						const rewardsEnabledBlockNumber = $script:_rewards_activated_at_block;
-						const rewardsBlockHash = await api.rpc.chain.getBlockHash(rewardsEnabledBlockNumber);
-
-						// Use the .at() method on the API instance to query at the specific block hash
-						const apiAt = await api.at(rewardsBlockHash);  			// Get API instance for a specific block hash
-
-						// Query balance at the specific block
-						const { data: { free: startBalance } } = await apiAt.query.system.account(base58Addr);
-						if (b_at_least_one_block_found) {
-							resp_json += ',{=Block=:=' + rewardsEnabledBlockNumber + '=,=Balance=:=' + startBalance + '=,=Date=:=' + '$script:_rewards_activated_date_ymd' + '=,=Timestamp=:=' + '' + '=}';
-						}
-						else {
-							resp_json += '{=Block=:=' + rewardsEnabledBlockNumber + '=,=Balance=:=' + startBalance + '=,=Date=:=' + '$script:_rewards_activated_date_ymd' + '=,=Timestamp=:=' + '' + '=}';
-						}
-						if (_iterator >= 1) { resp_json += ']'; }
-					}
+					if (_iterator >= 1) { resp_json += '},'; }
+					resp_json += '{=address_id=:=' + base58Addr + '=,=Duration=:=' + 'current_balance' + '=,=data=:['; 
+					resp_json += '{=Block=:=' + currentBlockNumber + '=,=Balance=:=' + currentBalance + '=,=Date=:=' + sCurrBlockDate + '=,=Timestamp=:=' + currBlockTimestampDate + '=}';
+					resp_json += ']';
+					
+					b_at_least_one_block_found = true;
+					_iterator += 1;
 				}
-				//if (b_at_least_one_block_found == true) { resp_json += ']' } ;
+
 				if (b_at_least_one_block_found == true) { resp_json += '}' } ;
 				resp_json += ']}';
 				
@@ -3568,6 +3452,433 @@ $_resp_Json = $null
 		"
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
+		#Write-Host "DELETE: "
+		#Write-Host "DELETE: _resp_Json=" $_resp_Json
+		#Read-Host
+		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
+	}
+	catch {}
+	#
+	return $_response_obj_arr_PS
+}
+
+function fGetEarningsInfo ([string]$io_node_url, [array]$io_vlt_address_arr) {
+$_response_obj_arr_PS = $null
+#
+$_resp_Json = $null
+
+	# Define the function name to be called
+	$functionName = "fGetEarnings"
+	# Run the Node.js script with the function name as an argument
+	try {
+		$_resp_Json = node -e "
+			// Define functions inside the script
+
+			function fGetPriorEarningReportDate(io_date, io_durationType) {
+				let new_date = new Date(io_date);
+				let lastReportDateTimestampRetVal = new_date.getFullYear().toString() + '/' + ('0' + (new_date.getMonth()+1).toString()).slice(-2) + '/' + ('0' + new_date.getDate().toString()).slice(-2);
+				let _lastReportDateTimestamp_ = '';
+				
+				switch (io_durationType) {
+					case 'daily':
+						var previousDay = new Date(new_date.setDate(new_date.getDate() - 1));
+						_lastReportDateTimestamp_ = previousDay;
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+					case 'weekly':
+						function getFirstDayOfWeek(_io_date) {
+							return new Date(_io_date.setDate(_io_date.getDate() - _io_date.getDay() + (_io_date.getDay() === 0 ? -6 : 1)));
+						}
+						function getLastDayOfWeek(_io_date) {
+							return new Date(_io_date.setDate(_io_date.getDate() - _io_date.getDay() + 7));
+						}
+						function getLastDayOfPreviousWeek(_io_date) {
+							first_date_of_week = getFirstDayOfWeek (_io_date);
+							return new Date(_io_date.setDate(first_date_of_week.getDate() - 1));
+						}
+						_lastReportDateTimestamp_ = getLastDayOfPreviousWeek(new_date);
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+					case 'monthly':
+						var lastDayOfPreviousMonth = new Date(new_date.getFullYear(), new_date.getMonth(), 0);	
+						_lastReportDateTimestamp_ = lastDayOfPreviousMonth;
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+					case 'yearly':
+						var lastDayOfPreviousYear = new Date(new_date.getFullYear() - 1, 12, 0);
+						_lastReportDateTimestamp_ = lastDayOfPreviousYear;
+						lastReportDateTimestampRetVal = _lastReportDateTimestamp_.getFullYear().toString() + '/' + ('0' + (_lastReportDateTimestamp_.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _lastReportDateTimestamp_.getDate().toString()).slice(-2);
+						break;
+				}
+				return lastReportDateTimestampRetVal;
+			}
+
+			async function fGetEarnings() {
+				const { ApiPromise, WsProvider } = require('@polkadot/api');
+
+				// Save the original process.stdout.write function to restore later
+				const originalStdoutWrite = process.stdout.write;
+
+				// Redirect stdout and stderr to null to suppress all logs
+				//process.stdout.write = function() {};  																	// Suppresses all stdout (info/debug)
+				process.stderr.write = function() {};  																		// Suppresses all stderr (error/warnings)
+
+				const _provider = new WsProvider('$io_node_url'); 															// WebSocket connection to the Polkadot network
+				const api = await ApiPromise.create({ provider: _provider });
+
+				// Get the current block hash
+				const currentBlockHash = await api.rpc.chain.getBlockHash();  												// Get the current block hash
+				const currentBlockHeader = await api.rpc.chain.getHeader(currentBlockHash);  								// Get the block header
+				const currentBlockNumber = currentBlockHeader.number.toNumber();  											// Get the block number
+				// Query the timestamp for the current block
+				const currBlockTimestamp = await api.query.timestamp.now(); 												// Retrieves the block timestamp (milliseconds)
+				// Convert timestamp to Date
+				const currBlockTimestampDate = new Date(currBlockTimestamp.toNumber());
+				const sCurrBlockDate = currBlockTimestampDate.getFullYear().toString() + '/' + ('0' + (currBlockTimestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + currBlockTimestampDate.getDate().toString()).slice(-2);
+
+				//define response
+				var resp_json = '{=Response=:[';
+				var _iterator = 0;
+
+				// Get the current date and curent UTC time (hours, minutes, seconds)
+				let today = new Date();
+
+				const hoursUTC = today.getUTCHours();
+				const minutesUTC = today.getUTCMinutes();
+				const secondsUTC = today.getUTCSeconds();
+				// Convert the current UTC time to total seconds elapsed today
+				const elapsedSecondsUTC = hoursUTC * 3600 + minutesUTC * 60 + secondsUTC;
+				/*
+				// Combine the time into a string
+				const utcTime = String(hoursUTC).padStart(2, '0') + ':' + String(minutesUTC).padStart(2, '0') + ':' + String(secondsUTC).padStart(2, '0');
+				*/
+
+				// Query balances over a period
+				const block_speed = Math.floor(Number($script:_block_speed));												//seconds per block, from config file
+				var blocks_today = Math.floor((60 / block_speed) * 60 * (elapsedSecondsUTC / 3600)); 						// blocks produced today
+				//console.log(blocks_today);
+				var blocks_per_day = Math.floor((60 / block_speed) * 60 * 24); 												// [1 block in 6s = (60/6)*60*24 per day] ~ 14440
+				var max_history_days = Math.floor(currentBlockNumber / blocks_per_day);
+				var remainder = currentBlockNumber % blocks_per_day;
+				if (remainder > 0) { max_history_days += 1 };
+				var upper_range = max_history_days;
+				var multiplier = 1;
+				var date_iterator = upper_range;
+
+				const duration_arr = ['daily', 'weekly', 'monthly', 'yearly'];
+				//const duration_arr = ['yearly'];																			//DEBUG mode
+				
+				for (let k = 0; k < duration_arr.length; k++) 
+				{
+					_duration_ = duration_arr[k];
+				
+					switch (_duration_) 
+					{
+						case 'daily':
+							upper_range = 7;
+							multiplier = 1;
+							date_iterator = 7;														// upto 7 days history
+							break;
+						case 'weekly':
+							upper_range = Math.floor(max_history_days / 7) - 1;						//7 days in a week, subtracting genesis week from total weeks since genesis for calc
+							multiplier = 7;															//7 days in a week
+							date_iterator = 4;														// upto 4 weeks history
+							break;
+						case 'monthly':
+							upper_range = Math.floor(max_history_days / 30) - 1;					//assuming 30 avg day in a month - 1 month for current month
+							multiplier = 7 * Math.floor(30 / 7); 									//week in a month ~ 4
+							date_iterator = 4;														// upto 4 months history
+							break;
+						case 'yearly':
+							upper_range = Math.floor(max_history_days / 365);  						//365 days of a year
+							multiplier = 7 * 52;													//52 weeks in a year
+							date_iterator = 1;														// upto 1 year history
+							break;
+						default :
+							upper_range = max_history_days - 1;
+							multiplier = 1;
+							date_iterator = 7;														//default to same as daily
+							break;
+					}
+
+					// build dates for reporting earnings
+					sDurationType = _duration_;
+
+					let s_curr_date = new Date(today);
+					let s_date = s_curr_date.getFullYear().toString() + '/' + ('0' + (s_curr_date.getMonth()+1).toString()).slice(-2) + '/' + ('0' + s_curr_date.getDate().toString()).slice(-2);
+					let _curr_date = s_date;
+					let lastReportDateTimestamp = s_date;
+
+					var sDateArr = [];
+					//sDateArr.push(s_date);																// don't do this
+					
+					for (let j = 0; j < date_iterator; j++) 
+					{
+						s_date = fGetPriorEarningReportDate (s_date, sDurationType);
+						if (s_date >= '$script:_rewards_activated_date_ymd')
+						{
+							sDateArr.push(s_date);
+						}
+					}
+					
+					if (sDateArr.length > 0)
+					{
+						lastReportDateTimestamp = sDateArr[0];
+					}
+
+					const _increment_block_number = Number($script:_additional_block_increments);														//limit search up to certain number of blocks in either direction (variance duration allowed: 1 minute, high value causes slowdown)
+					
+					var b_at_least_one_block_found = false;
+					for (const io_vlt_address_arr_item of $io_vlt_address_arr) 
+					{
+						b_at_least_one_block_found = false;
+						base58Addr = io_vlt_address_arr_item.acct_id.toString();
+						
+						// Query the balance of the account at the current block
+						const { data: { free: currentBalance } } = await api.query.system.account(base58Addr);
+
+						//iterate for all days in a month and break the loop once last report date desired matches and hold the block info
+						let LastReportingPeriodBlockNumber = currentBlockNumber;
+						let sLastRewardDate = '';
+						for (let i = 1; i <= 31; i++) 																				//iterate for maximum number of calendar days in any month
+						{				
+							let num_blocks = blocks_per_day;
+							let num_block_multiplier_offset = 1;
+							if (i == 1)
+							{
+								num_blocks = blocks_today;
+								num_block_multiplier_offset = 0;
+							}
+							LastReportingPeriodBlockNumber = currentBlockNumber - ((i - num_block_multiplier_offset)  * num_blocks);
+							
+							let _temp_BlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber);
+
+							// Use the .at() method on the API instance to query at the specific block hash
+							let apiAt = await api.at(_temp_BlockHash);  															// Get API instance for a specific block hash
+							
+							// Query balance at the specific block
+							let { data: { free: pastBalance } } = await apiAt.query.system.account(base58Addr);
+
+							// Query the timestamp for the specific block
+							const _temp_blockTimestamp = await apiAt.query.timestamp.now(); 										// Retrieves the block timestamp (milliseconds)
+						
+							// Convert timestamp to Date
+							let timestampDate = new Date(_temp_blockTimestamp.toNumber());
+							let sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+							
+							/*
+							// Get the current UTC time (hours, minutes, seconds)
+							const hUTC = timestampDate.getUTCHours();
+							const mUTC = timestampDate.getUTCMinutes();
+							const sUTC = timestampDate.getUTCSeconds();
+							// Convert the current UTC time to total seconds elapsed today
+							const elapsedUTC = hUTC * 3600 + mUTC * 60 + sUTC;
+							// Combine the time into a string
+							const utcTime = String(hUTC).padStart(2, '0') + ':' + String(mUTC).padStart(2, '0') + ':' + String(sUTC).padStart(2, '0');
+							*/
+
+							let previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
+							let previousBlockNumber = previousBlockHeader.number.toNumber();  										// Get previous block number
+
+							let iNextBlockNumber = previousBlockNumber;
+							while (sDate < _curr_date)
+							{
+								iNextBlockNumber += 1;
+								if (iNextBlockNumber > (previousBlockNumber + _increment_block_number)) { break; }					//limit search up to certain number of blocks in either direction
+								
+								_temp_BlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
+
+								// Use the .at() method on the API instance to query at the specific block hash
+								apiAt = await api.at(_temp_BlockHash);  															// Get API instance for a specific block hash
+
+								// Query balance at the specific block
+								let { data: { free: priorBalance } } = await apiAt.query.system.account(base58Addr);
+								pastBalance = priorBalance;
+
+								// Query the timestamp for the specific block
+								blockTimestamp = await apiAt.query.timestamp.now(); 												// Retrieves the block timestamp (milliseconds)
+								
+								// Convert timestamp to Date
+								timestampDate = new Date(blockTimestamp.toNumber());
+								sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+							}
+							previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
+							previousBlockNumber = previousBlockHeader.number.toNumber();  											// Get previous block number
+
+							if (i==1) 		//write to response only once for current block in this section as we will process prior period blocks later on
+							{		
+								if (_iterator >= 1) { resp_json += '},'; }
+								resp_json += '{=address_id=:=' + base58Addr + '=,=Duration=:=' + _duration_ + '=,=data=:['; 
+								resp_json += '{=Block=:=' + currentBlockNumber + '=,=Balance=:=' + currentBalance + '=,=Date=:=' + sCurrBlockDate + '=,=Timestamp=:=' + currBlockTimestampDate + '=}';
+							}
+
+							b_at_least_one_block_found = true;
+							_iterator += 1;
+
+							if (sDate <= lastReportDateTimestamp || sDate < '$script:_rewards_activated_date_ymd' || lastReportDateTimestamp < '$script:_rewards_activated_date_ymd') 
+							{
+								sLastRewardDate = sDate;
+								break;
+							}
+						}
+
+						if (sLastRewardDate != '' && sLastRewardDate > '$script:_rewards_activated_date_ymd')
+						{
+							let iCurrIndex_dateArr = -1;
+							for (let i = 0; i <= upper_range; i++) 
+							{
+								iCurrIndex_dateArr += 1;
+								if (iCurrIndex_dateArr >= sDateArr.length) { break; }
+								
+								//const previousBlockHash = await api.rpc.chain.getBlockHash(currentBlockNumber - (i * blocks_per_day * multiplier));
+								let previousBlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber - (i * blocks_per_day * multiplier));
+
+								// Use the .at() method on the API instance to query at the specific block hash
+								let apiAt = await api.at(previousBlockHash);  														// Get API instance for a specific block hash
+
+								// Query balance at the specific block
+								let { data: { free: pastBalance } } = await apiAt.query.system.account(base58Addr);
+
+								// Query the timestamp for the specific block
+								let blockTimestamp = await apiAt.query.timestamp.now(); 											// Retrieves the block timestamp (milliseconds)
+								
+								// Convert timestamp to Date
+								let timestampDate = new Date(blockTimestamp.toNumber());
+								let sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+
+								let previousBlockHeader = await api.rpc.chain.getHeader(previousBlockHash);
+								let previousBlockNumber = previousBlockHeader.number.toNumber();  									// Get previous block number
+
+								let iNextBlockNumber =  previousBlockNumber;
+								let b_lookup_direction_up = false;
+								let b_lookup_direction_down = false;
+								let b_exit_while_loop = false;
+								while (!(b_exit_while_loop))
+								{
+									if (iCurrIndex_dateArr >= sDateArr.length) { break; }
+									
+									if (sDate  <= sDateArr[iCurrIndex_dateArr])
+									{
+										if (b_lookup_direction_down)
+										{
+											b_exit_while_loop = true;
+											break;
+										}
+										
+										b_lookup_direction_up = true;
+										iNextBlockNumber += 1;
+										if (iNextBlockNumber > (previousBlockNumber + _increment_block_number)) { break; }				//limit search up to certain number of blocks in either direction
+										
+										previousBlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
+
+										// Use the .at() method on the API instance to query at the specific block hash
+										apiAt = await api.at(previousBlockHash);  														// Get API instance for a specific block hash
+
+										// Query balance at the specific block
+										let { data: { free: priorBalance } } = await apiAt.query.system.account(base58Addr);
+										pastBalance = priorBalance;
+
+										// Query the timestamp for the specific block
+										blockTimestamp = await apiAt.query.timestamp.now(); 											// Retrieves the block timestamp (milliseconds)
+										
+										// Convert timestamp to Date
+										timestampDate = new Date(blockTimestamp.toNumber());
+										sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+									}
+									if (sDate > sDateArr[iCurrIndex_dateArr])
+									{
+										if (b_lookup_direction_up)
+										{
+											b_exit_while_loop = true;
+											break;
+										}
+										b_lookup_direction_down = true;
+										iNextBlockNumber = iNextBlockNumber - 1;
+										if (iNextBlockNumber > (previousBlockNumber - _increment_block_number)) { break; }				//limit search up to certain number of blocks in either direction
+										
+										previousBlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
+
+										// Use the .at() method on the API instance to query at the specific block hash
+										apiAt = await api.at(previousBlockHash);  														// Get API instance for a specific block hash
+
+										// Query balance at the specific block
+										let { data: { free: priorBalance } } = await apiAt.query.system.account(base58Addr);
+										pastBalance = priorBalance;
+
+										// Query the timestamp for the specific block
+										blockTimestamp = await apiAt.query.timestamp.now(); 											// Retrieves the block timestamp (milliseconds)
+										
+										// Convert timestamp to Date
+										timestampDate = new Date(blockTimestamp.toNumber());
+										sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+									}
+								}
+								if (b_lookup_direction_up)
+								{
+										iNextBlockNumber = iNextBlockNumber - 1;
+										previousBlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
+
+										// Use the .at() method on the API instance to query at the specific block hash
+										apiAt = await api.at(previousBlockHash);  														// Get API instance for a specific block hash
+
+										// Query balance at the specific block
+										let { data: { free: priorBalance } } = await apiAt.query.system.account(base58Addr);
+										pastBalance = priorBalance;
+
+										// Query the timestamp for the specific block
+										blockTimestamp = await apiAt.query.timestamp.now(); 											// Retrieves the block timestamp (milliseconds)
+										
+										// Convert timestamp to Date
+										timestampDate = new Date(blockTimestamp.toNumber());
+										sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+								}
+
+								previousBlockHeader = await api.rpc.chain.getHeader(previousBlockHash);
+								previousBlockNumber = previousBlockHeader.number.toNumber();  											// Get previous block number
+
+								resp_json += ',{=Block=:=' + previousBlockNumber + '=,=Balance=:=' + pastBalance + '=,=Date=:=' + sDate + '=,=Timestamp=:=' + timestampDate + '=}';
+								
+								b_at_least_one_block_found = true;
+							}
+						}
+						
+						//get blockhash when rewards were enabled
+						const rewardsEnabledBlockNumber = $script:_rewards_activated_at_block;
+						const rewardsBlockHash = await api.rpc.chain.getBlockHash(rewardsEnabledBlockNumber);
+
+						// Use the .at() method on the API instance to query at the specific block hash
+						const apiAt = await api.at(rewardsBlockHash);  																	// Get API instance for a specific block hash
+
+						// Query balance at the specific block
+						const { data: { free: startBalance } } = await apiAt.query.system.account(base58Addr);
+						if (b_at_least_one_block_found) {
+							resp_json += ',{=Block=:=' + rewardsEnabledBlockNumber + '=,=Balance=:=' + startBalance + '=,=Date=:=' + '$script:_rewards_activated_date_ymd' + '=,=Timestamp=:=' + '' + '=}';
+						}
+						else {
+							resp_json += '{=Block=:=' + rewardsEnabledBlockNumber + '=,=Balance=:=' + startBalance + '=,=Date=:=' + '$script:_rewards_activated_date_ymd' + '=,=Timestamp=:=' + '' + '=}';
+						}
+						if (_iterator >= 1) { resp_json += ']'; }
+					}
+				}
+				if (b_at_least_one_block_found == true) { resp_json += '}' } ;
+				resp_json += ']}';
+				
+				// Restore stdout to display the balance
+				process.stdout.write = originalStdoutWrite;
+				
+				process.stdout.write(resp_json);
+
+				await api.disconnect();
+			}
+
+			//call function by name
+			eval('$functionName().catch(console.error)');
+		"
+		#
+		$_resp_Json = $_resp_Json.Replace('=','"')
+		#Write-Host "DELETE: "
+		#Write-Host "DELETE: _resp_Json=" $_resp_Json
+		#Read-Host
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
 	}
 	catch {}
@@ -3593,12 +3904,24 @@ $_html_yellow = "yellow"
 		# build earnings type object based on duration requested
 		$_earning_chart_display_type = $_io_earnings_duration_type
 		
+		
+		$_curr_earnings_info = $null
+		if ($script:_curr_earnings_info) {
+			$_curr_earnings_info = $script:_curr_earnings_info.Response
+			# sort array if more than one entry
+			if (($script:_curr_earnings_info.Response | Measure-Object).count -gt 1)
+			{
+				$_curr_earnings_info = $script:_curr_earnings_info.Response | Sort-Object @{Expression={$_.address_id}; descending=$false}
+			}
+		}
+		
 		$_sorted_earnings_info = $null
 		if ($script:_earnings_info) {
 			$_sorted_earnings_info = $script:_earnings_info.Response | Sort-Object @{Expression={$_.address_id}; descending=$false}, @{Expression={$_.Duration}; descending=$false}
 		}
 
 		[object]$_prev_bal_obj = $null
+		$_initial_entry = $true
 		foreach ($_sorted_earnings_info_obj in $_sorted_earnings_info)
 		{
 			if ($_sorted_earnings_info_obj.Duration -eq $_earning_chart_display_type)
@@ -3612,6 +3935,20 @@ $_html_yellow = "yellow"
 					if ($_prev_bal_obj)
 					{
 						if ($_prev_bal_obj.Date -eq $_sorted_bal_data_obj.Date) { continue }
+						#
+						
+						if ($_initial_entry)
+						{
+							foreach ($_curr_earnings_info_obj in $_curr_earnings_info)
+							{
+								if ($_curr_earnings_info_obj.address_id -eq $_sorted_earnings_info_obj.address_id)
+								{
+									$_prev_bal_obj = $_curr_earnings_info_obj.data
+								}
+							}
+							$_initial_entry = $false
+						}
+						
 						#
 						$_earnings_ = [double]($_prev_bal_obj.Balance) - [double]($_sorted_bal_data_obj.Balance)
 						$_earnings_ = [math]::Round($_earnings_ / [math]::Pow(10, 18), 8)
