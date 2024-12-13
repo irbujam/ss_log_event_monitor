@@ -40,9 +40,13 @@ rpc-node-url              : wss://rpc.mainnet.subspace.foundation/ws
 #                    - defaults to 6.5 if not provided
 # 
 # earnings accurancy - number of blocks over a period to check for earnings over extended time period closer to midnight utc
+#                    -  fine tune earnings reporting accurancy closer to midnight utc 
+#                                          ***********************************
+#                                          *** caution advised - see below ***
+#                                          ***********************************
 #                    -  setting too high value may cause slowdown/network overload 
-#                    -  if using set to lower value (less than 50 blocks), adjust tool refresh frequency to accomodate
-#                       defaults to 0 (blocks producded in 1 minute)
+#                    -  defaults to 0 (blocks producded in 1 minute), non-zero value should be limited to lower value (less  
+#                       than 50 blocks), adjust tool refresh frequency to accomodate
 #
 # disable earnings - completely disbale earnings calculation and display 
 #-------------------------------------------------------------------------------------------------------------------------

@@ -15,7 +15,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.5"
+	$_monitor_file_name = "v0.4.4"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
