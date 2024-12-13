@@ -35,11 +35,21 @@ balance-refresh (seconds) : 3600
 #Show-Rank                 : N
 rpc-node-url              : wss://rpc.mainnet.subspace.foundation/ws
 
-#-------------------------------------------------------------------------------------------------------------------------
-# current chain block production rate for single block, defaults to 6.5 if not provided
+#------------------------------------------------------ [Earnings] -------------------------------------------------------
+# block speed - avg chain block production rate for single block (used to skip over days for earnings calculations)
+#                    - defaults to 6.5 if not provided
+# 
+# earnings accurancy - number of blocks over a period to check for earnings over extended time period closer to midnight utc
+#                    -  setting too high value may cause slowdown/network overload 
+#                    -  if using set to lower value (less than 50 blocks), adjust tool refresh frequency to accomodate
+#                       defaults to 0 (blocks producded in 1 minute)
+#
+# disable earnings - completely disbale earnings calculation and display 
 #-------------------------------------------------------------------------------------------------------------------------
 
-block-speed (seconds)     = 6.5
+block-speed (seconds)     : 6.5
+ earning-accuracy (blocks/ minute) : 0
+# disable-Earnings    : Y
 
 #-----------------------------------------------------[Optional]----------------------------------------------------------
 # Local node synced block height v/s highest block height display - This option is 'off' by default unless uncommented
