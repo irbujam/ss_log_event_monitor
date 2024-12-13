@@ -42,5 +42,5 @@ To use the monitor:
   - Configurable summary and detail stats view at start-up
   - local Time Zone display
   
->*** For questions and feedback please contact (rs_00) in autonomys discord channel.
+>*** Use at your own risk. For questions and feedback please contact (rs_00) in autonomys discord channel.
 
