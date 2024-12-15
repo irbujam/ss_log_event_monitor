@@ -5,6 +5,7 @@
 ##header
 $host.UI.RawUI.WindowTitle = "Autonomys Network Monitor"
 function main {
+	$script:_b_test_mode_on = 'N'
 	$_b_allow_refresh = $false
 	$script:_b_enable_new_sector_times_calc = $true
 	$script:_total_time_elpased_stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -15,7 +16,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.5"
+	$_monitor_file_name = "v0.4.6"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -73,7 +74,6 @@ function main {
 	[object]$script:_cluster_data_row_pos_hold = $null
 	$script:_new_rows_written_to_console = 0
 	$script:_custom_alert_text = ""
-	#$script:_b_ps_window_resize_enabled = "N"
 	$script:_alert_category_txt = "all"										#default set to send  alerts for all components, if not supplied in config
 	$script:_process_alt_name_max_length = 0
 	$script:_process_farmer_alt_name_max_length = 0
@@ -86,10 +86,13 @@ function main {
 	#
 	$script:_show_earnings = $true											# defaults to $true if not supplied in config
 	$script:_earnings_duration = "daily"
+	$script:_earnings_duration_label_max_length = 7
 	[array]$script:_duration_arr = @("Daily","Weekly","Monthly","Yearly")
 	$script:_curr_earnings_info = $null
 	$script:_earnings_info = $null
 	$script:_earnings_row_max_count = 0
+	##
+	[array]$script:_bal_airdrop_obj_arr = $null
 	##
 	$script:_node_url = "wss://rpc.mainnet.subspace.foundation/ws"			# default if not supplied in config
 	$script:_vlt_addr_filename = ""
@@ -1401,7 +1404,7 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 		else
 		{
 			##
-			Write-Host "Querying node, please wait..."
+			Write-Host "Querying node for balance, please wait..."
 			$_balance_resp_PS = fGetWalletBalance $_io_node_url $_vlt_addr_arrJS
 			if ($script:_show_earnings)
 			{
@@ -1447,7 +1450,7 @@ $_balance = 0
 	$_rank_obj_arr = fLoadPreviousRank $script:_rank_filename $script:_vlt_addr_arr
 	#$_previous_rank = 0
 	####
-	$_msg = "Grab a treat and/or a cup of coffee while i get things ready..."
+	$_msg = "Querying node for rank information can take a few minutes, please wait..."
 	Write-Host $_msg
 	fPrintTree
 	####
@@ -1528,19 +1531,27 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		$_label_line_separator = "_"
 		$_label_line_separator_upper = [char](8254)			# overline unicode (reverse of underscore)
 		## define header labels
-		$_lbl_addr				= "  Address    "
-		$_lbl_bal 				= "  Bal (AI3)   "
-		$_lbl_rank 				= "  Rank  "
+		$_lbl_addr				= "Address      "
+		$_lbl_bal 				= "Bal (AI3)     "
+		$_lbl_rank 				= "Rank    "
 		$_lbl_rank_direction 	= "  "
-		$_lbl_earnings			= "  Earnings (AI3)  "
-		$_lbl_date				= "  Date      "
+		$_lbl_airdrop			= "Airdrop (AI3)    "
+		$_lbl_earnings			= "Earnings (AI3)    "
+		$_lbl_date				= "Date        "
 
 		$_up_arrow_label = [char]::ConvertFromUtf32(0x2191)
 		$_down_arrow_label = [char]::ConvertFromUtf32(0x2193)
 		$_lbl_date_navigation_padding = "[" + $_up_arrow_label + $_down_arrow_label + "]"
-		$_spacer_length_ = $_lbl_date.Length - $script:_earnings_duration.Length - $_lbl_date_navigation_padding.Length - 1
+		$_spacer_length_ = $_lbl_date.Length - $script:_earnings_duration_label_max_length - $_lbl_date_navigation_padding.Length - 1
 		$_lbl_date_header_filler = fBuildDynamicSpacer  $_spacer_length_ $_spacer
-		$_lbl_date = " " + $script:_earnings_duration + $_lbl_date_navigation_padding + $_lbl_date_header_filler
+
+		$_lbl_date = $script:_earnings_duration + $_lbl_date_navigation_padding + $_lbl_date_header_filler
+		if ($script:_earnings_duration.Length -lt $script:_earnings_duration_label_max_length)
+		{
+			$_filler_ = $script:_earnings_duration_label_max_length - $script:_earnings_duration.Length
+			$_lbl_filler = fBuildDynamicSpacer  $_filler_ $_spacer
+			$_lbl_date = $script:_earnings_duration + $_lbl_date_navigation_padding + $_lbl_filler + $_lbl_date_header_filler
+		}
 		#
 		#$_num_rows_ = $script:_num_rows
 		$_num_cols_ = $script:_num_cols
@@ -1554,22 +1565,22 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		{
 			if ($script:_show_earnings)
 			{
-				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + $_lbl_airdrop.Length + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
 			}
 			else
 			{
-				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length - 1 + 3		#leading and trailing characters
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + 3		#leading and trailing characters
 			}
 		}
 		else
 		{
 			if ($script:_show_earnings)
 			{
-				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_airdrop.Length + $_lbl_earnings.Length + $_lbl_date.Length + 3		#leading and trailing characters
 			}
 			else
 			{
-				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + $_lbl_rank.Length + $_lbl_rank_direction.Length + 3		#leading and trailing characters
+				$_data_length = $_lbl_addr.Length + $_lbl_bal.Length + 3		#leading and trailing characters
 			}
 		}
 		$_spacer_length = $_data_length
@@ -1597,13 +1608,14 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		if ($_io_accounts_obj_type -eq "rank")
 		{
 			Write-Host $_lbl_rank -NoNewline -ForegroundColor $_html_cyan
-			#Write-Host $_lbl_rank_direction -NoNewline -ForegroundColor $_html_cyan
-			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 2 - 1
+			Write-Host $_lbl_rank_direction -NoNewline
+			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - 1
 			if ($script:_show_earnings)
 			{
+				Write-Host $_lbl_airdrop -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
-				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_earnings.Length - $_lbl_date.Length - 2 - 1
+				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_rank.Length - $_lbl_rank_direction.Length - $_lbl_airdrop.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
 			}
 		}
 		else
@@ -1611,9 +1623,10 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 			$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - 1
 			if ($script:_show_earnings)
 			{
+				Write-Host $_lbl_airdrop -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_lbl_earnings -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_lbl_date -NoNewline -ForegroundColor $_html_cyan
-				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
+				$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_lbl_addr.Length - $_lbl_bal.Length - $_lbl_airdrop.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
 			}
 		}
 		$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
@@ -1630,7 +1643,6 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 		##
 		#
 		# determine input account object type and write data
-		$_delimiter = "    "
 		$_accounts_row_count = 0
 		$_earnings_row_count  = 0
 		$_b_has_earnings  = $false
@@ -1645,13 +1657,13 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				$_accounts_row_count += 1
 				$_addr_ = $_io_accounts_obj.address_id.toString()
 				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
-				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length - 1
+				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length
 				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_addr_disp_ = $_addr_disp_ + $_filler_
 				
 				$_balance_ = [double]($_io_accounts_obj.balance)
 				$_balance_disp = ([math]::Round($_balance_ / [math]::Pow(10, 18), 4)).ToString()
-				$_spacer_length = $_lbl_bal.Length - $_balance_disp.Length - 1
+				$_spacer_length = $_lbl_bal.Length - $_balance_disp.Length
 				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_balance_disp = $_balance_disp + $_filler_
 				$_rank_ = $_io_accounts_obj.rank_id
@@ -1688,11 +1700,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_leading_spaces_filler -NoNewline
 				Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
-				Write-Host $_delimiter -NoNewline
 				Write-Host $_balance_disp -NoNewline -ForegroundColor $_html_yellow
-				#Write-Host $_delimiter -NoNewline
-				
-				$_delimiter_repeat_count = 1
 				
 				##
 				# write rank
@@ -1711,14 +1719,15 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				$_rank_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 				Write-Host $_rank_disp -NoNewline -ForegroundColor $_html_yellow
 				Write-Host $_rank_direction_disp -NoNewline -Foregroundcolor $_fg_color
-				Write-Host $_rank_filler_ -NoNewline -ForegroundColor $_html_yellow
+				Write-Host $_rank_filler_ -NoNewline
 				##
 				#
 				$_earnings_cursor_pos = $host.UI.RawUI.CursorPosition
-				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration $_cursor_pos_x $_cursor_pos_y
+				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration
 				if ($_earnings_obj_arr)  { $_b_has_earnings  = $true }
 				##
 				# write detailed earnings data
+				$_b_show_airdrop = $true
 				foreach ($_earnings_obj in $_earnings_obj_arr)
 				{
 					#
@@ -1726,21 +1735,50 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 					{
 						$_earnings_ = [double]($_earnings_obj.Earnings)
 						$_earnings_disp = ([math]::Round($_earnings_, 4)).ToString()
-						$_spacer_length = $_lbl_earnings.Length - $_earnings_disp.Length - 1
+						$_spacer_length = $_lbl_earnings.Length - $_earnings_disp.Length
 						$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_earnings_disp = $_earnings_disp + $_filler_
 						#
 						$_date_earned = $_earnings_obj.DateEarned.toString()
+						$_spacer_length = $_lbl_date.Length - $_date_earned.Length - 1
+						$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+						$_date_earned_disp = $_date_earned + $_filler_
 						##
 						if ($_addr_ -eq $_earnings_obj.AddressId.toString())
 						{
 							$_earnings_row_count  += 1
-							
 							[Console]::SetCursorPosition($_earnings_cursor_pos.X, $_cursor_pos_y)
+
+							$_spacer_length = $_rank_direction_disp.Length
+							$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+							Write-Host $_filler_ -NoNewline
+
+							if ($_b_show_airdrop)
+							{
+								foreach ($_bal_airdrop_obj in $script:_bal_airdrop_obj_arr)
+								{
+									if ($_addr_ -eq $_bal_airdrop_obj.AddressId.toString())
+									{
+										$_airdrop_amt = [math]::Round([double]($_bal_airdrop_obj.AirdropAmount) / [math]::Pow(10, 18), 4)
+										$_airdrop_amt_disp = $_airdrop_amt.ToString()
+										$_spacer_length = $_lbl_airdrop.Length - $_airdrop_amt_disp.Length
+										$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+										$_airdrop_amt_disp = $_airdrop_amt_disp + $_filler_
+										Write-Host $_airdrop_amt_disp -NoNewline -ForegroundColor $_html_yellow
+									}
+								}
+								$_b_show_airdrop = $false
+							}
+							else
+							{
+								$_spacer_length = $_lbl_airdrop.Length
+								$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+								Write-Host $_filler_ -NoNewline 
+							}
 							Write-Host $_earnings_disp -NoNewline -ForegroundColor $_html_yellow
-							Write-Host $_date_earned -NoNewline -ForegroundColor $_html_yellow
+							Write-Host $_date_earned_disp -NoNewline -ForegroundColor $_html_yellow
 							#
-							$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_disp.Length - $_rank_direction_label.Length - 1 - $_lbl_earnings.Length - $_lbl_date.Length - 1 - 1 - ($_delimiter.Length * $_delimiter_repeat_count)
+							$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_lbl_rank.Length - $_rank_direction_label.Length - $_lbl_airdrop.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
 							$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 							Write-Host $_trailing_spaces_filler -NoNewline
 							Write-Host "|" -ForegroundColor $_html_cyan
@@ -1749,7 +1787,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 							[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
 							Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 							Write-Host $_leading_spaces_filler -NoNewline
-							$_spacer_length = $_addr_disp_.Length + $_balance_disp.Length + $_rank_disp.Length + $_rank_direction_label.Length + $_rank_filler_.Length + 1 + ($_delimiter.Length * $_delimiter_repeat_count)
+							$_spacer_length = $_addr_disp_.Length + $_balance_disp.Length + $_lbl_rank.Length + $_rank_direction_label.Length + $_lbl_airdrop.Length + 1
 							$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 							Write-Host $_filler_ -NoNewline
 						}
@@ -1759,7 +1797,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				#
 				if (!($script:_show_earnings))
 				{
-					$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_rank_disp.Length - $_rank_direction_label.Length - 1 - ($_delimiter.Length * $_delimiter_repeat_count) - 1
+					$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_lbl_rank.Length - $_rank_direction_label.Length
 					$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 					Write-Host $_trailing_spaces_filler -NoNewline
 					Write-Host "|" -ForegroundColor $_html_cyan
@@ -1776,13 +1814,13 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				$_accounts_row_count += 1
 				$_addr_ = $_io_accounts_obj.address_id.toString()
 				$_addr_disp_ = "...." + $_addr_.Substring($_addr_.Length - 6, 6)
-				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length - 1
+				$_spacer_length = $_lbl_addr.Length - $_addr_disp_.Length
 				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_addr_disp_ = $_addr_disp_ + $_filler_
 						
 				$_balance_ = [double]($_io_accounts_obj.balance)
 				$_balance_disp = ([math]::Round($_balance_ / [math]::Pow(10, 18), 4)).toString()
-				$_spacer_length = $_lbl_bal.Length - $_balance_disp.Length - 1
+				$_spacer_length = $_lbl_bal.Length - $_balance_disp.Length
 				$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 				$_balance_disp = $_balance_disp + $_filler_
 				##
@@ -1790,17 +1828,16 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 				Write-Host $_leading_spaces_filler -NoNewline
 				Write-Host $_addr_disp_ -NoNewline -ForegroundColor $_html_yellow
-				Write-Host $_delimiter -NoNewline
 				Write-Host $_balance_disp -NoNewline -ForegroundColor $_html_yellow
 
-				$_delimiter_repeat_count = 1
 				##
 				#
 				$_earnings_cursor_pos = $host.UI.RawUI.CursorPosition
-				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration $_cursor_pos_x $_cursor_pos_y
+				$_earnings_obj_arr = fDisplayEarningsTrend $script:_earnings_duration
 				if ($_earnings_obj_arr)  { $_b_has_earnings  = $true }
 				##
 				# write detailed earnings data
+				$_b_show_airdrop = $true
 				foreach ($_earnings_obj in $_earnings_obj_arr)
 				{
 					#
@@ -1808,21 +1845,46 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 					{
 						$_earnings_ = [double]($_earnings_obj.Earnings)
 						$_earnings_disp = ([math]::Round($_earnings_, 4)).ToString()
-						$_spacer_length = $_lbl_earnings.Length - $_earnings_disp.Length - 1
+						$_spacer_length = $_lbl_earnings.Length - $_earnings_disp.Length
 						$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 						$_earnings_disp = $_earnings_disp + $_filler_
 						#
 						$_date_earned = $_earnings_obj.DateEarned.toString()
+						$_spacer_length = $_lbl_date.Length - $_date_earned.Length
+						$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+						$_date_earned_disp = $_date_earned + $_filler_
 						##
 						if ($_addr_ -eq $_earnings_obj.AddressId.toString())
 						{
 							$_earnings_row_count  += 1
-							
 							[Console]::SetCursorPosition($_earnings_cursor_pos.X, $_cursor_pos_y)
+
+							if ($_b_show_airdrop)
+							{
+								foreach ($_bal_airdrop_obj in $script:_bal_airdrop_obj_arr)
+								{
+									if ($_addr_ -eq $_bal_airdrop_obj.AddressId.toString())
+									{
+										$_airdrop_amt = [math]::Round([double]($_bal_airdrop_obj.AirdropAmount) / [math]::Pow(10, 18), 4)
+										$_airdrop_amt_disp = $_airdrop_amt.ToString()
+										$_spacer_length = $_lbl_airdrop.Length - $_airdrop_amt_disp.Length
+										$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+										$_airdrop_amt_disp = $_airdrop_amt_disp + $_filler_
+										Write-Host $_airdrop_amt_disp -NoNewline -ForegroundColor $_html_yellow
+									}
+								}
+								$_b_show_airdrop = $false
+							}
+							else
+							{
+								$_spacer_length = $_lbl_airdrop.Length
+								$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
+								Write-Host $_filler_ -NoNewline 
+							}
 							Write-Host $_earnings_disp -NoNewline -ForegroundColor $_html_yellow
-							Write-Host $_date_earned -NoNewline -ForegroundColor $_html_yellow
+							Write-Host $_date_earned_disp -NoNewline -ForegroundColor $_html_yellow
 							#
-							$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_lbl_earnings.Length - $_lbl_date.Length - 1 - 1 #- ($_delimiter.Length * $_delimiter_repeat_count)
+							$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - $_lbl_airdrop.Length - $_lbl_earnings.Length - $_lbl_date.Length - 1
 							$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 							Write-Host $_trailing_spaces_filler -NoNewline
 							Write-Host "|" -ForegroundColor $_html_cyan
@@ -1831,7 +1893,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 							[Console]::SetCursorPosition($_cursor_pos_x, $_cursor_pos_y)
 							Write-Host "|" -NoNewline -ForegroundColor $_html_cyan
 							Write-Host $_leading_spaces_filler -NoNewline
-							$_spacer_length = $_addr_disp_.Length + $_balance_disp.Length + $_delimiter.Length
+							$_spacer_length = $_addr_disp_.Length + $_balance_disp.Length + $_lbl_airdrop.Length
 							$_filler_ = fBuildDynamicSpacer $_spacer_length $_spacer
 							Write-Host $_filler_ -NoNewline
 						}
@@ -1841,7 +1903,7 @@ function fDisplayVltDetails([array]$_io_accounts_obj_arr, [string]$_io_accounts_
 				#
 				if (!($script:_show_earnings))
 				{
-					$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1 - ($_delimiter.Length * $_delimiter_repeat_count)
+					$_spacer_length = $_all_line_filler.Length - ("|").Length - $_leading_spaces_filler.Length - $_addr_disp_.Length - $_balance_disp.ToString().Length - 1
 					$_trailing_spaces_filler = fBuildDynamicSpacer $_spacer_length $_spacer
 					Write-Host $_trailing_spaces_filler -NoNewline
 					Write-Host "|" -ForegroundColor $_html_cyan
@@ -2319,7 +2381,6 @@ function fCheckPlatformType () {
 }
 
 function fResizePSWindow ([int]$_io_ps_window_height, [int]$_io_ps_window_width) {
-	#if ($_b_ps_window_resize_enabled.toLower() -eq 'y')
 	if ($script:_b_windows_host)
 	{
 		$_height = $_io_ps_window_height + 8
@@ -3192,6 +3253,10 @@ $_resp_Json = $null
 
 				// Adjust how many accounts to query at once.
 				let limit = 100;
+				if ('$script:_b_test_mode_on' == 'Y')
+				{
+					limit = 1;
+				}
 				let result = [];
 				let last_key = '';
 				
@@ -3211,6 +3276,10 @@ $_resp_Json = $null
 						
 						last_key = user[0];
 					};
+					if ('$script:_b_test_mode_on' == 'Y')
+					{
+						break;			//DEBUG only
+					}
 				};
 				
 				//sort accounts by balance - descending
@@ -3452,9 +3521,6 @@ $_resp_Json = $null
 		"
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
-		#Write-Host "DELETE: "
-		#Write-Host "DELETE: _resp_Json=" $_resp_Json
-		#Read-Host
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
 	}
 	catch {}
@@ -3876,9 +3942,6 @@ $_resp_Json = $null
 		"
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
-		#Write-Host "DELETE: "
-		#Write-Host "DELETE: _resp_Json=" $_resp_Json
-		#Read-Host
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
 	}
 	catch {}
@@ -3886,8 +3949,9 @@ $_resp_Json = $null
 	return $_response_obj_arr_PS
 }
 
-function fDisplayEarningsTrend ([string]$_io_earnings_duration_type, [int]$_io_cursor_pos_x, [int]$_io_cursor_pos_y) {
+function fDisplayEarningsTrend ([string]$_io_earnings_duration_type) {
 [array]$_bal_earned_obj_arr = $null
+$script:_bal_airdrop_obj_arr = $null
 $_html_cyan = "cyan"
 $_html_yellow = "yellow"
 	#
@@ -3968,6 +4032,14 @@ $_html_yellow = "yellow"
 							elseif ($_sorted_bal_data_obj.Date -lt $script:_rewards_activated_date_ymd) {
 								$_b_show = $false;
 							}
+						}
+
+						if ($_sorted_bal_data_obj.Date -eq $script:_rewards_activated_date_ymd) {
+							$_tmp_bal_airdrop_obj = [PSCustomObject]@{
+								AddressId		= $_sorted_earnings_info_obj.address_id
+								AirdropAmount	= $_sorted_bal_data_obj.Balance
+							}
+							$script:_bal_airdrop_obj_arr += $_tmp_bal_airdrop_obj
 						}
 
 						$_tmp_bal_earrned_obj = [PSCustomObject]@{

@@ -45,8 +45,8 @@ rpc-node-url              : wss://rpc.mainnet.subspace.foundation/ws
 #                                          *** caution advised - see below ***
 #                                          ***********************************
 #                    -  setting too high value may cause slowdown/network overload 
-#                    -  defaults to 0 (blocks producded in 1 minute), non-zero value should be limited to lower value (less  
-#                       than 50 blocks), adjust tool refresh frequency to accomodate
+#                    -  defaults to 0, non-zero value should be limited to lower value (less  than 50 blocks), 
+#                       adjust tool refresh frequency to accomodate
 #
 # disable earnings - completely disbale earnings calculation and display 
 #-------------------------------------------------------------------------------------------------------------------------
