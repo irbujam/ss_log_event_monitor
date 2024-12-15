@@ -4185,7 +4185,7 @@ function fGetFarmerMatchInCluster ([string]$_io_host_url) {
 	{
 		$_ss_farmer_obj_arr_item = $script:_ss_farmer_obj_arr[$_ss_farmer_obj_arr_pos]
 		$_nats_farmer_hostname = $_ss_farmer_obj_arr_item.IP.toString()
-		if ($_tmp_host_ip[0] -ne $_nats_farmer_hostname) { continue }
+		#if ($_tmp_host_ip[0] -ne $_nats_farmer_hostname) { continue }
 		$_nats_farmer_subscriptions_arr = $_ss_farmer_obj_arr_item.Subscriptions
 		foreach ($_tmp_disk_UUId_obj in $_tmp_disk_UUId_arr)
 		{
