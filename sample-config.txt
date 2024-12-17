@@ -39,20 +39,10 @@ rpc-node-url              : wss://rpc.mainnet.subspace.foundation/ws
 # block speed - avg chain block production rate for single block (used to skip over days for earnings calculations)
 #                    - defaults to 6.5 if not provided
 # 
-# earnings accurancy - number of blocks over a period to check for earnings over extended time period closer to midnight utc
-#                    -  fine tune earnings reporting accurancy closer to midnight utc 
-#                                          ***********************************
-#                                          *** caution advised - see below ***
-#                                          ***********************************
-#                    -  setting too high value may cause slowdown/network overload 
-#                    -  defaults to 0, non-zero value should be limited to lower value (less  than 50 blocks), 
-#                       adjust tool refresh frequency to accomodate
-#
 # disable earnings - completely disbale earnings calculation and display 
 #-------------------------------------------------------------------------------------------------------------------------
 
 block-speed (seconds)     : 6.5
- earning-accuracy (blocks/ minute) : 0
 # disable-Earnings    : Y
 
 #-----------------------------------------------------[Optional]----------------------------------------------------------
