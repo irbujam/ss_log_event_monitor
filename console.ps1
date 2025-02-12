@@ -44,7 +44,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_eta = "ETA   "
 	$_label_process_sector_time = "SCT   "
 	$_label_process_total_sectors_per_hour = "SCT    "
-	$_label_process_total_TiB_per_day = "   PL TiB   "
+
+	#$_label_process_total_TiB_per_day = "   PL TiB   "
+	$_label_process_total_TiB_per_day = "   PL " + $script:_size_unit + "   "
+
 	$_label_process_disks = "  Plots   "
 	$_label_process_replot_disks = "    Replots    "
 	$_label_process_rewards = "          Rewards          "
@@ -57,7 +60,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_alt_name_row2 =  fBuildDynamicSpacer $_label_process_alt_name.Length $_spacer
 	if ($script:_b_cluster_mode) { $_label_process_alt_name_row2 =  "[Cluster Id]" } 
 	$_label_process_uptime_row2 = "      "
-	$_label_process_size_row2 = "(TiB) "
+	
+	#$_label_process_size_row2 = "(TiB) "
+	$_label_process_size_row2 = "(" + $script:_size_unit + ") "
+	
 	$_label_process_progress_row2 = "Cmpl  "
 	$_label_process_eta_row2 = "      "
 	$_label_process_sector_time_row2 = "Time  "
@@ -82,7 +88,10 @@ function fGetSummaryDataForConsole ([array]$_io_process_arr) {
 	$_label_process_total_TiB_per_day_row3 = "Tot/PD      "
 	$_label_process_disks_row3 = "#/Cmpl/RM "
 	$_label_process_replot_disks_row3 = "EX/RM/% Cmpl   "
-	$_label_process_rewards_row3 = "Tot/PH/Est PD/PPTiB PD     "
+
+	#$_label_process_rewards_row3 = "Tot/PH/Est PD/PPTiB PD     "
+	$_label_process_rewards_row3 = "Tot/PH/Est PD/PP" + $script:_size_unit + " PD     "
+
 	$_label_process_misses_row3 = "TO/RJ/FL"
 	# node extra columns
 	$_label_process_sync_status_row3 = "      "
@@ -1377,7 +1386,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	$_label_diskid = "Plot Id"
 	$_label_size = "Size  "
 	$_label_percent_complete = "%     "
-	$_label_size_plotted = "PL TiB"
+
+	#$_label_size_plotted = "PL TiB"
+	$_label_size_plotted = "PL " + $script:_size_unit + ""
+
 	$_label_eta = "ETA   "
 	$_label_replot = "    Replots    "
 	$_label_sectors_per_hour = "SCT    "
@@ -1387,7 +1399,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 	#
 	$_label_hostname_row2 = "        "
 	$_label_diskid_row2 = "       "
-	$_label_size_row2 = "(TiB) "
+
+	#$_label_size_row2 = "(TiB) "
+	$_label_size_row2 = "(" + $script:_size_unit + ") "
+
 	$_label_percent_complete_row2 = "Cmpl  "
 	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
@@ -1971,8 +1986,10 @@ function fWriteDetailDataToConsole ([array]$_io_farmers_ip_arr) {
 					$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 2)
 				}
 			}
-			#$_farm_rewards_disp_label = "Rewards(Tot/PPTiB/PH/Est PD/PPTiB PD):"
-			$_farm_rewards_disp_label = "Rewards(Tot/PH/Est PD/PPTiB PD):"
+
+			#$_farm_rewards_disp_label = "Rewards(Tot/PH/Est PD/PPTiB PD):"
+			$_farm_rewards_disp_label = "Rewards(Tot/PH/Est PD/PP" + $script:_size_unit + " PD):"
+
 			#$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 			$_farm_rewards_disp = "-"
 			if ($_rewards_total -gt 0)
@@ -2843,7 +2860,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	$_label_diskid = "Plot Id"
 	$_label_size = "Size  "
 	$_label_percent_complete = "%     "
-	$_label_size_plotted = "PL TiB"
+
+	#$_label_size_plotted = "PL TiB"
+	$_label_size_plotted = "PL " + $script:_size_unit + ""
+
 	$_label_eta = "ETA   "
 	$_label_replot = "    Replots    "
 	$_label_sectors_per_hour = "SCT    "
@@ -2853,7 +2873,10 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 	#
 	$_label_hostname_row2 = "        "
 	$_label_diskid_row2 = "       "
-	$_label_size_row2 = "(TiB) "
+
+	#$_label_size_row2 = "(TiB) "
+	$_label_size_row2 = "(" + $script:_size_unit + ") "
+
 	$_label_percent_complete_row2 = "Cmpl  "
 	$_label_size_plotted_row2 = "      "
 	$_label_eta_row2 = "      "
@@ -3331,8 +3354,9 @@ function fWriteIndividualProcessDataToConsole ([object]$_io_individual_farmer_id
 				$_farm_daily_avg_rewards_per_TiB = [math]::Round([int]($_rewards_per_day_estimated) / $_farm_plotted_size_TiB, 2)
 			}
 		}
-		#$_farm_rewards_disp_label = "Rewards(Tot/PPTiB/PH/Est PD/PPTiB PD):"
-		$_farm_rewards_disp_label = "Rewards(Tot/PH/Est PD/PPTiB PD):"
+		#$_farm_rewards_disp_label = "Rewards(Tot/PH/Est PD/PPTiB PD):"
+		$_farm_rewards_disp_label = "Rewards(Tot/PH/Est PD/PP" + $script:_size_unit + " PD):"
+
 		#$_farm_rewards_disp = $_rewards_total.toString() + "/" + $_rewards_per_TiB.toString() + "/" + $_rewards_per_hour.toString() + "/" + $_rewards_per_day_estimated.toString() + "/" + $_farm_daily_avg_rewards_per_TiB.toString()
 		$_farm_rewards_disp = "-"
 		if ($_rewards_total -gt 0)
@@ -4286,15 +4310,33 @@ function fDisplayFooterInfo () {
 }
 
 function fDisplayHelpSummary() {
-	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,EX=Expired,"
-	$_help_text_2 = "RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
+	#$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,PPTB=Per Plotted TB,"
+	$_help_text_1 = ""
+	switch ($script:_size_unit) {
+		"TiB" 	{
+			$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,"
+		}
+		"TB " 	{
+			$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTB=Per Plotted TB,PL=Plotted,"
+		}
+	}
+	$_help_text_2 = "EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }
 
 function fDisplayHelp() {
-	$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PL=Plotted,"
-	$_help_text_2 = "EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
+	#$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,PPTB=Per Plotted TB,"
+	$_help_text_1 = ""
+	switch ($script:_size_unit) {
+		"TiB" 	{
+			$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTiB=Per Plotted TiB,"
+		}
+		"TB " 	{
+			$_help_text_1 = "SCT=Sector,PH=Per Hour,PD=Per Day,Tot=Total,Cmpl=Complete,PPTB=Per Plotted TB,"
+		}
+	}
+	$_help_text_2 = "PL=Plotted,EX=Expired,RM=Remaining,Est=Estimated,TO=Timeout,RJ=Rejected,FL=Failed,Bal=Balance"
 	Write-Host $_help_text_1 -BackgroundColor black -ForegroundColor darkgray
 	Write-Host $_help_text_2 -BackgroundColor black -ForegroundColor darkgray
 }

@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.7"
+	$_monitor_file_name = "v0.4.8"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -27,7 +27,8 @@ function main {
 	#
 	$script:_piece_cache_size_text = ""
 	$script:_piece_cache_size_percent = 0		# default to 0 if no user specified value
-	$script:_TiB_to_GiB_converter = 1024
+	$script:_size_unit = "TiB"
+	$script:_TiB_to_GiB_converter = [double](1024)
 	$script:_sector_size_GiB = 0.9843112		# sector size for 1000 pieces (current default) is 1056896064 bytes
 	$script:_mulitplier_size_converter = 1 
 	#
@@ -1150,6 +1151,8 @@ function fReloadConfig() {
 	$script:_show_earnings = $true
 	$script:_additional_block_increments = 10
 	$script:_block_speed = 6.5
+	$script:_size_unit = "TiB"
+	$_size_display_unit = $script:_size_unit
 	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
@@ -1171,6 +1174,7 @@ function fReloadConfig() {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
 			}
+			elseif ($_process_type.toLower().IndexOf("size-display-unit") -ge 0) { $_size_display_unit = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("send-an-alert") -ge 0) { $script:_alert_category_txt = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("wallet-address") -ge 0) {
 				$script:_vlt_address = $_config[1].toString()
@@ -1373,6 +1377,11 @@ function fReloadConfig() {
 		$script:_vlt_addr_arr = $null
 	}
 	#
+	if ($_size_display_unit.toLower() -eq "tb")
+	{
+		$script:_size_unit = "TB "
+		$script:_TiB_to_GiB_converter = [double]($script:_TiB_to_GiB_converter / 1.099512)
+	}
 	## return from function
 	return $_process_ip_arr
 }
@@ -1453,7 +1462,7 @@ $_balance = 0
 	####
 	$_msg = "Querying node for rank information can take a few minutes, please wait..."
 	Write-Host $_msg
-	fPrintTree
+	## TBD - custom logo display function goes here
 	####
 	$_my_accts_json = ""
 	$_my_accts_obj_PS = $null
@@ -2159,47 +2168,6 @@ function fConverPSObjArrToJScriptArr ([array]$_io_arr) {
 	$_resp_js += ']'
 	
 	return $_resp_js
-}
-
-function fPrintTree {
-$height = 11
-$Message = "Happy Holidays!!"
-
-	0..($height-1) | % { Write-Host ' ' -NoNewline }
-	Write-Host -ForegroundColor Yellow '*'
-	0..($height - 1) | %{
-		$width = $_ * 2 
-		1..($height - $_) | %{ Write-Host ' ' -NoNewline}
-
-		Write-Host '/' -NoNewline -ForegroundColor Green
-		while($Width -gt 0){
-			switch (Get-Random -Minimum 1 -Maximum 20) {
-				1       { Write-Host -BackgroundColor Green -ForegroundColor Red '@' -NoNewline }
-				2       { Write-Host -BackgroundColor Green -ForegroundColor Green '@' -NoNewline }
-				3       { Write-Host -BackgroundColor Green -ForegroundColor Blue '@' -NoNewline }
-				4       { Write-Host -BackgroundColor Green -ForegroundColor Yellow '@' -NoNewline }
-				5       { Write-Host -BackgroundColor Green -ForegroundColor Magenta '@' -NoNewline }
-				Default { Write-Host -BackgroundColor Green ' ' -NoNewline }
-			}
-			$Width--
-		}
-		 Write-Host '\' -ForegroundColor Green
-	}
-	0..($height*2) | %{ Write-Host -ForegroundColor Green '~' -NoNewline }
-	Write-Host -ForegroundColor Green '~'
-	0..($height-1) | % { Write-Host ' ' -NoNewline }
-	Write-Host -BackgroundColor Black -ForegroundColor Black ' '
-	$Padding = ($Height * 2 - $Message.Length) / 2
-	if($Padding -gt 0){
-		1..$Padding | % { Write-Host ' ' -NoNewline }
-	}
-	0..($Message.Length -1) | %{
-		$Index = $_
-		switch ($Index % 2 ){
-			0 { Write-Host -ForegroundColor Green $Message[$Index] -NoNewline }
-			1 { Write-Host -ForegroundColor Red $Message[$Index] -NoNewline }
-		}
-	} 
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
