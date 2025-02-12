@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.6"
+	$_monitor_file_name = "v0.4.8"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -27,7 +27,8 @@ function main {
 	#
 	$script:_piece_cache_size_text = ""
 	$script:_piece_cache_size_percent = 0		# default to 0 if no user specified value
-	$script:_TiB_to_GiB_converter = 1024
+	$script:_size_unit = "TiB"
+	$script:_TiB_to_GiB_converter = [double](1024)
 	$script:_sector_size_GiB = 0.9843112		# sector size for 1000 pieces (current default) is 1056896064 bytes
 	$script:_mulitplier_size_converter = 1 
 	#
@@ -1150,6 +1151,8 @@ function fReloadConfig() {
 	$script:_show_earnings = $true
 	$script:_additional_block_increments = 10
 	$script:_block_speed = 6.5
+	$script:_size_unit = "TiB"
+	$_size_display_unit = $script:_size_unit
 	#
 	for ($arrPos = 0; $arrPos -lt $_process_ip_arr.Count; $arrPos++)
 	{
@@ -1171,6 +1174,7 @@ function fReloadConfig() {
 				$script:refreshTimeScaleInSeconds = [int]$_config[1].toString()
 				if ($script:refreshTimeScaleInSeconds -eq 0 -or $script:refreshTimeScaleInSeconds -eq "" -or $script:refreshTimeScaleInSeconds -eq $null) {$script:refreshTimeScaleInSeconds = $_refresh_duration_default}
 			}
+			elseif ($_process_type.toLower().IndexOf("size-display-unit") -ge 0) { $_size_display_unit = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("send-an-alert") -ge 0) { $script:_alert_category_txt = $_config[1].toString() }
 			elseif ($_process_type.toLower().IndexOf("wallet-address") -ge 0) {
 				$script:_vlt_address = $_config[1].toString()
@@ -1373,6 +1377,11 @@ function fReloadConfig() {
 		$script:_vlt_addr_arr = $null
 	}
 	#
+	if ($_size_display_unit.toLower() -eq "tb")
+	{
+		$script:_size_unit = "TB "
+		$script:_TiB_to_GiB_converter = [double]($script:_TiB_to_GiB_converter / 1.099512)
+	}
 	## return from function
 	return $_process_ip_arr
 }
@@ -1440,6 +1449,7 @@ function  fGetVltBalance([string]$_io_node_url, [array]$_io_vlt_address_arr) {
 	}
 	catch {}
 	$_balance = [math]::Round($_balance / [math]::Pow(10, 18), 4)
+	#
 	return $_balance
 }
 
@@ -1452,7 +1462,7 @@ $_balance = 0
 	####
 	$_msg = "Querying node for rank information can take a few minutes, please wait..."
 	Write-Host $_msg
-	fPrintTree
+	## TBD - custom logo display function goes here
 	####
 	$_my_accts_json = ""
 	$_my_accts_obj_PS = $null
@@ -2158,47 +2168,6 @@ function fConverPSObjArrToJScriptArr ([array]$_io_arr) {
 	$_resp_js += ']'
 	
 	return $_resp_js
-}
-
-function fPrintTree {
-$height = 11
-$Message = "Happy Holidays!!"
-
-	0..($height-1) | % { Write-Host ' ' -NoNewline }
-	Write-Host -ForegroundColor Yellow '*'
-	0..($height - 1) | %{
-		$width = $_ * 2 
-		1..($height - $_) | %{ Write-Host ' ' -NoNewline}
-
-		Write-Host '/' -NoNewline -ForegroundColor Green
-		while($Width -gt 0){
-			switch (Get-Random -Minimum 1 -Maximum 20) {
-				1       { Write-Host -BackgroundColor Green -ForegroundColor Red '@' -NoNewline }
-				2       { Write-Host -BackgroundColor Green -ForegroundColor Green '@' -NoNewline }
-				3       { Write-Host -BackgroundColor Green -ForegroundColor Blue '@' -NoNewline }
-				4       { Write-Host -BackgroundColor Green -ForegroundColor Yellow '@' -NoNewline }
-				5       { Write-Host -BackgroundColor Green -ForegroundColor Magenta '@' -NoNewline }
-				Default { Write-Host -BackgroundColor Green ' ' -NoNewline }
-			}
-			$Width--
-		}
-		 Write-Host '\' -ForegroundColor Green
-	}
-	0..($height*2) | %{ Write-Host -ForegroundColor Green '~' -NoNewline }
-	Write-Host -ForegroundColor Green '~'
-	0..($height-1) | % { Write-Host ' ' -NoNewline }
-	Write-Host -BackgroundColor Black -ForegroundColor Black ' '
-	$Padding = ($Height * 2 - $Message.Length) / 2
-	if($Padding -gt 0){
-		1..$Padding | % { Write-Host ' ' -NoNewline }
-	}
-	0..($Message.Length -1) | %{
-		$Index = $_
-		switch ($Index % 2 ){
-			0 { Write-Host -ForegroundColor Green $Message[$Index] -NoNewline }
-			1 { Write-Host -ForegroundColor Red $Message[$Index] -NoNewline }
-		}
-	} 
 }
 
 function fGetElapsedTime ([object]$_io_obj) {
@@ -3620,7 +3589,7 @@ $_resp_Json = $null
 				*/
 
 				// Query balances over a period
-				const block_speed = Math.floor(Number($script:_block_speed));												//seconds per block, from config file
+				let block_speed = Math.floor(Number($script:_block_speed));												//seconds per block, from config file
 				var blocks_today = Math.floor((60 / block_speed) * 60 * (elapsedSecondsUTC / 3600)); 						// blocks produced today
 				//console.log(blocks_today);
 				var blocks_per_day = Math.floor((60 / block_speed) * 60 * 24); 												// [1 block in 6s = (60/6)*60*24 per day] ~ 14440
@@ -3668,7 +3637,7 @@ $_resp_Json = $null
 					}
 
 					// build dates for reporting earnings
-					sDurationType = _duration_;
+					let sDurationType = _duration_;
 
 					let s_curr_date = new Date(today);
 					let s_date = s_curr_date.getFullYear().toString() + '/' + ('0' + (s_curr_date.getMonth()+1).toString()).slice(-2) + '/' + ('0' + s_curr_date.getDate().toString()).slice(-2);
@@ -3691,6 +3660,23 @@ $_resp_Json = $null
 					{
 						lastReportDateTimestamp = sDateArr[0];
 					}
+					//console.log(sDateArr);
+
+					var utcMidnightDateTime = new Date(lastReportDateTimestamp);
+					var utcMidnightTimestamp = new Date(utcMidnightDateTime.setUTCHours(24,0,0,0));
+					if (sDateArr.length > 0)
+					{
+						utcMidnightTimestamp = new Date(utcMidnightDateTime.setUTCHours(23,59,59,999));
+					}
+					utcMidnightTimestamp.setDate(utcMidnightTimestamp.getDate() - 1);
+					var hUTCMidnight = utcMidnightTimestamp.getUTCHours();
+					var mUTCMidnight = utcMidnightTimestamp.getUTCMinutes();
+					var sUTCMidnight = utcMidnightTimestamp.getUTCSeconds();
+					// Convert the current UTC time to total seconds elapsed today
+					var elapsedUTCMidnight = hUTCMidnight * 3600 + mUTCMidnight * 60 + sUTCMidnight;
+					// Combine the time into a string
+					var utcMidnightDate = utcMidnightTimestamp.getFullYear().toString() + '/' + ('0' + (utcMidnightTimestamp.getMonth()+1).toString()).slice(-2) + '/' + ('0' + utcMidnightTimestamp.getDate().toString()).slice(-2);
+					var utcMidnightTime = String(hUTCMidnight).padStart(2, '0') + ':' + String(mUTCMidnight).padStart(2, '0') + ':' + String(sUTCMidnight).padStart(2, '0');
 
 					const _increment_block_number = Number($script:_additional_block_increments);														//limit search up to certain number of blocks in either direction (variance duration allowed: 1 minute, high value causes slowdown)
 					
@@ -3706,16 +3692,31 @@ $_resp_Json = $null
 						//iterate for all days in a month and break the loop once last report date desired matches and hold the block info
 						let LastReportingPeriodBlockNumber = currentBlockNumber;
 						let sLastRewardDate = '';
+						
+						let b_next_iteration = false;
 						for (let i = 1; i <= 31; i++) 																				//iterate for maximum number of calendar days in any month
 						{				
+							if (i==1) 		//write to response only once for current block in this section as we will process prior period blocks later on
+							{		
+								if (_iterator >= 1) { resp_json += '},'; }
+								resp_json += '{=address_id=:=' + base58Addr + '=,=Duration=:=' + _duration_ + '=,=data=:['; 
+								resp_json += '{=Block=:=' + currentBlockNumber + '=,=Balance=:=' + currentBalance + '=,=Date=:=' + sCurrBlockDate + '=,=Timestamp=:=' + currBlockTimestampDate + '=}';
+							}
+							b_at_least_one_block_found = true;
+							_iterator += 1;
+
+
 							let num_blocks = blocks_per_day;
 							let num_block_multiplier_offset = 1;
+							let _multiplication_factor = 1;
 							if (i == 1)
 							{
 								num_blocks = blocks_today;
 								num_block_multiplier_offset = 0;
+								_multiplication_factor  = 1
 							}
-							LastReportingPeriodBlockNumber = currentBlockNumber - ((i - num_block_multiplier_offset)  * num_blocks);
+
+							LastReportingPeriodBlockNumber = currentBlockNumber - ((i - num_block_multiplier_offset)  * num_blocks * _multiplication_factor);
 							
 							let _temp_BlockHash = await api.rpc.chain.getBlockHash(LastReportingPeriodBlockNumber);
 
@@ -3732,26 +3733,123 @@ $_resp_Json = $null
 							let timestampDate = new Date(_temp_blockTimestamp.toNumber());
 							let sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
 							
-							/*
 							// Get the current UTC time (hours, minutes, seconds)
-							const hUTC = timestampDate.getUTCHours();
-							const mUTC = timestampDate.getUTCMinutes();
-							const sUTC = timestampDate.getUTCSeconds();
+							let hUTC = timestampDate.getUTCHours();
+							let mUTC = timestampDate.getUTCMinutes();
+							let sUTC = timestampDate.getUTCSeconds();
 							// Convert the current UTC time to total seconds elapsed today
-							const elapsedUTC = hUTC * 3600 + mUTC * 60 + sUTC;
+							let elapsedUTC = hUTC * 3600 + mUTC * 60 + sUTC;
 							// Combine the time into a string
-							const utcTime = String(hUTC).padStart(2, '0') + ':' + String(mUTC).padStart(2, '0') + ':' + String(sUTC).padStart(2, '0');
-							*/
+							let utcDate = timestampDate.getUTCFullYear().toString() + '/' + ('0' + (timestampDate.getUTCMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getUTCDate().toString()).slice(-2);
+							let utcTime = String(hUTC).padStart(2, '0') + ':' + String(mUTC).padStart(2, '0') + ':' + String(sUTC).padStart(2, '0');
 
 							let previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
 							let previousBlockNumber = previousBlockHeader.number.toNumber();  										// Get previous block number
 
-							let iNextBlockNumber = previousBlockNumber;
-							while (sDate < _curr_date)
+							let blocksDurationToSkip = elapsedUTCMidnight - elapsedUTC;
+							let skip_blocks = Math.floor((60 / block_speed) * 60 * (blocksDurationToSkip / 3600)); 						// blocks produced today
+							let iNextBlockNumber = previousBlockNumber + (1 * skip_blocks) - 1;
+							if (timestampDate > utcMidnightTimestamp)
 							{
-								iNextBlockNumber += 1;
-								if (iNextBlockNumber > (previousBlockNumber + _increment_block_number)) { break; }					//limit search up to certain number of blocks in either direction
-								
+								iNextBlockNumber = previousBlockNumber - (1 * skip_blocks) + 1;
+							}
+
+							let utcDateTimeToCompare = utcDate + ' ' + utcTime;
+							let utcMidnightDateTimeToCompare = utcMidnightDate + ' ' + utcMidnightTime;
+							
+							//console.log(utcDateTimeToCompare);
+							//console.log(utcMidnightDateTimeToCompare);
+							//console.log('FIRST');
+							
+							if (timestampDate < utcMidnightTimestamp)
+							{
+								while (timestampDate < utcMidnightTimestamp)
+								{
+									iNextBlockNumber += 1;
+									if (iNextBlockNumber > (previousBlockNumber + (1 * skip_blocks) + _increment_block_number)) { break; }					//limit search up to certain number of blocks in either direction
+									
+									_temp_BlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
+
+									// Use the .at() method on the API instance to query at the specific block hash
+									apiAt = await api.at(_temp_BlockHash);  															// Get API instance for a specific block hash
+
+									// Query balance at the specific block
+									let { data: { free: priorBalance } } = await apiAt.query.system.account(base58Addr);
+									pastBalance = priorBalance;
+
+									// Query the timestamp for the specific block
+									blockTimestamp = await apiAt.query.timestamp.now(); 												// Retrieves the block timestamp (milliseconds)
+									
+									// Convert timestamp to Date
+									timestampDate = new Date(blockTimestamp.toNumber());
+									sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+
+									// Get the UTC date
+									utcDate = timestampDate.getUTCFullYear().toString() + '/' + ('0' + (timestampDate.getUTCMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getUTCDate().toString()).slice(-2);
+									// Get the current UTC time (hours, minutes, seconds)
+									hUTC = timestampDate.getUTCHours();
+									mUTC = timestampDate.getUTCMinutes();
+									sUTC = timestampDate.getUTCSeconds();
+									// Combine the time into a string
+									utcTime = String(hUTC).padStart(2, '0') + ':' + String(mUTC).padStart(2, '0') + ':' + String(sUTC).padStart(2, '0');
+									utcDateTimeToCompare = utcDate + ' ' + utcTime;
+									
+									//console.log(utcDateTimeToCompare);
+									
+								}
+							}
+							else if (timestampDate > utcMidnightTimestamp && b_next_iteration == true)
+							{
+								b_next_iteration = false;
+								while (timestampDate > utcMidnightTimestamp)
+								{
+									iNextBlockNumber = iNextBlockNumber - 1;
+									if (iNextBlockNumber > (previousBlockNumber - (1 * skip_blocks) - _increment_block_number)) { break; }					//limit search up to certain number of blocks in either direction
+									
+									_temp_BlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
+
+									// Use the .at() method on the API instance to query at the specific block hash
+									apiAt = await api.at(_temp_BlockHash);  															// Get API instance for a specific block hash
+
+									// Query balance at the specific block
+									let { data: { free: priorBalance } } = await apiAt.query.system.account(base58Addr);
+									pastBalance = priorBalance;
+
+									// Query the timestamp for the specific block
+									blockTimestamp = await apiAt.query.timestamp.now(); 												// Retrieves the block timestamp (milliseconds)
+									
+									// Convert timestamp to Date
+									timestampDate = new Date(blockTimestamp.toNumber());
+									sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+
+									// Get the UTC date
+									utcDate = timestampDate.getUTCFullYear().toString() + '/' + ('0' + (timestampDate.getUTCMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getUTCDate().toString()).slice(-2);
+									// Get the current UTC time (hours, minutes, seconds)
+									hUTC = timestampDate.getUTCHours();
+									mUTC = timestampDate.getUTCMinutes();
+									sUTC = timestampDate.getUTCSeconds();
+									// Combine the time into a string
+									utcTime = String(hUTC).padStart(2, '0') + ':' + String(mUTC).padStart(2, '0') + ':' + String(sUTC).padStart(2, '0');
+									utcDateTimeToCompare = utcDate + ' ' + utcTime;
+									
+									//console.log(utcDateTimeToCompare);
+									
+								}
+							}
+							previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
+							previousBlockNumber = previousBlockHeader.number.toNumber();  											// Get previous block number
+
+							if (utcDate <= lastReportDateTimestamp || utcDate < '$script:_rewards_activated_date_ymd' || lastReportDateTimestamp < '$script:_rewards_activated_date_ymd') 
+							{
+								sLastRewardDate = sDate;
+								break;
+							}
+							else if (utcDate > lastReportDateTimestamp && b_next_iteration == true)
+							{
+								b_next_iteration = false;
+								iNextBlockNumber = iNextBlockNumber - 1;
+								LastReportingPeriodBlockNumber = iNextBlockNumber
+							
 								_temp_BlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
 
 								// Use the .at() method on the API instance to query at the specific block hash
@@ -3767,27 +3865,16 @@ $_resp_Json = $null
 								// Convert timestamp to Date
 								timestampDate = new Date(blockTimestamp.toNumber());
 								sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
-							}
-							previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
-							previousBlockNumber = previousBlockHeader.number.toNumber();  											// Get previous block number
 
-							if (i==1) 		//write to response only once for current block in this section as we will process prior period blocks later on
-							{		
-								if (_iterator >= 1) { resp_json += '},'; }
-								resp_json += '{=address_id=:=' + base58Addr + '=,=Duration=:=' + _duration_ + '=,=data=:['; 
-								resp_json += '{=Block=:=' + currentBlockNumber + '=,=Balance=:=' + currentBalance + '=,=Date=:=' + sCurrBlockDate + '=,=Timestamp=:=' + currBlockTimestampDate + '=}';
-							}
+								previousBlockHeader = await api.rpc.chain.getHeader(_temp_BlockHash);
+								previousBlockNumber = previousBlockHeader.number.toNumber();  											// Get previous block number
 
-							b_at_least_one_block_found = true;
-							_iterator += 1;
-
-							if (sDate <= lastReportDateTimestamp || sDate < '$script:_rewards_activated_date_ymd' || lastReportDateTimestamp < '$script:_rewards_activated_date_ymd') 
-							{
 								sLastRewardDate = sDate;
 								break;
 							}
+							b_next_iteration = true;
 						}
-
+						
 						if (sLastRewardDate != '' && sLastRewardDate > '$script:_rewards_activated_date_ymd')
 						{
 							let iCurrIndex_dateArr = -1;
@@ -3815,15 +3902,47 @@ $_resp_Json = $null
 								let previousBlockHeader = await api.rpc.chain.getHeader(previousBlockHash);
 								let previousBlockNumber = previousBlockHeader.number.toNumber();  									// Get previous block number
 
-								let iNextBlockNumber =  previousBlockNumber;
+								
 								let b_lookup_direction_up = false;
 								let b_lookup_direction_down = false;
 								let b_exit_while_loop = false;
+
+								// Get the current UTC time (hours, minutes, seconds)
+								let _hUTC = timestampDate.getUTCHours();
+								let _mUTC = timestampDate.getUTCMinutes();
+								let _sUTC = timestampDate.getUTCSeconds();
+								// Convert the current UTC time to total seconds elapsed today
+								let _elapsedUTC = _hUTC * 3600 + _mUTC * 60 + _sUTC;
+								// Combine the time into a string
+								let _utcDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+								let _utcTime = String(_hUTC).padStart(2, '0') + ':' + String(_mUTC).padStart(2, '0') + ':' + String(_sUTC).padStart(2, '0');
+								
+								let _utcMidnightDateTime = new Date(sDateArr[iCurrIndex_dateArr]);
+								let _utcMidnightTimestamp = new Date(_utcMidnightDateTime.setUTCHours(23,59,59,999));
+								let _hUTCMidnight = _utcMidnightTimestamp.getUTCHours();
+								let _mUTCMidnight = _utcMidnightTimestamp.getUTCMinutes();
+								let _sUTCMidnight = _utcMidnightTimestamp.getUTCSeconds();
+								// Convert the current UTC time to total seconds elapsed today
+								let _elapsedUTCMidnight = _hUTCMidnight * 3600 + _mUTCMidnight * 60 + _sUTCMidnight;
+								// Combine the time into a string
+								let _utcMidnightDate = _utcMidnightTimestamp.getFullYear().toString() + '/' + ('0' + (_utcMidnightTimestamp.getMonth()+1).toString()).slice(-2) + '/' + ('0' + _utcMidnightTimestamp.getDate().toString()).slice(-2);
+								let _utcMidnightTime = String(_hUTCMidnight).padStart(2, '0') + ':' + String(_mUTCMidnight).padStart(2, '0') + ':' + String(_sUTCMidnight).padStart(2, '0');
+
+								let dur_blocksToSkip = _elapsedUTCMidnight - _elapsedUTC;
+								let _skip_blocks = Math.floor((60 / block_speed) * 60 * (dur_blocksToSkip / 3600)); 						// blocks produced today
+								let iNextBlockNumber = previousBlockNumber + (1 * _skip_blocks) - 1;
+								if (timestampDate > _utcMidnightTimestamp)
+								{
+									iNextBlockNumber = previousBlockNumber - (1 * _skip_blocks) + 1;
+								}
+								let _utcDateTimeToCompare = _utcDate + ' ' + _utcTime;
+								let _utcMidnightDateTimeToCompare = _utcMidnightDate + ' ' + _utcMidnightTime;
+								
 								while (!(b_exit_while_loop))
 								{
 									if (iCurrIndex_dateArr >= sDateArr.length) { break; }
 									
-									if (sDate  <= sDateArr[iCurrIndex_dateArr])
+									if (timestampDate < _utcMidnightTimestamp)
 									{
 										if (b_lookup_direction_down)
 										{
@@ -3833,7 +3952,7 @@ $_resp_Json = $null
 										
 										b_lookup_direction_up = true;
 										iNextBlockNumber += 1;
-										if (iNextBlockNumber > (previousBlockNumber + _increment_block_number)) { break; }				//limit search up to certain number of blocks in either direction
+										if (iNextBlockNumber > (previousBlockNumber + (1 * _skip_blocks) + _increment_block_number)) { break; }					//limit search up to certain number of blocks in either direction
 										
 										previousBlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
 
@@ -3850,8 +3969,18 @@ $_resp_Json = $null
 										// Convert timestamp to Date
 										timestampDate = new Date(blockTimestamp.toNumber());
 										sDate = timestampDate.getFullYear().toString() + '/' + ('0' + (timestampDate.getMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getDate().toString()).slice(-2);
+
+										// Get the UTC date
+										_utcDate = timestampDate.getUTCFullYear().toString() + '/' + ('0' + (timestampDate.getUTCMonth()+1).toString()).slice(-2) + '/' + ('0' + timestampDate.getUTCDate().toString()).slice(-2);
+										// Get the current UTC time (hours, minutes, seconds)
+										_hUTC = timestampDate.getUTCHours();
+										_mUTC = timestampDate.getUTCMinutes();
+										_sUTC = timestampDate.getUTCSeconds();
+										// Combine the time into a string
+										_utcTime = String(_hUTC).padStart(2, '0') + ':' + String(_mUTC).padStart(2, '0') + ':' + String(_sUTC).padStart(2, '0');
+										_utcDateTimeToCompare = _utcDate + ' ' + _utcTime;
 									}
-									if (sDate > sDateArr[iCurrIndex_dateArr])
+									else if (timestampDate > _utcMidnightTimestamp)
 									{
 										if (b_lookup_direction_up)
 										{
@@ -3860,7 +3989,7 @@ $_resp_Json = $null
 										}
 										b_lookup_direction_down = true;
 										iNextBlockNumber = iNextBlockNumber - 1;
-										if (iNextBlockNumber > (previousBlockNumber - _increment_block_number)) { break; }				//limit search up to certain number of blocks in either direction
+										if (iNextBlockNumber > (previousBlockNumber - (1 * _skip_blocks) - _increment_block_number)) { break; }					//limit search up to certain number of blocks in either direction
 										
 										previousBlockHash = await api.rpc.chain.getBlockHash(iNextBlockNumber);
 
@@ -3942,6 +4071,9 @@ $_resp_Json = $null
 		"
 		#
 		$_resp_Json = $_resp_Json.Replace('=','"')
+		#Write-Host "DELETE:"
+		#Write-Host "DELETE: _resp_Json=" $_resp_Json
+		#Read-Host
 		$_response_obj_arr_PS =  ConvertFrom-Json -InputObject $_resp_Json
 	}
 	catch {}

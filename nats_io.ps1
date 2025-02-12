@@ -137,6 +137,10 @@ function fSanitizeConnections ([array]$_io_arr) {
 		{
 			$_sanitized_arr += $_sorted_arr[$_i]
 		}
+		elseif ($_sorted_arr[$_i].IP -eq $_sorted_arr[$_i-1].IP -and $_sorted_arr[$_i].Port -ne $_sorted_arr[$_i-1].Port)
+		{
+			$_sanitized_arr += $_sorted_arr[$_i]
+		}
 	}	
 	#
 	return $_sanitized_arr
