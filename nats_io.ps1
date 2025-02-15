@@ -119,7 +119,7 @@ $_io_nats_connections_obj = [PSCustomObject]@{
 	return $_io_nats_connections_obj_arr
 }
 
-function fSanitizeConnections ([array]$_io_arr) {
+function fSanitizeConnections ([array]$_io_arr, [string]$_io_nats_url) {
 	[array]$_sanitized_arr = $null
 	#
 	$_sorted_arr = $_io_arr
@@ -131,7 +131,12 @@ function fSanitizeConnections ([array]$_io_arr) {
 	{
 		if ($_i -eq 0)
 		{
-			$_sanitized_arr += $_sorted_arr[$_i]
+			#$_sanitized_arr += $_sorted_arr[$_i]
+			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr $_io_nats_url
+			if (!($_b_nats_obj_disconnected))
+			{
+				$_sanitized_arr += $_sorted_arr[$_i]
+			}
 		}
 		elseif ($_sorted_arr[$_i].IP -ne $_sorted_arr[$_i-1].IP)
 		{
@@ -139,11 +144,36 @@ function fSanitizeConnections ([array]$_io_arr) {
 		}
 		elseif ($_sorted_arr[$_i].IP -eq $_sorted_arr[$_i-1].IP -and $_sorted_arr[$_i].Port -ne $_sorted_arr[$_i-1].Port)
 		{
-			$_sanitized_arr += $_sorted_arr[$_i]
+			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr $_io_nats_url
+			if (!($_b_nats_obj_disconnected))
+			{
+				$_sanitized_arr += $_sorted_arr[$_i]
+			}
 		}
 	}	
 	#
 	return $_sanitized_arr
+}
+
+function fCheckNatsObjsForDisconnection ([array]$_io_srt_arr, [string]$_io_nats_url) {
+	[boolean]$_io_b_nats_obj_disconnected = $false
+	[array]$_nats_closed_connection_obj_arr = $null
+	if ($script:_nats_server_health_status) 
+	{
+		$_nats_closed_connection_obj_arr = fGetNatsServerClosedConnections $_io_nats_url
+	}
+	for ($_nats_closed_connection_obj_arr_pos = 0; $_nats_closed_connection_obj_arr_pos -lt $_nats_closed_connection_obj_arr.Count; $_nats_closed_connection_obj_arr_pos++)
+	{
+		$_nats_closed_connection_obj_arr_item = $_nats_closed_connection_obj_arr[$_nats_closed_connection_obj_arr_pos]
+
+		if ($_nats_closed_connection_obj_arr_item.IP -eq $_sorted_arr[$_i].IP -and $_nats_closed_connection_obj_arr_item.Port -eq $_sorted_arr[$_i].Port)
+		{
+			$_io_b_nats_obj_disconnected = $true
+			break
+		}
+	}
+	#
+	return $_io_b_nats_obj_disconnected
 }
 
 function fGetNatsServerClosedConnections ([string]$_io_nats_url) {
@@ -214,7 +244,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				#else { $_tmp_conn_obj_arr = $script:_ss_controller_obj_arr }
 			}
-			$script:_ss_controller_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
+			$script:_ss_controller_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr $_io_nats_url
 			#
 			$_tmp_conn_obj_arr = $script:_ss_cache_obj_arr
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Cache
@@ -238,7 +268,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				#else { $_tmp_conn_obj_arr = $script:_ss_cache_obj_arr }
 			}
-			$script:_ss_cache_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
+			$script:_ss_cache_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr $_io_nats_url
 			#
 			$_tmp_conn_obj_arr = $script:_ss_farmer_obj_arr
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Farmer
@@ -262,7 +292,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				#else { $_tmp_conn_obj_arr = $script:_ss_farmer_obj_arr }
 			}
-			$script:_ss_farmer_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
+			$script:_ss_farmer_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr $_io_nats_url
 			#
 			$_tmp_conn_obj_arr = $script:_ss_plotter_obj_arr
 			$_nats_controller_obj_item_arr = $_nats_active_connection_obj_arr[$_nats_active_connection_obj_arr_pos].Plotter
@@ -286,7 +316,7 @@ function fPreserveNatsConnectionsDetails ([string]$_io_nats_url) {
 				}
 				#else { $_tmp_conn_obj_arr = $script:_ss_plotter_obj_arr }
 			}
-			$script:_ss_plotter_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr
+			$script:_ss_plotter_obj_arr = fSanitizeConnections $_tmp_conn_obj_arr $_io_nats_url
 		}
 	}
 	#
@@ -1181,17 +1211,17 @@ $_b_cluster_information_printed = $true
 	$script:_cluster_data_prev_row_pos_hold = $_finish_line_separator_nats_server_CursorPosition
 	##
 	##NOT USED - below lines
-	[array]$_nats_closed_connection_obj_arr = $null
-	if ($script:_nats_server_health_status) 
-	{
-		$_nats_closed_connection_obj_arr = fGetNatsServerClosedConnections $_io_nats_url
-	}
-	for ($_nats_closed_connection_obj_arr_pos = 0; $_nats_closed_connection_obj_arr_pos -lt $_nats_closed_connection_obj_arr.Count; $_nats_closed_connection_obj_arr_pos++)
-	{
-		$_nats_closed_connection_obj_arr_item = $_nats_closed_connection_obj_arr[$_nats_closed_connection_obj_arr_pos]
-		##Not used currently
-		#Write-Host "_nats_closed_connection_obj_arr_item = " $_nats_closed_connection_obj_arr_item
-	}
+	#[array]$_nats_closed_connection_obj_arr = $null
+	#if ($script:_nats_server_health_status) 
+	#{
+	#	$_nats_closed_connection_obj_arr = fGetNatsServerClosedConnections $_io_nats_url
+	#}
+	#for ($_nats_closed_connection_obj_arr_pos = 0; $_nats_closed_connection_obj_arr_pos -lt $_nats_closed_connection_obj_arr.Count; $_nats_closed_connection_obj_arr_pos++)
+	#{
+	#	$_nats_closed_connection_obj_arr_item = $_nats_closed_connection_obj_arr[$_nats_closed_connection_obj_arr_pos]
+	#	##Not used currently
+	#	#Write-Host "_nats_closed_connection_obj_arr_item = " $_nats_closed_connection_obj_arr_item
+	#}
 	##NOT USED - above lines
 	#
 	# send alerts
