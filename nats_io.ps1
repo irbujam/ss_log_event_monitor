@@ -140,7 +140,11 @@ function fSanitizeConnections ([array]$_io_arr, [string]$_io_nats_url) {
 		}
 		elseif ($_sorted_arr[$_i].IP -ne $_sorted_arr[$_i-1].IP)
 		{
-			$_sanitized_arr += $_sorted_arr[$_i]
+			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr[$_i] $_io_nats_url
+			if (!($_b_nats_obj_disconnected))
+			{
+				$_sanitized_arr += $_sorted_arr[$_i]
+			}
 		}
 		elseif ($_sorted_arr[$_i].IP -eq $_sorted_arr[$_i-1].IP -and $_sorted_arr[$_i].Port -ne $_sorted_arr[$_i-1].Port)
 		{
