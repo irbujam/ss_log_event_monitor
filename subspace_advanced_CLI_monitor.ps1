@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.4.9"
+	$_monitor_file_name = "v0.5.0"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -344,6 +344,18 @@ function fInvokeHttpRequestListener ([array]$_io_farmers_ip_arr, [object]$_io_co
 							$_key_value = $_x.key
 							switch ( $_x.key)
 							{
+								Spacebar {
+									if ($script:_size_unit -eq "TiB")
+									{
+										$script:_size_unit = "TB "
+										$script:_TiB_to_GiB_converter = [double]($script:_TiB_to_GiB_converter / 1.099512)									
+									}
+									elseif ($script:_size_unit -eq "TB ")
+									{
+										$script:_size_unit = "TiB"
+										$script:_TiB_to_GiB_converter = [double](1024)
+									}
+								}
 								F12 {
 									$script:_individual_farmer_id_last_pos = -1
 									Clear-Host
@@ -965,6 +977,18 @@ Function fStartCountdownTimer ([int]$_io_timer_duration) {
 			$_key_value = $_x.key
 			switch ( $_x.key)
 			{
+				Spacebar {
+					if ($script:_size_unit -eq "TiB")
+					{
+						$script:_size_unit = "TB "
+						$script:_TiB_to_GiB_converter = [double]($script:_TiB_to_GiB_converter / 1.099512)									
+					}
+					elseif ($script:_size_unit -eq "TB ")
+					{
+						$script:_size_unit = "TiB"
+						$script:_TiB_to_GiB_converter = [double](1024)
+					}
+				}
 				F12 {
 					$script:_individual_farmer_id_last_pos = -1
 					Clear-Host
