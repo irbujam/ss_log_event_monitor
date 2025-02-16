@@ -166,7 +166,7 @@ function fCheckNatsObjsForDisconnection ([array]$_io_srt_arr, [string]$_io_nats_
 	{
 		$_nats_closed_connection_obj_arr_item = $_nats_closed_connection_obj_arr[$_nats_closed_connection_obj_arr_pos]
 
-		if ($_nats_closed_connection_obj_arr_item.IP -eq $_sorted_arr[$_i].IP -and $_nats_closed_connection_obj_arr_item.Port -eq $_sorted_arr[$_i].Port)
+		if ($_nats_closed_connection_obj_arr_item.IP -eq $_io_srt_arr[$_i].IP -and $_nats_closed_connection_obj_arr_item.Port -eq $_io_srt_arr[$_i].Port)
 		{
 			$_io_b_nats_obj_disconnected = $true
 			break
