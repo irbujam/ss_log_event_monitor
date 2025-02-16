@@ -132,7 +132,7 @@ function fSanitizeConnections ([array]$_io_arr, [string]$_io_nats_url) {
 		if ($_i -eq 0)
 		{
 			#$_sanitized_arr += $_sorted_arr[$_i]
-			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr $_io_nats_url
+			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr[$_i] $_io_nats_url
 			if (!($_b_nats_obj_disconnected))
 			{
 				$_sanitized_arr += $_sorted_arr[$_i]
@@ -144,7 +144,7 @@ function fSanitizeConnections ([array]$_io_arr, [string]$_io_nats_url) {
 		}
 		elseif ($_sorted_arr[$_i].IP -eq $_sorted_arr[$_i-1].IP -and $_sorted_arr[$_i].Port -ne $_sorted_arr[$_i-1].Port)
 		{
-			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr $_io_nats_url
+			$_b_nats_obj_disconnected = fCheckNatsObjsForDisconnection $_sorted_arr[$_i] $_io_nats_url
 			if (!($_b_nats_obj_disconnected))
 			{
 				$_sanitized_arr += $_sorted_arr[$_i]
@@ -155,7 +155,7 @@ function fSanitizeConnections ([array]$_io_arr, [string]$_io_nats_url) {
 	return $_sanitized_arr
 }
 
-function fCheckNatsObjsForDisconnection ([array]$_io_srt_arr, [string]$_io_nats_url) {
+function fCheckNatsObjsForDisconnection ([object]$_io_arr_item_obj, [string]$_io_nats_url) {
 	[boolean]$_io_b_nats_obj_disconnected = $false
 	[array]$_nats_closed_connection_obj_arr = $null
 	if ($script:_nats_server_health_status) 
@@ -166,7 +166,7 @@ function fCheckNatsObjsForDisconnection ([array]$_io_srt_arr, [string]$_io_nats_
 	{
 		$_nats_closed_connection_obj_arr_item = $_nats_closed_connection_obj_arr[$_nats_closed_connection_obj_arr_pos]
 
-		if ($_nats_closed_connection_obj_arr_item.IP -eq $_io_srt_arr[$_i].IP -and $_nats_closed_connection_obj_arr_item.Port -eq $_io_srt_arr[$_i].Port)
+		if ($_nats_closed_connection_obj_arr_item.IP -eq $_io_arr_item_obj.IP -and $_nats_closed_connection_obj_arr_item.Port -eq $_io_arr_item_obj.Port)
 		{
 			$_io_b_nats_obj_disconnected = $true
 			break
