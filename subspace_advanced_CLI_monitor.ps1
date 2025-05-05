@@ -16,7 +16,7 @@ function main {
 	$_monitor_git_url = "https://api.github.com/repos/irbujam/ss_log_event_monitor/releases/latest"
 	$_monitor_git_version = fCheckGitNewVersion $_monitor_git_url
 	$_monitor_file_curr_local_path = $PSCommandPath
-	$_monitor_file_name = "v0.5.0"
+	$_monitor_file_name = "v0.5.1"
 	#
 	$_refresh_duration_default = 30
 	$script:refreshTimeScaleInSeconds = 0		# defined in config, defaults to 30 if not provided
@@ -2992,9 +2992,9 @@ function fGetDiskSectorPerformance ([array]$_io_farmer_metrics_arr) {
 							if($_miss_obj.Id -eq $_farmer_disk_id_rewards)
 							{
 								$_resp_misses_arr[$_m].Misses += $_farmer_disk_proving_misses_count
-								$_resp_misses_arr[$_m].Timeout = $_farmer_disk_proving_misses_timeout_count
-								$_resp_misses_arr[$_m].Rejected = $_farmer_disk_proving_misses_rejected_count
-								$_resp_misses_arr[$_m].Failed = $_farmer_disk_proving_misses_failed_count
+								$_resp_misses_arr[$_m].Timeout += $_farmer_disk_proving_misses_timeout_count
+								$_resp_misses_arr[$_m].Rejected += $_farmer_disk_proving_misses_rejected_count
+								$_resp_misses_arr[$_m].Failed += $_farmer_disk_proving_misses_failed_count
 								$_b_miss_captured_prev = $true
 								break
 							}
@@ -4272,7 +4272,12 @@ function fDisplayMonitorGitVersionVariance ([object]$_io_process_git_version, [s
 			Write-Host $_io_process_git_version[1].toString('yyyy-MM-dd') -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
 			Write-Host ", ChangeLog: " -NoNewline -ForegroundColor $_html_black -BackgroundColor $_bg_color
 			$_change_log_ = $_io_process_git_version[2].toString()
-			$_change_log_disp_ = $_change_log_.Substring(0, 35)
+			$_change_log_disp_size_ = 35
+			if ($_change_log_.Length -lt $_change_log_disp_size_)
+			{
+				$_change_log_disp_size_ = $_change_log_.Length
+			}
+			$_change_log_disp_ = $_change_log_.Substring(0, $_change_log_disp_size_)
 			Write-Host $_change_log_disp_ -NoNewline -ForegroundColor $_html_dark_magenta -BackgroundColor $_bg_color
 			Write-Host
 		}
